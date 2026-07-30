@@ -23,7 +23,6 @@ export interface WizardTranslations {
     trust: string[];
     steps: string[];
     cta: string;
-    prefillLabel: string;
   };
   step1: {
     eyebrow: string;
@@ -174,7 +173,6 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
         "Bankverbindung",
       ],
       cta: "Jetzt starten",
-      prefillLabel: "Dein bisheriger Wunsch",
     },
     step1: {
       eyebrow: "1/8 · Kreditart",
@@ -407,7 +405,6 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
         "Bank details",
       ],
       cta: "Start now",
-      prefillLabel: "Your selection so far",
     },
     step1: {
       eyebrow: "1/8 · Loan type",

@@ -3,12 +3,11 @@
 import { useLanguage } from "@/lib/language-context";
 import { wizardTranslations } from "@/lib/wizard-i18n";
 import { useWizard } from "@/lib/wizard-context";
-import { formatEuro } from "@/lib/loan-calc";
 
 export default function StepIntro() {
   const { lang } = useLanguage();
   const wt = wizardTranslations[lang];
-  const { data, goNext } = useWizard();
+  const { goNext } = useWizard();
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-20 sm:py-28 flex flex-col items-center text-center gap-6">
@@ -36,15 +35,6 @@ export default function StepIntro() {
       </ul>
 
       <div className="w-full rounded-[24px] border border-border bg-surface p-7 sm:p-9 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.55)] ring-1 ring-white/5 flex flex-col gap-6 mt-4">
-        {data.amount && (
-          <div className="rounded-[16px] bg-surface-2 border border-border p-4 flex items-center justify-between text-left">
-            <span className="text-xs text-muted">{wt.intro.prefillLabel}</span>
-            <span className="text-sm font-semibold">
-              {formatEuro(data.amount)} · {data.months} {wt.step2.monthsUnit}
-            </span>
-          </div>
-        )}
-
         <ol className="flex flex-col gap-3 text-left">
           {wt.intro.steps.map((label, i) => (
             <li key={label} className="flex items-center gap-3 text-sm">
