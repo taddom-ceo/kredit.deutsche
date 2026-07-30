@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/language-context";
+import { useAnimatedNumber } from "@/lib/use-animated-number";
 import {
   AMOUNT_MAX,
   AMOUNT_MIN,
@@ -24,6 +25,10 @@ export default function CreditCalculator() {
   );
   const total = payment * months;
 
+  const displayedAmount = useAnimatedNumber(amount);
+  const displayedPayment = useAnimatedNumber(payment);
+  const displayedTotal = useAnimatedNumber(total);
+
   return (
     <div className="w-full max-w-md rounded-[24px] border border-border bg-surface p-7 sm:p-9 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.55)] ring-1 ring-white/5">
       <div className="flex flex-col gap-7">
@@ -33,7 +38,7 @@ export default function CreditCalculator() {
               {t.calculator.amountLabel}
             </label>
             <span className="text-lg font-semibold tracking-tight">
-              {formatEuro(amount)}
+              {formatEuro(displayedAmount)}
             </span>
           </div>
           <input
@@ -79,10 +84,10 @@ export default function CreditCalculator() {
             {t.calculator.paymentLabel}
           </span>
           <span className="text-4xl font-bold tracking-tight text-accent">
-            {formatEuro(payment)}
+            {formatEuro(displayedPayment)}
           </span>
           <span className="text-xs text-muted leading-relaxed">
-            {t.calculator.totalLabel} {formatEuro(total)} ·{" "}
+            {t.calculator.totalLabel} {formatEuro(displayedTotal)} ·{" "}
             {t.calculator.rateLabel}{" "}
             {(SAMPLE_ANNUAL_RATE * 100).toFixed(2).replace(".", ",")} %
           </span>

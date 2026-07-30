@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useLanguage } from "@/lib/language-context";
 import { wizardTranslations } from "@/lib/wizard-i18n";
 import { useWizard } from "@/lib/wizard-context";
+import { useAnimatedNumber } from "@/lib/use-animated-number";
 import {
   AMOUNT_MAX,
   AMOUNT_MIN,
@@ -25,6 +26,10 @@ export default function StepDetails() {
   );
   const total = payment * data.months;
 
+  const displayedAmount = useAnimatedNumber(data.amount);
+  const displayedPayment = useAnimatedNumber(payment);
+  const displayedTotal = useAnimatedNumber(total);
+
   return (
     <WizardStepLayout
       eyebrow={wt.step2.eyebrow}
@@ -40,10 +45,10 @@ export default function StepDetails() {
           {wt.step2.previewLabel}
         </span>
         <span className="text-4xl font-bold tracking-tight text-accent">
-          {formatEuro(payment)}
+          {formatEuro(displayedPayment)}
         </span>
         <span className="text-xs text-muted leading-relaxed">
-          {wt.step2.totalLabel} ≈ {formatEuro(total)} · {data.months}{" "}
+          {wt.step2.totalLabel} ≈ {formatEuro(displayedTotal)} · {data.months}{" "}
           {wt.step2.monthsUnit} · {wt.step2.previewNote}
         </span>
       </div>
@@ -76,7 +81,7 @@ export default function StepDetails() {
             {wt.step2.amountLabel}
           </span>
           <span className="text-lg font-semibold tracking-tight">
-            {formatEuro(data.amount)}
+            {formatEuro(displayedAmount)}
           </span>
         </div>
         <input
