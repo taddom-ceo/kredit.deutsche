@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useLanguage } from "@/lib/language-context";
 import type { Language } from "@/lib/i18n";
 
@@ -36,9 +37,12 @@ export default function Header() {
   return (
     <header className="border-b border-border">
       <div className="mx-auto max-w-6xl px-6 py-5 flex items-center justify-between">
-        <span className="text-lg font-semibold tracking-[-0.01em]">
+        <Link
+          href="/"
+          className="text-lg font-semibold tracking-[-0.01em] transition-opacity duration-200 hover:opacity-80"
+        >
           kredit.deutsche
-        </span>
+        </Link>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1 rounded-full border border-border bg-surface p-1">
             <LangButton

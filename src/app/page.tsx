@@ -2,6 +2,7 @@
 
 import CreditCalculator from "@/components/CreditCalculator";
 import Header from "@/components/Header";
+import BankMarquee from "@/components/BankMarquee";
 import { useLanguage } from "@/lib/language-context";
 
 export default function Home() {
@@ -10,6 +11,7 @@ export default function Home() {
   return (
     <>
       <Header />
+      <BankMarquee />
 
       <main className="flex-1">
         <section className="mx-auto max-w-6xl px-6 py-16 sm:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
