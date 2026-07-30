@@ -38,7 +38,7 @@ export const translations: Record<Language, Translations> = {
       paymentLabel: "Monatliche Rate ab",
       totalLabel: "Gesamtbetrag",
       rateLabel: "eff. Jahreszins",
-      cta: "Unverbindliches Angebot anfragen",
+      cta: "Mit anderen Angeboten vergleichen",
       disclaimer:
         "Beispielrechnung, kein verbindliches Angebot. Individueller effektiver Jahreszins abhängig von Bonität und Anbieter.",
     },
@@ -76,7 +76,7 @@ export const translations: Record<Language, Translations> = {
       paymentLabel: "Monthly rate from",
       totalLabel: "Total amount",
       rateLabel: "effective annual rate",
-      cta: "Request a non-binding offer",
+      cta: "Compare with other offers",
       disclaimer:
         "Example calculation, not a binding offer. Individual effective annual rate depends on creditworthiness and provider.",
     },
