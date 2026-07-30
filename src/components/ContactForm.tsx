@@ -45,7 +45,7 @@ export default function ContactForm() {
 
   if (status === "success") {
     return (
-      <p className="text-sm text-green-700 dark:text-green-400">
+      <p className="text-sm text-accent">
         Danke! Wir melden uns in Kürze bei dir.
       </p>
     );
@@ -54,7 +54,7 @@ export default function ContactForm() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-md">
       <div className="flex flex-col gap-1">
-        <label htmlFor="name" className="text-sm font-medium">
+        <label htmlFor="name" className="text-sm font-medium text-muted">
           Name
         </label>
         <input
@@ -62,11 +62,11 @@ export default function ContactForm() {
           name="name"
           type="text"
           required
-          className="rounded-md border border-black/10 dark:border-white/20 bg-transparent px-3 py-2 text-sm"
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground"
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor="email" className="text-sm font-medium">
+        <label htmlFor="email" className="text-sm font-medium text-muted">
           E-Mail
         </label>
         <input
@@ -74,11 +74,11 @@ export default function ContactForm() {
           name="email"
           type="email"
           required
-          className="rounded-md border border-black/10 dark:border-white/20 bg-transparent px-3 py-2 text-sm"
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground"
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor="message" className="text-sm font-medium">
+        <label htmlFor="message" className="text-sm font-medium text-muted">
           Nachricht
         </label>
         <textarea
@@ -86,18 +86,16 @@ export default function ContactForm() {
           name="message"
           required
           rows={4}
-          className="rounded-md border border-black/10 dark:border-white/20 bg-transparent px-3 py-2 text-sm"
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground"
         />
       </div>
       {status === "error" && (
-        <p className="text-sm text-red-600 dark:text-red-400">
-          {errorMessage}
-        </p>
+        <p className="text-sm text-red-400">{errorMessage}</p>
       )}
       <button
         type="submit"
         disabled={status === "loading"}
-        className="rounded-md bg-foreground text-background px-4 py-2 text-sm font-medium disabled:opacity-50"
+        className="rounded-lg bg-accent text-accent-foreground px-4 py-2 text-sm font-semibold disabled:opacity-50 hover:opacity-90 transition-opacity"
       >
         {status === "loading" ? "Wird gesendet…" : "Absenden"}
       </button>

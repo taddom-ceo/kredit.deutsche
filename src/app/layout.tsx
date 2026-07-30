@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Fintech DE",
-  description: "Moderne Finanzlösungen, made in Germany.",
+  title: "kredit.deutsche",
+  description: "Dein Kredit. Fair. Transparent. Digital.",
 };
 
 export default function RootLayout({
