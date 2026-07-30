@@ -46,15 +46,15 @@ export default function Header() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1 rounded-full border border-border bg-surface p-1">
             <LangButton
-              value="de"
-              label="DE"
-              active={lang === "de"}
-              onSelect={setLang}
-            />
-            <LangButton
               value="en"
               label="EN"
               active={lang === "en"}
+              onSelect={setLang}
+            />
+            <LangButton
+              value="de"
+              label="DE"
+              active={lang === "de"}
               onSelect={setLang}
             />
           </div>
