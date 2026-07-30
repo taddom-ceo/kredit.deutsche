@@ -33,14 +33,14 @@ export default function CreditCalculator() {
   const total = payment * months;
 
   return (
-    <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 sm:p-8 shadow-2xl shadow-black/30">
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-2">
+    <div className="w-full max-w-md rounded-[24px] border border-border bg-surface p-7 sm:p-9 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.55)] ring-1 ring-white/5">
+      <div className="flex flex-col gap-7">
+        <div className="flex flex-col gap-3">
           <div className="flex items-baseline justify-between">
             <label htmlFor="amount" className="text-sm font-medium text-muted">
               {t.calculator.amountLabel}
             </label>
-            <span className="text-lg font-semibold">
+            <span className="text-lg font-semibold tracking-tight">
               {formatEuro(amount)}
             </span>
           </div>
@@ -52,7 +52,6 @@ export default function CreditCalculator() {
             step={500}
             value={amount}
             onChange={(e) => setAmount(Number(e.target.value))}
-            className="accent-accent"
           />
           <div className="flex justify-between text-xs text-muted">
             <span>500 €</span>
@@ -60,7 +59,7 @@ export default function CreditCalculator() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           <label htmlFor="duration" className="text-sm font-medium text-muted">
             {t.calculator.durationLabel}
           </label>
@@ -68,7 +67,7 @@ export default function CreditCalculator() {
             id="duration"
             value={months}
             onChange={(e) => setMonths(Number(e.target.value))}
-            className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-foreground"
+            className="rounded-[16px] border border-border bg-surface-2 px-4 py-2.5 text-sm text-foreground transition-colors duration-200 hover:border-border-strong focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {DURATIONS.map((m) => (
               <option key={m} value={m}>
@@ -83,14 +82,14 @@ export default function CreditCalculator() {
           </select>
         </div>
 
-        <div className="rounded-xl bg-surface-2 border border-border p-4 flex flex-col gap-1">
+        <div className="rounded-[16px] bg-surface-2 border border-border ring-1 ring-white/5 p-5 flex flex-col gap-1.5">
           <span className="text-xs text-muted">
             {t.calculator.paymentLabel}
           </span>
-          <span className="text-3xl font-bold text-accent">
+          <span className="text-4xl font-bold tracking-tight text-accent">
             {formatEuro(payment)}
           </span>
-          <span className="text-xs text-muted">
+          <span className="text-xs text-muted leading-relaxed">
             {t.calculator.totalLabel} {formatEuro(total)} ·{" "}
             {t.calculator.rateLabel}{" "}
             {(SAMPLE_ANNUAL_RATE * 100).toFixed(2).replace(".", ",")} %
@@ -99,11 +98,11 @@ export default function CreditCalculator() {
 
         <button
           type="button"
-          className="w-full text-center rounded-lg bg-accent text-accent-foreground font-semibold px-4 py-3 text-sm hover:opacity-90 transition-opacity"
+          className="w-full text-center rounded-[16px] bg-accent text-accent-foreground font-semibold px-4 py-3.5 text-sm shadow-[0_8px_24px_-6px_rgba(52,211,153,0.45)] transition-all duration-200 hover:bg-accent-strong hover:shadow-[0_10px_30px_-6px_rgba(52,211,153,0.55)] hover:-translate-y-px active:translate-y-0 active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
         >
           {t.calculator.cta}
         </button>
-        <p className="text-[11px] leading-snug text-muted">
+        <p className="text-[11px] leading-relaxed text-muted">
           {t.calculator.disclaimer}
         </p>
       </div>
