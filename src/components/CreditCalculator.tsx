@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useLanguage } from "@/lib/language-context";
 
 const DURATIONS = [12, 24, 36, 48, 60, 84, 120, 180, 240];
 const SAMPLE_ANNUAL_RATE = 0.0549;
@@ -21,6 +22,7 @@ function monthlyPayment(principal: number, months: number, annualRate: number) {
 }
 
 export default function CreditCalculator() {
+  const { t } = useLanguage();
   const [amount, setAmount] = useState(20000);
   const [months, setMonths] = useState(84);
 
@@ -36,7 +38,7 @@ export default function CreditCalculator() {
         <div className="flex flex-col gap-2">
           <div className="flex items-baseline justify-between">
             <label htmlFor="amount" className="text-sm font-medium text-muted">
-              Kreditbetrag
+              {t.calculator.amountLabel}
             </label>
             <span className="text-lg font-semibold">
               {formatEuro(amount)}
@@ -60,7 +62,7 @@ export default function CreditCalculator() {
 
         <div className="flex flex-col gap-2">
           <label htmlFor="duration" className="text-sm font-medium text-muted">
-            Laufzeit
+            {t.calculator.durationLabel}
           </label>
           <select
             id="duration"
@@ -70,20 +72,27 @@ export default function CreditCalculator() {
           >
             {DURATIONS.map((m) => (
               <option key={m} value={m}>
-                {m} Monate
-                {m >= 12 ? ` (${m / 12} ${m === 12 ? "Jahr" : "Jahre"})` : ""}
+                {m} {t.calculator.months}
+                {m >= 12
+                  ? ` (${m / 12} ${
+                      m === 12 ? t.calculator.year : t.calculator.years
+                    })`
+                  : ""}
               </option>
             ))}
           </select>
         </div>
 
         <div className="rounded-xl bg-surface-2 border border-border p-4 flex flex-col gap-1">
-          <span className="text-xs text-muted">Monatliche Rate ab</span>
+          <span className="text-xs text-muted">
+            {t.calculator.paymentLabel}
+          </span>
           <span className="text-3xl font-bold text-accent">
             {formatEuro(payment)}
           </span>
           <span className="text-xs text-muted">
-            Gesamtbetrag {formatEuro(total)} · eff. Jahreszins{" "}
+            {t.calculator.totalLabel} {formatEuro(total)} ·{" "}
+            {t.calculator.rateLabel}{" "}
             {(SAMPLE_ANNUAL_RATE * 100).toFixed(2).replace(".", ",")} %
           </span>
         </div>
@@ -92,11 +101,10 @@ export default function CreditCalculator() {
           href="#kontakt"
           className="w-full text-center rounded-lg bg-accent text-accent-foreground font-semibold px-4 py-3 text-sm hover:opacity-90 transition-opacity"
         >
-          Unverbindliches Angebot anfragen
+          {t.calculator.cta}
         </a>
         <p className="text-[11px] leading-snug text-muted">
-          Beispielrechnung, kein verbindliches Angebot. Individueller
-          effektiver Jahreszins abhängig von Bonität und Anbieter.
+          {t.calculator.disclaimer}
         </p>
       </div>
     </div>
