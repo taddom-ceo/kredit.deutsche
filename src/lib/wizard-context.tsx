@@ -37,7 +37,7 @@ export interface WizardData {
 export const TOTAL_STEPS = 8;
 
 const initialData: WizardData = {
-  step: 1,
+  step: 0,
   kreditart: null,
   purpose: "",
   amount: 20000,
@@ -101,7 +101,7 @@ export function WizardProvider({
   }
 
   function goBack() {
-    setData((prev) => ({ ...prev, step: Math.max(prev.step - 1, 1) }));
+    setData((prev) => ({ ...prev, step: Math.max(prev.step - 1, 0) }));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 

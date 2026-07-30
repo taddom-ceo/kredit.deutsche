@@ -15,6 +15,16 @@ export interface WizardTranslations {
     next: string;
     submit: string;
   };
+  intro: {
+    eyebrow: string;
+    title: string;
+    highlight: string;
+    subtitle: string;
+    trust: string[];
+    steps: string[];
+    cta: string;
+    prefillLabel: string;
+  };
   step1: {
     eyebrow: string;
     title: string;
@@ -145,6 +155,26 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       back: "Zurück",
       next: "Weiter",
       submit: "Antrag absenden",
+    },
+    intro: {
+      eyebrow: "Kreditantrag",
+      title: "In 8 kurzen Schritten",
+      highlight: "zu deinem Angebot.",
+      subtitle:
+        "Wir stellen dir ein paar Fragen zu deinem Kredit, dir selbst und deiner Situation — am Ende erhältst du ein unverbindliches Angebot.",
+      trust: [
+        "SCHUFA-neutrale Anfrage",
+        "Vergleich von 20+ Banken",
+        "Kostenlos und unverbindlich",
+      ],
+      steps: [
+        "Kreditart & Details",
+        "Persönliche Angaben",
+        "Beruf & Einkommen",
+        "Bankverbindung",
+      ],
+      cta: "Jetzt starten",
+      prefillLabel: "Dein bisheriger Wunsch",
     },
     step1: {
       eyebrow: "1/8 · Kreditart",
@@ -358,6 +388,26 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       back: "Back",
       next: "Next",
       submit: "Submit application",
+    },
+    intro: {
+      eyebrow: "Loan application",
+      title: "Your offer in",
+      highlight: "8 quick steps.",
+      subtitle:
+        "We'll ask a few questions about your loan, you, and your situation — at the end you'll get a non-binding offer.",
+      trust: [
+        "Credit-score-neutral request",
+        "Compare 20+ banks",
+        "Free and non-binding",
+      ],
+      steps: [
+        "Loan type & details",
+        "Personal details",
+        "Employment & income",
+        "Bank details",
+      ],
+      cta: "Start now",
+      prefillLabel: "Your selection so far",
     },
     step1: {
       eyebrow: "1/8 · Loan type",
