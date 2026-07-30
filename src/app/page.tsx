@@ -1,7 +1,6 @@
 "use client";
 
 import CreditCalculator from "@/components/CreditCalculator";
-import ContactForm from "@/components/ContactForm";
 import Header from "@/components/Header";
 import { useLanguage } from "@/lib/language-context";
 
@@ -36,13 +35,6 @@ export default function Home() {
                 <p className="text-sm text-muted">{feature.description}</p>
               </div>
             ))}
-          </div>
-        </section>
-
-        <section id="kontakt" className="border-t border-border">
-          <div className="mx-auto max-w-6xl px-6 py-16 flex flex-col gap-6">
-            <h2 className="text-2xl font-semibold">{t.contact.heading}</h2>
-            <ContactForm />
           </div>
         </section>
       </main>

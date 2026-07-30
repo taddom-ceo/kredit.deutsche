@@ -97,12 +97,12 @@ export default function CreditCalculator() {
           </span>
         </div>
 
-        <a
-          href="#kontakt"
+        <button
+          type="button"
           className="w-full text-center rounded-lg bg-accent text-accent-foreground font-semibold px-4 py-3 text-sm hover:opacity-90 transition-opacity"
         >
           {t.calculator.cta}
-        </a>
+        </button>
         <p className="text-[11px] leading-snug text-muted">
           {t.calculator.disclaimer}
         </p>

@@ -1,10 +1,28 @@
 export type Language = "de" | "en";
 
-export const translations = {
+export interface Translations {
+  hero: {
+    titleLine1: string;
+    titleLine2: string;
+    subtitle: string;
+  };
+  calculator: {
+    amountLabel: string;
+    durationLabel: string;
+    months: string;
+    year: string;
+    years: string;
+    paymentLabel: string;
+    totalLabel: string;
+    rateLabel: string;
+    cta: string;
+    disclaimer: string;
+  };
+  features: { title: string; description: string }[];
+}
+
+export const translations: Record<Language, Translations> = {
   de: {
-    nav: {
-      kontakt: "Kontakt",
-    },
     hero: {
       titleLine1: "Dein Kredit.",
       titleLine2: "Fair. Transparent. Digital.",
@@ -41,22 +59,8 @@ export const translations = {
           "Entwickelt und gehostet nach deutschen und europäischen Datenschutzstandards.",
       },
     ],
-    contact: {
-      heading: "Kontakt aufnehmen",
-      name: "Name",
-      email: "E-Mail",
-      message: "Nachricht",
-      submit: "Absenden",
-      submitting: "Wird gesendet…",
-      success: "Danke! Wir melden uns in Kürze bei dir.",
-      genericError: "Etwas ist schiefgelaufen.",
-      validationError: "Bitte alle Felder ausfüllen.",
-    },
   },
   en: {
-    nav: {
-      kontakt: "Contact",
-    },
     hero: {
       titleLine1: "Your loan.",
       titleLine2: "Fair. Transparent. Digital.",
@@ -93,18 +97,5 @@ export const translations = {
           "Built and hosted according to German and European data protection standards.",
       },
     ],
-    contact: {
-      heading: "Get in touch",
-      name: "Name",
-      email: "Email",
-      message: "Message",
-      submit: "Submit",
-      submitting: "Sending…",
-      success: "Thanks! We'll get back to you shortly.",
-      genericError: "Something went wrong.",
-      validationError: "Please fill in all fields.",
-    },
   },
-} as const;
-
-export type Translations = (typeof translations)["de"];
+};
