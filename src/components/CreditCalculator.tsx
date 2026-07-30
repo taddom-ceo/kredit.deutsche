@@ -1,33 +1,25 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useLanguage } from "@/lib/language-context";
-
-const DURATIONS = [12, 24, 36, 48, 60, 84, 120, 180, 240];
-const SAMPLE_ANNUAL_RATE = 0.0549;
-
-function formatEuro(value: number) {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 2,
-  }).format(value);
-}
-
-function monthlyPayment(principal: number, months: number, annualRate: number) {
-  const monthlyRate = annualRate / 12;
-  if (monthlyRate === 0) return principal / months;
-  const factor = Math.pow(1 + monthlyRate, months);
-  return (principal * monthlyRate * factor) / (factor - 1);
-}
+import {
+  AMOUNT_MAX,
+  AMOUNT_MIN,
+  AMOUNT_STEP,
+  DURATIONS,
+  SAMPLE_ANNUAL_RATE,
+  formatEuro,
+  monthlyPayment,
+} from "@/lib/loan-calc";
 
 export default function CreditCalculator() {
   const { t } = useLanguage();
   const [amount, setAmount] = useState(20000);
-  const [months, setMonths] = useState(84);
+  const [months, setMonths] = useState(72);
 
   const payment = useMemo(
-    () => monthlyPayment(amount, months, SAMPLE_ANNUAL_RATE),
+    () => monthlyPayment(amount, months),
     [amount, months]
   );
   const total = payment * months;
@@ -47,15 +39,15 @@ export default function CreditCalculator() {
           <input
             id="amount"
             type="range"
-            min={500}
-            max={150000}
-            step={500}
+            min={AMOUNT_MIN}
+            max={AMOUNT_MAX}
+            step={AMOUNT_STEP}
             value={amount}
             onChange={(e) => setAmount(Number(e.target.value))}
           />
           <div className="flex justify-between text-xs text-muted">
-            <span>500 €</span>
-            <span>150.000 €</span>
+            <span>{formatEuro(AMOUNT_MIN)}</span>
+            <span>{formatEuro(AMOUNT_MAX)}</span>
           </div>
         </div>
 
@@ -96,12 +88,12 @@ export default function CreditCalculator() {
           </span>
         </div>
 
-        <button
-          type="button"
+        <Link
+          href={`/antrag?amount=${amount}&months=${months}`}
           className="w-full text-center rounded-[16px] bg-accent text-accent-foreground font-semibold px-4 py-3.5 text-sm shadow-[0_8px_24px_-6px_rgba(52,211,153,0.45)] transition-all duration-200 hover:bg-accent-strong hover:shadow-[0_10px_30px_-6px_rgba(52,211,153,0.55)] hover:-translate-y-px active:translate-y-0 active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
         >
           {t.calculator.cta}
-        </button>
+        </Link>
         <p className="text-[11px] leading-relaxed text-muted">
           {t.calculator.disclaimer}
         </p>
