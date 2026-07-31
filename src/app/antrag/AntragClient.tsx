@@ -3,7 +3,6 @@
 import Header from "@/components/Header";
 import StepProgress from "@/components/wizard/StepProgress";
 import { WizardProvider, useWizard, TOTAL_STEPS } from "@/lib/wizard-context";
-import StepIntro from "@/components/wizard/StepIntro";
 import StepArt from "@/components/wizard/StepArt";
 import StepDetails from "@/components/wizard/StepDetails";
 import StepPersonen from "@/components/wizard/StepPersonen";
@@ -18,8 +17,6 @@ function ActiveStep() {
   const { data } = useWizard();
 
   switch (data.step) {
-    case 0:
-      return <StepIntro />;
     case 1:
       return <StepArt />;
     case 2:
