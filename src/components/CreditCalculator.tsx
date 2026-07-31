@@ -25,7 +25,6 @@ export default function CreditCalculator() {
   );
   const total = payment * months;
 
-  const displayedAmount = useAnimatedNumber(amount);
   const displayedPayment = useAnimatedNumber(payment);
   const displayedTotal = useAnimatedNumber(total);
 
@@ -38,7 +37,7 @@ export default function CreditCalculator() {
               {t.calculator.amountLabel}
             </label>
             <span className="text-lg font-semibold tracking-tight">
-              {formatEuro(displayedAmount)}
+              {formatEuro(amount)}
             </span>
           </div>
           <input

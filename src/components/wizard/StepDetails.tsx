@@ -26,7 +26,6 @@ export default function StepDetails() {
   );
   const total = payment * data.months;
 
-  const displayedAmount = useAnimatedNumber(data.amount);
   const displayedPayment = useAnimatedNumber(payment);
   const displayedTotal = useAnimatedNumber(total);
 
@@ -81,7 +80,7 @@ export default function StepDetails() {
             {wt.step2.amountLabel}
           </span>
           <span className="text-lg font-semibold tracking-tight">
-            {formatEuro(displayedAmount)}
+            {formatEuro(data.amount)}
           </span>
         </div>
         <input
