@@ -53,7 +53,7 @@ export default function Header() {
             />
             <LangButton
               value="en"
-              label="EN"
+              label="ENG"
               active={lang === "en"}
               onSelect={setLang}
             />
