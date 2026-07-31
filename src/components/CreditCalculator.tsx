@@ -94,7 +94,7 @@ export default function CreditCalculator() {
         </div>
 
         <Link
-          href={`/antrag?amount=${amount}&months=${months}`}
+          href={`/?amount=${amount}&months=${months}`}
           className="w-full text-center rounded-[16px] bg-accent text-accent-foreground font-semibold px-4 py-3.5 text-sm shadow-[0_8px_24px_-6px_rgba(52,211,153,0.45)] transition-all duration-200 hover:bg-accent-strong hover:shadow-[0_10px_30px_-6px_rgba(52,211,153,0.55)] hover:-translate-y-px active:translate-y-0 active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
         >
           {t.calculator.cta}
