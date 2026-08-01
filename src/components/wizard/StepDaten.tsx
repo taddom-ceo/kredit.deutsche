@@ -72,10 +72,11 @@ export default function StepDaten() {
   const countries = useMemo(() => dialCodeOptions(lang), [lang]);
 
   const email = data.email.trim();
-  // Ein @ genügt nicht: dahinter muss noch etwas stehen, "max@" ist
-  // unvollständig. Geprüft wird das letzte @, damit auch "max@@" abgewiesen wird.
+  // Vor und hinter dem @ muss etwas stehen: weder "max@" noch "@anbieter.de"
+  // ist eine vollständige Adresse. Geprüft wird das letzte @, damit auch
+  // "max@@" abgewiesen wird.
   const atIndex = email.lastIndexOf("@");
-  const emailOk = atIndex > -1 && atIndex < email.length - 1;
+  const emailOk = atIndex > 0 && atIndex < email.length - 1;
   const emailError = email !== "" && !emailOk ? wt.step4.emailInvalid : undefined;
 
   const valid =

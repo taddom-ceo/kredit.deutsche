@@ -95,6 +95,9 @@ export interface WizardTranslations {
     plzLookupFailed: string;
     plzVerified: string;
     strasseInvalid: string;
+    strasseUnknown: string;
+    strasseNoData: string;
+    strasseVerified: string;
     hausnummerInvalid: string;
     addressNote: string;
   };
@@ -312,6 +315,11 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
         "Prüfung derzeit nicht möglich. Bitte später erneut versuchen.",
       plzVerified: "Postleitzahl bestätigt",
       strasseInvalid: "Bitte einen gültigen Straßennamen eingeben.",
+      strasseUnknown:
+        "Diese Straße kennen wir zu dieser Postleitzahl nicht. Bitte Schreibweise prüfen oder aus der Liste wählen.",
+      strasseNoData:
+        "Für diese Postleitzahl liegt uns kein Straßenverzeichnis vor.",
+      strasseVerified: "Adresse bestätigt",
       hausnummerInvalid: "Bitte eine gültige Hausnummer eingeben, z. B. 12a.",
       addressNote:
         "Postleitzahl und Ort werden gegen das amtliche Verzeichnis geprüft.",
@@ -548,6 +556,10 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       plzLookupFailed: "Check currently unavailable. Please try again later.",
       plzVerified: "Postal code confirmed",
       strasseInvalid: "Please enter a valid street name.",
+      strasseUnknown:
+        "We do not know this street for that postal code. Please check the spelling or pick one from the list.",
+      strasseNoData: "No street directory is available for this postal code.",
+      strasseVerified: "Address confirmed",
       hausnummerInvalid: "Please enter a valid house number, e.g. 12a.",
       addressNote:
         "Postal code and city are checked against the official directory.",
