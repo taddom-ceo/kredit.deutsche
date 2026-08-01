@@ -208,7 +208,14 @@ export default function StepArt() {
                         aria-expanded={offen === option.id}
                         aria-controls="zweck-hinweis"
                         aria-label={`${wt.step1.hinweisOeffnen}: ${option.title}`}
-                        className={`pointer-events-auto ml-1.5 inline-flex h-[1.35em] w-[1.35em] shrink-0 items-center justify-center rounded-full border align-[-0.1em] text-[0.7em] font-bold leading-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                        // Sichtbar 1,5rem, damit es die 24px Mindestgröße für
+                        // Tippziele erreicht. Die Fläche, die tatsächlich
+                        // annimmt, geht über ::after noch einmal 6px darüber
+                        // hinaus — man trifft es also auch knapp daneben.
+                        // align-middle und -my-1.5 halten die Zeilenhöhe des
+                        // Titels: Ohne beides zöge das größere Symbol die
+                        // Zeile und damit die Karte auseinander.
+                        className={`pointer-events-auto relative ml-1.5 -my-1.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border align-middle text-[0.72rem] font-bold leading-none transition-colors duration-200 after:absolute after:-inset-1.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-accent/40 ${
                           offen === option.id
                             ? "border-accent bg-accent text-accent-foreground"
                             : "border-accent/50 text-accent hover:bg-accent/15"
