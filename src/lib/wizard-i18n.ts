@@ -66,6 +66,7 @@ export interface WizardTranslations {
     trust: string[];
     vorname: string;
     zweiterVorname: string;
+    optionalHint: string;
     nachname: string;
     geburtsdatum: string;
     email: string;
@@ -270,7 +271,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
         "Kostenlos und unverbindlich",
       ],
       vorname: "Vorname",
-      zweiterVorname: "Zweiter Vorname (optional)",
+      zweiterVorname: "Zweiter Vorname",
+      optionalHint: "optional",
       nachname: "Nachname",
       geburtsdatum: "Geburtsdatum",
       email: "E-Mail-Adresse",
@@ -501,7 +503,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
         "Free and non-binding",
       ],
       vorname: "First name",
-      zweiterVorname: "Middle name (optional)",
+      zweiterVorname: "Middle name",
+      optionalHint: "optional",
       nachname: "Last name",
       geburtsdatum: "Date of birth",
       email: "Email address",
