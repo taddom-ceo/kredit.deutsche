@@ -8,6 +8,7 @@ export interface WizardTranslations {
   progress: {
     stepLabels: string[];
     timeRemaining: string;
+    stepAriaPrefix: string;
     saved: string;
   };
   nav: {
@@ -141,6 +142,7 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
         "Bank",
       ],
       timeRemaining: "Ca. 4 Min. verbleibend",
+      stepAriaPrefix: "Schritt",
       saved: "Gespeichert",
     },
     nav: {
@@ -356,6 +358,7 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
         "Bank",
       ],
       timeRemaining: "Approx. 4 min. remaining",
+      stepAriaPrefix: "Step",
       saved: "Saved",
     },
     nav: {
