@@ -2,6 +2,8 @@ export interface WizardOption {
   id: string;
   title: string;
   description: string;
+  // Optionaler Hinweis, der als Kurzinfo an der Karte eingeblendet wird.
+  hinweis?: string;
 }
 
 export interface WizardTranslations {
@@ -197,11 +199,15 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
           id: "fahrzeug",
           title: "Fahrzeugkauf",
           description: "Neu- oder Gebrauchtwagen",
+          hinweis:
+            "Viele Banken verlangen weder einen Verwendungsnachweis noch die Hinterlegung des Kfz-Briefs. Über diesen Verwendungszweck sind aktuell die besten Zinsen möglich.",
         },
         {
           id: "umschuldung",
           title: "Umschuldung/Kredit ablösen",
           description: "Bestehende Kredite zusammenfassen",
+          hinweis:
+            "Eine Umschuldung fasst laufende Kredite zusammen: Das senkt die monatliche Ratenbelastung und verbessert in der Regel die Bonität.",
         },
         {
           id: "modernisierung",
@@ -485,11 +491,15 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
           id: "fahrzeug",
           title: "Vehicle purchase",
           description: "New or used car",
+          hinweis:
+            "Many banks require neither proof of use nor the vehicle registration document as security. This purpose currently offers the best rates.",
         },
         {
           id: "umschuldung",
           title: "Debt consolidation/loan repayment",
           description: "Combine existing loans",
+          hinweis:
+            "Consolidating existing loans lowers your monthly instalment burden and usually improves your credit rating.",
         },
         {
           id: "modernisierung",
