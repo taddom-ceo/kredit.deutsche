@@ -17,6 +17,10 @@ import WizardStepLayout from "./WizardStepLayout";
 // einen Akzentrand, auf Schritt 2 durch eine eigene Gruppe im Auswahlfeld.
 export const HIGHLIGHTED_COUNT = 4;
 
+// So viele Zwecke stehen sofort da. Der Rest liegt hinter "Sonstige", damit
+// die Auswahl auf den ersten Blick überschaubar bleibt.
+const SICHTBAR_COUNT = 5;
+
 // Erlaubt den Zeilenumbruch nach einem Schrägstrich. Ohne diesen Hinweis
 // bricht der Browser innerhalb des Wortes ("Baufin|anzierung"); so entsteht
 // stattdessen "Modernisierung/" und "Baufinanzierung".
@@ -51,6 +55,19 @@ export default function StepArt() {
   const [oben, setOben] = useState(0);
   const [obenMobil, setObenMobil] = useState(0);
   const ausfahrerRef = useRef<HTMLDivElement>(null);
+
+  const sichtbare = wt.step1.options.slice(0, SICHTBAR_COUNT);
+  const weitere = wt.step1.options.slice(SICHTBAR_COUNT);
+
+  // Wer über die Fortschrittsleiste zurückkommt und einen der hinteren Zwecke
+  // gewählt hat, soll ihn auch sehen — sonst wirkte die Auswahl verloren.
+  const [mehrOffen, setMehrOffen] = useState(() =>
+    weitere.some((o) => o.id === data.kreditart)
+  );
+  // Beschneiden nur während der Bewegung, siehe Kommentar am Ausklappbereich.
+  const [ausklappFertig, setAusklappFertig] = useState(() =>
+    weitere.some((o) => o.id === data.kreditart)
+  );
 
   const schliessen = useCallback(() => setOffen(null), []);
 
@@ -144,6 +161,77 @@ export default function StepArt() {
     </div>
   );
 
+  function karte(option: (typeof wt.step1.options)[number]) {
+    const active = data.kreditart === option.id;
+    return (
+      <div
+        key={option.id}
+        data-zweck-karte
+        // Weiß ist die Farbe der Auswahl. Beim Überfahren erscheint sie
+        // bereits, damit vorab erkennbar ist, was ein Klick auswählt; der Ring
+        // bleibt dem tatsächlich gewählten Zweck vorbehalten, sodass beides
+        // unterscheidbar bleibt. Sonst sehen alle Kacheln gleich aus.
+        className={`relative rounded-[16px] border bg-surface-2 transition-all duration-200 hover:border-foreground hover:-translate-y-px ${
+          active
+            ? "border-foreground ring-1 ring-foreground/30"
+            : "border-border"
+        }`}
+      >
+        {/* Die Auswahlfläche liegt als eigene Schaltfläche unter dem Inhalt
+            und deckt die ganze Karte ab. Nötig, weil das ⓘ eine echte
+            Schaltfläche sein muss: Eine Schaltfläche in einer Schaltfläche
+            ist als Markup nicht zulässig. */}
+        <button
+          type="button"
+          onClick={() => select(option.id)}
+          aria-label={`${option.title} – ${option.description}`}
+          className="absolute inset-0 rounded-[16px] focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+        />
+        {/* Der Inhalt liegt darüber, lässt Klicks aber durch — nur das ⓘ
+            nimmt sie wieder an. */}
+        <span className="pointer-events-none relative flex items-center justify-between gap-3 p-4">
+          {/* min-w-0 hebt die Standard-Mindestbreite von Flex-Elementen auf,
+              sonst schrumpft der Textblock nicht unter seine Inhaltsbreite und
+              lange Bezeichnungen wie "Modernisierung/Baufinanzierung" ragen
+              über die Karte hinaus. break-words erlaubt den Umbruch innerhalb
+              des Wortes. */}
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-sm font-semibold break-words">
+              {withBreakAfterSlash(option.title)}
+              {option.hinweis && (
+                <button
+                  type="button"
+                  data-hinweis-knopf
+                  onClick={(e) => umschalten(option.id, e.currentTarget)}
+                  aria-expanded={offen === option.id}
+                  aria-controls="zweck-hinweis"
+                  aria-label={`${wt.step1.hinweisOeffnen}: ${option.title}`}
+                  // Sichtbar 1,5rem, damit es die 24px Mindestgröße für
+                  // Tippziele erreicht. Die Fläche, die tatsächlich annimmt,
+                  // geht über ::after noch einmal 6px darüber hinaus — man
+                  // trifft es also auch knapp daneben. align-middle und -my-1.5
+                  // halten die Zeilenhöhe des Titels: Ohne beides zöge das
+                  // größere Symbol die Zeile und damit die Karte auseinander.
+                  className={`pointer-events-auto relative ml-1.5 -my-1.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border align-middle text-[0.72rem] font-bold leading-none transition-colors duration-200 after:absolute after:-inset-1.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                    offen === option.id
+                      ? "border-accent bg-accent text-accent-foreground"
+                      : "border-accent/50 text-accent hover:bg-accent/15"
+                  }`}
+                >
+                  i
+                </button>
+              )}
+            </span>
+            <span className="text-xs text-muted break-words">
+              {option.description}
+            </span>
+          </span>
+          <span className="text-accent shrink-0">→</span>
+        </span>
+      </div>
+    );
+  }
+
   return (
     <WizardStepLayout
       eyebrow={wt.step1.eyebrow}
@@ -154,88 +242,75 @@ export default function StepArt() {
       showNav={false}
       ausfahrer={ausfahrer}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {wt.step1.options.map((option, index) => {
-          const active = data.kreditart === option.id;
-          // Die ersten vier decken den Großteil der Anträge ab und bekommen
-          // einen leichten Akzentrand. Bewusst schwächer als der
-          // Auswahlzustand, damit beides unterscheidbar bleibt.
-          const betont = index < HIGHLIGHTED_COUNT;
-          return (
-            <div
-              key={option.id}
-              data-zweck-karte
-              // Weiß ist die Farbe der Auswahl. Beim Überfahren erscheint sie
-              // bereits, damit vorab erkennbar ist, was ein Klick auswählt;
-              // der Ring bleibt dem tatsächlich gewählten Zweck vorbehalten,
-              // sodass beides unterscheidbar bleibt.
-              className={`relative rounded-[16px] border bg-surface-2 transition-all duration-200 hover:border-foreground hover:-translate-y-px ${
-                active
-                  ? "border-foreground ring-1 ring-foreground/30"
-                  : "border-border"
-              } ${
-                // Die vier häufigsten Zwecke heben sich allein durch eine
-                // leichte Tönung ab. Der Rahmen bleibt neutral wie bei allen
-                // übrigen, damit Weiß eindeutig für Überfahren und Auswahl
-                // steht und sonst nichts um Aufmerksamkeit konkurriert.
-                betont && !active ? "zweck-betont" : ""
+      <div className="flex flex-col">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {sichtbare.map(karte)}
+          {/* Der Schalter sitzt in der freien Rasterzelle neben dem fünften
+              Zweck — so bleibt das Raster geschlossen, statt eine Lücke zu
+              lassen. */}
+          <button
+            type="button"
+            onClick={() => {
+              if (mehrOffen) setAusklappFertig(false);
+              setMehrOffen((v) => !v);
+            }}
+            aria-expanded={mehrOffen}
+            aria-controls="weitere-zwecke"
+            className="relative rounded-[16px] border border-dashed border-border bg-surface-2/50 p-4 flex items-center justify-between gap-3 text-left transition-all duration-200 hover:border-foreground hover:-translate-y-px focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+          >
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="text-sm font-semibold break-words">
+                {wt.step1.sonstigeLabel}
+              </span>
+              <span className="text-xs text-muted break-words">
+                {weitere.length} {wt.step1.sonstigeAnzahl}
+              </span>
+            </span>
+            {/* Als Zeichnung statt als Schriftzeichen: Der Winkel liegt in
+                den Systemschriften uneinheitlich vor und säße mal zu hoch,
+                mal zu tief. */}
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`h-4 w-4 shrink-0 text-accent transition-transform duration-300 ${
+                mehrOffen ? "rotate-180" : ""
               }`}
             >
-              {/* Die Auswahlfläche liegt als eigene Schaltfläche unter dem
-                  Inhalt und deckt die ganze Karte ab. Nötig, weil das ⓘ eine
-                  echte Schaltfläche sein muss: Eine Schaltfläche in einer
-                  Schaltfläche ist als Markup nicht zulässig. */}
-              <button
-                type="button"
-                onClick={() => select(option.id)}
-                aria-label={`${option.title} – ${option.description}`}
-                className="absolute inset-0 rounded-[16px] focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-              />
-              {/* Der Inhalt liegt darüber, lässt Klicks aber durch — nur das
-                  ⓘ nimmt sie wieder an. */}
-              <span className="pointer-events-none relative flex items-center justify-between gap-3 p-4">
-                {/* min-w-0 hebt die Standard-Mindestbreite von Flex-Elementen
-                    auf, sonst schrumpft der Textblock nicht unter seine
-                    Inhaltsbreite und lange Bezeichnungen wie
-                    "Modernisierung/Baufinanzierung" ragen über die Karte
-                    hinaus. break-words erlaubt den Umbruch innerhalb des Wortes. */}
-                <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-sm font-semibold break-words">
-                    {withBreakAfterSlash(option.title)}
-                    {option.hinweis && (
-                      <button
-                        type="button"
-                        data-hinweis-knopf
-                        onClick={(e) => umschalten(option.id, e.currentTarget)}
-                        aria-expanded={offen === option.id}
-                        aria-controls="zweck-hinweis"
-                        aria-label={`${wt.step1.hinweisOeffnen}: ${option.title}`}
-                        // Sichtbar 1,5rem, damit es die 24px Mindestgröße für
-                        // Tippziele erreicht. Die Fläche, die tatsächlich
-                        // annimmt, geht über ::after noch einmal 6px darüber
-                        // hinaus — man trifft es also auch knapp daneben.
-                        // align-middle und -my-1.5 halten die Zeilenhöhe des
-                        // Titels: Ohne beides zöge das größere Symbol die
-                        // Zeile und damit die Karte auseinander.
-                        className={`pointer-events-auto relative ml-1.5 -my-1.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border align-middle text-[0.72rem] font-bold leading-none transition-colors duration-200 after:absolute after:-inset-1.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-accent/40 ${
-                          offen === option.id
-                            ? "border-accent bg-accent text-accent-foreground"
-                            : "border-accent/50 text-accent hover:bg-accent/15"
-                        }`}
-                      >
-                        i
-                      </button>
-                    )}
-                  </span>
-                  <span className="text-xs text-muted break-words">
-                    {option.description}
-                  </span>
-                </span>
-                <span className="text-accent shrink-0">→</span>
-              </span>
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Ausklappbereich. Die äußere Ebene wächst über die Rasterzeile,
+            die mittlere schneidet währenddessen ab. Nach dem Ausfahren wird
+            das Abschneiden aufgehoben, sonst beschnitte es den Fokusrahmen
+            und das leichte Anheben beim Überfahren. */}
+        <div
+          id="weitere-zwecke"
+          className={`zwecke-ausklapp grid ${
+            mehrOffen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+          }`}
+          onTransitionEnd={(e) => {
+            if (e.propertyName === "grid-template-rows" && mehrOffen) {
+              setAusklappFertig(true);
+            }
+          }}
+        >
+          <div className={ausklappFertig ? "overflow-visible" : "overflow-hidden"}>
+            <div
+              className={`grid grid-cols-1 lg:grid-cols-2 gap-3 pt-3 ${
+                mehrOffen ? "opacity-100" : "opacity-0 -translate-y-2"
+              }`}
+            >
+              {weitere.map(karte)}
             </div>
-          );
-        })}
+          </div>
+        </div>
       </div>
     </WizardStepLayout>
   );
