@@ -41,7 +41,7 @@ export const translations: Record<Language, Translations> = {
       editAmount: "Kreditbetrag eingeben",
       editPayment: "Monatliche Rate eingeben",
       totalLabel: "Gesamtbetrag",
-      rateLabel: "eff. Jahreszins",
+      rateLabel: "Sollzins",
       cta: "Mit anderen Angeboten vergleichen",
       disclaimer:
         "Beispielrechnung, kein verbindliches Angebot. Individueller effektiver Jahreszins abhängig von Bonität und Anbieter.",
@@ -81,7 +81,7 @@ export const translations: Record<Language, Translations> = {
       editAmount: "Enter loan amount",
       editPayment: "Enter monthly rate",
       totalLabel: "Total amount",
-      rateLabel: "effective annual rate",
+      rateLabel: "nominal annual rate",
       cta: "Compare with other offers",
       disclaimer:
         "Example calculation, not a binding offer. Individual effective annual rate depends on creditworthiness and provider.",

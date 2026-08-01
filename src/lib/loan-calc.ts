@@ -1,6 +1,11 @@
 // Calibrated against a reference German loan-comparison calculator:
 // 15.000 € / 72 Monate → 255 €/Monat, and 53.000 € / 72 Monate → 901 €/Monat.
-// Both are reproduced exactly by an effective annual rate of 6.90 %.
+//
+// This is a NOMINAL annual rate (Sollzins): monthlyPayment divides it by 12
+// rather than converting geometrically, which is what reproduces those two
+// reference figures. The corresponding effective annual rate (effektiver
+// Jahreszins) is higher — (1 + 0.069/12)^12 − 1 ≈ 7.12 % — so this constant
+// must never be labelled as an effective rate in the UI.
 export const SAMPLE_ANNUAL_RATE = 0.069;
 
 export const AMOUNT_MIN = 1000;
