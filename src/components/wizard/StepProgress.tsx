@@ -2,11 +2,12 @@
 
 import { useLanguage } from "@/lib/language-context";
 import { wizardTranslations } from "@/lib/wizard-i18n";
-import { TOTAL_STEPS } from "@/lib/wizard-context";
+import { TOTAL_STEPS, useWizard } from "@/lib/wizard-context";
 
 export default function StepProgress({ current }: { current: number }) {
   const { lang } = useLanguage();
   const wt = wizardTranslations[lang];
+  const { data, goToStep } = useWizard();
 
   return (
     <div className="border-b border-border">
@@ -16,15 +17,27 @@ export default function StepProgress({ current }: { current: number }) {
             const stepNum = i + 1;
             const done = stepNum < current;
             const active = stepNum === current;
+            // Bereits besuchte Schritte bleiben anspringbar — auch vorwärts,
+            // wenn man zwischendurch zurückgegangen ist.
+            const reachable = stepNum <= data.maxStep && !active;
             return (
               <div key={label} className="flex items-center gap-2 shrink-0">
-                <div
-                  className={`flex items-center gap-1.5 ${
+                <button
+                  type="button"
+                  onClick={() => goToStep(stepNum)}
+                  disabled={!reachable}
+                  aria-current={active ? "step" : undefined}
+                  aria-label={`${wt.progress.stepAriaPrefix} ${stepNum}: ${label}`}
+                  className={`flex items-center gap-1.5 rounded-full px-1 -mx-1 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
                     active
                       ? "text-foreground"
                       : done
                         ? "text-accent"
                         : "text-muted"
+                  } ${
+                    reachable
+                      ? "cursor-pointer hover:text-foreground"
+                      : "cursor-default"
                   }`}
                 >
                   <span
@@ -41,7 +54,7 @@ export default function StepProgress({ current }: { current: number }) {
                   <span className="text-[11px] font-medium hidden lg:inline">
                     {label}
                   </span>
-                </div>
+                </button>
                 {stepNum < TOTAL_STEPS && (
                   <span className="w-4 lg:w-8 h-px bg-border shrink-0" />
                 )}

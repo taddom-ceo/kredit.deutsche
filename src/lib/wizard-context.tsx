@@ -9,6 +9,10 @@ import {
 
 export interface WizardData {
   step: number;
+  // Weitester bereits erreichter Schritt. Erlaubt es, über die
+  // Fortschrittsleiste zwischen allen schon besuchten Schritten zu springen,
+  // ohne ungesehene Schritte überspringen zu können.
+  maxStep: number;
   kreditart: string | null;
   purpose: string;
   amount: number;
@@ -38,6 +42,7 @@ export const TOTAL_STEPS = 8;
 
 const initialData: WizardData = {
   step: 1,
+  maxStep: 1,
   kreditart: null,
   purpose: "",
   amount: 20000,
@@ -93,20 +98,26 @@ export function WizardProvider({
   }
 
   function goNext() {
-    setData((prev) => ({
-      ...prev,
-      step: Math.min(prev.step + 1, TOTAL_STEPS + 1),
-    }));
+    setData((prev) => {
+      const step = Math.min(prev.step + 1, TOTAL_STEPS + 1);
+      return { ...prev, step, maxStep: Math.max(prev.maxStep, step) };
+    });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  // Zurückgehen verschiebt nur die Ansicht: maxStep und alle Eingaben bleiben
+  // unverändert, damit der Weg nach vorne offen bleibt.
   function goBack() {
     setData((prev) => ({ ...prev, step: Math.max(prev.step - 1, 1) }));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  // Sprung über die Fortschrittsleiste — nur zu bereits besuchten Schritten.
   function goToStep(step: number) {
-    setData((prev) => ({ ...prev, step }));
+    setData((prev) => ({
+      ...prev,
+      step: Math.min(Math.max(step, 1), prev.maxStep),
+    }));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
