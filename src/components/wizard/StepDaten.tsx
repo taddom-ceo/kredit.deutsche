@@ -29,7 +29,7 @@ export default function StepDaten() {
       onNext={goNext}
       nextDisabled={!valid}
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <FormField
           id="vorname"
           label={wt.step4.vorname}

@@ -33,12 +33,12 @@ export default function WizardStepLayout({
   const wt = wizardTranslations[lang];
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12 sm:py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+    <div className="mx-auto max-w-6xl px-6 py-16 grid grid-cols-2 gap-12 items-start">
       <div className="flex flex-col gap-6">
         <span className="inline-flex w-fit items-center rounded-full border border-border bg-surface px-3 py-1 text-[11px] font-semibold text-muted tracking-wide">
           {eyebrow}
         </span>
-        <h1 className="text-3xl sm:text-4xl font-bold leading-[1.1] tracking-[-0.02em]">
+        <h1 className="text-4xl font-bold leading-[1.1] tracking-[-0.02em]">
           {title} <span className="text-accent">{highlight}</span>
         </h1>
         <p className="text-muted leading-relaxed max-w-md">{subtitle}</p>
@@ -55,7 +55,7 @@ export default function WizardStepLayout({
         </ul>
       </div>
 
-      <div className="rounded-[24px] border border-border bg-surface p-7 sm:p-9 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.55)] ring-1 ring-white/5 flex flex-col gap-7">
+      <div className="rounded-[24px] border border-border bg-surface p-9 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.55)] ring-1 ring-white/5 flex flex-col gap-7">
         {children}
 
         {showNav && (

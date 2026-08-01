@@ -24,7 +24,7 @@ export default function StepArt() {
       trust={wt.step1.trust}
       showNav={false}
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {wt.step1.options.map((option) => {
           const active = data.kreditart === option.id;
           return (

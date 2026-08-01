@@ -28,8 +28,17 @@ export default function RootLayout({
       lang="de"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        <LanguageProvider>{children}</LanguageProvider>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var W=1440,d=document.documentElement;function fit(){var z=Math.min(1,d.clientWidth/W);d.style.setProperty("--stage-zoom",String(z));d.style.setProperty("--stage-min-height",Math.ceil(d.clientHeight/z)+"px");}fit();addEventListener("resize",fit);})();`,
+          }}
+        />
+      </head>
+      <body className="min-h-full">
+        <div id="stage" className="flex flex-col">
+          <LanguageProvider>{children}</LanguageProvider>
+        </div>
       </body>
     </html>
   );
