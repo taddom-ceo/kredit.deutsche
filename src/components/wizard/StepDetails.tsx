@@ -10,9 +10,12 @@ import {
   AMOUNT_MIN,
   AMOUNT_STEP,
   DURATIONS,
+  clampAmount,
   formatEuro,
   monthlyPayment,
+  principalFromPayment,
 } from "@/lib/loan-calc";
+import EditableValue from "@/components/EditableValue";
 import WizardStepLayout from "./WizardStepLayout";
 
 export default function StepDetails() {
@@ -43,9 +46,16 @@ export default function StepDetails() {
         <span className="text-[11px] font-semibold text-muted tracking-wide">
           {wt.step2.previewLabel}
         </span>
-        <span className="text-4xl font-bold tracking-tight text-accent">
-          {formatEuro(displayedPayment)}
-        </span>
+        <EditableValue
+          value={payment}
+          formatted={formatEuro(displayedPayment)}
+          onCommit={(next) =>
+            update({ amount: clampAmount(principalFromPayment(next, data.months)) })
+          }
+          label={wt.step2.editPayment}
+          className="text-4xl font-bold tracking-tight text-accent self-start"
+          inputClassName="w-48"
+        />
         <span className="text-xs text-muted leading-relaxed">
           {wt.step2.totalLabel} ≈ {formatEuro(displayedTotal)} · {data.months}{" "}
           {wt.step2.monthsUnit} · {wt.step2.previewNote}
@@ -79,9 +89,14 @@ export default function StepDetails() {
           <span className="text-[11px] font-semibold text-muted tracking-wide">
             {wt.step2.amountLabel}
           </span>
-          <span className="text-lg font-semibold tracking-tight">
-            {formatEuro(data.amount)}
-          </span>
+          <EditableValue
+            value={data.amount}
+            formatted={formatEuro(data.amount)}
+            onCommit={(next) => update({ amount: clampAmount(next) })}
+            label={wt.step2.editAmount}
+            className="text-lg font-semibold tracking-tight"
+            inputClassName="w-32"
+          />
         </div>
         <input
           id="wizard-amount"

@@ -10,9 +10,12 @@ import {
   AMOUNT_STEP,
   DURATIONS,
   SAMPLE_ANNUAL_RATE,
+  clampAmount,
   formatEuro,
   monthlyPayment,
+  principalFromPayment,
 } from "@/lib/loan-calc";
+import EditableValue from "@/components/EditableValue";
 
 export default function CreditCalculator() {
   const { t } = useLanguage();
@@ -36,9 +39,14 @@ export default function CreditCalculator() {
             <label htmlFor="amount" className="text-sm font-medium text-muted">
               {t.calculator.amountLabel}
             </label>
-            <span className="text-lg font-semibold tracking-tight">
-              {formatEuro(amount)}
-            </span>
+            <EditableValue
+              value={amount}
+              formatted={formatEuro(amount)}
+              onCommit={(next) => setAmount(clampAmount(next))}
+              label={t.calculator.editAmount}
+              className="text-lg font-semibold tracking-tight"
+              inputClassName="w-32"
+            />
           </div>
           <input
             id="amount"
@@ -82,9 +90,16 @@ export default function CreditCalculator() {
           <span className="text-xs text-muted">
             {t.calculator.paymentLabel}
           </span>
-          <span className="text-4xl font-bold tracking-tight text-accent">
-            {formatEuro(displayedPayment)}
-          </span>
+          <EditableValue
+            value={payment}
+            formatted={formatEuro(displayedPayment)}
+            onCommit={(next) =>
+              setAmount(clampAmount(principalFromPayment(next, months)))
+            }
+            label={t.calculator.editPayment}
+            className="text-4xl font-bold tracking-tight text-accent self-start"
+            inputClassName="w-48"
+          />
           <span className="text-xs text-muted leading-relaxed">
             {t.calculator.totalLabel} {formatEuro(displayedTotal)} ·{" "}
             {t.calculator.rateLabel}{" "}

@@ -35,6 +35,8 @@ export interface WizardTranslations {
     purposePlaceholder: string;
     purposeOptions: { value: string; label: string }[];
     amountLabel: string;
+    editAmount: string;
+    editPayment: string;
     durationLabel: string;
     monthsUnit: string;
     totalLabel: string;
@@ -209,6 +211,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
         { value: "sonstiges", label: "Sonstiges" },
       ],
       amountLabel: "KREDITBETRAG",
+      editAmount: "Kreditbetrag eingeben",
+      editPayment: "Monatliche Rate eingeben",
       durationLabel: "LAUFZEIT",
       monthsUnit: "Mon.",
       totalLabel: "Gesamt",
@@ -422,6 +426,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
         { value: "sonstiges", label: "Other" },
       ],
       amountLabel: "LOAN AMOUNT",
+      editAmount: "Enter loan amount",
+      editPayment: "Enter monthly rate",
       durationLabel: "DURATION",
       monthsUnit: "mo.",
       totalLabel: "Total",
