@@ -244,6 +244,23 @@ input[type="range"]:active::-moz-range-thumb {
   }
 }
 
+/* Der Zweck-Hinweis fährt hinter dem Hauptfenster hervor. Die Kurve setzt
+   zügig an und läuft weich aus — das liest sich als Herausziehen statt als
+   Sprung. Die Deckkraft folgt schneller, damit er beim Verlassen des Fensters
+   bereits vollständig da ist. */
+.hinweis-ausfahrer {
+  transition:
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 240ms ease-out;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hinweis-ausfahrer {
+    transition-duration: 1ms;
+  }
+}
+
 @keyframes marquee-vertical {
   from {
     transform: translateY(0);
