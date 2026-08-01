@@ -216,16 +216,38 @@ export function CompareIllustration({ className }: { className?: string }) {
       {/* Ohne Vergleich */}
       <rect x="58" y="40" width="72" height="130" rx="12" fill="rgba(148,163,196,0.16)" />
       <rect x="58" y="40" width="72" height="130" rx="12" fill="none" stroke="rgba(148,163,196,0.28)" />
-      <rect x="74" y="58" width="40" height="8" rx="4" fill="rgba(148,163,196,0.45)" />
+      {/* Prozentzeichen als Zeichnung, im Ton des jeweiligen Balkens. Als
+          Buchstabe gesetzt richtete es sich an der Grundlinie aus und säße
+          je nach Schrift anders — gezeichnet sitzt es genau im Balken. */}
+      <g
+        stroke="rgba(148,163,196,0.55)"
+        fill="rgba(148,163,196,0.55)"
+        strokeLinecap="round"
+      >
+        <circle cx="87" cy="66" r="4" stroke="none" />
+        <circle cx="101" cy="80" r="4" stroke="none" />
+        <line x1="86" y1="81" x2="102" y2="65" strokeWidth="4.5" />
+      </g>
 
       {/* Mit Vergleich */}
       <rect x="190" y="92" width="72" height="78" rx="12" fill="rgba(52,211,153,0.16)" />
       <rect x="190" y="92" width="72" height="78" rx="12" fill="none" stroke="rgba(52,211,153,0.45)" />
-      <rect x="206" y="110" width="40" height="8" rx="4" fill="rgba(52,211,153,0.75)" />
+      <g
+        stroke="rgba(52,211,153,0.85)"
+        fill="rgba(52,211,153,0.85)"
+        strokeLinecap="round"
+      >
+        <circle cx="219" cy="118" r="4" stroke="none" />
+        <circle cx="233" cy="132" r="4" stroke="none" />
+        <line x1="218" y1="133" x2="234" y2="117" strokeWidth="4.5" />
+      </g>
 
-      {/* Pfeil nach unten zwischen beiden */}
+      {/* Verbindung vom hohen zum niedrigen Balken. Die Kurve setzt rechts
+          neben dem grauen Balken an, führt über den grünen und endet mit
+          senkrechter Tangente über dessen Mitte (x=226) — dadurch zeigt die
+          Spitze von oben auf den grünen Kasten und nicht daneben ins Leere. */}
       <path
-        d="M148 66 C166 66 166 78 172 88"
+        d="M142 52 C188 52 226 58 226 76"
         fill="none"
         stroke="#34d399"
         strokeWidth="2.5"
@@ -233,7 +255,7 @@ export function CompareIllustration({ className }: { className?: string }) {
         strokeDasharray="5 6"
       />
       <path
-        d="M166 82 L173 92 L180 82"
+        d="M219 77 L226 84 L233 77"
         fill="none"
         stroke="#34d399"
         strokeWidth="2.5"

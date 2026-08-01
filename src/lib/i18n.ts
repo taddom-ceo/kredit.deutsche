@@ -112,7 +112,7 @@ export const translations: Record<Language, Translations> = {
       ablaufEyebrow: "So läuft es ab",
       ablaufTitle: "Drei Schritte, keine Warteschleife",
       ablaufSubtitle:
-        "Kein Termin, keine Unterlagen im Voraus, kein Anruf, den Sie nicht wollten.",
+        "Kein Termin und keine Unterlagen im Voraus.",
       schritte: [
         {
           titel: "Wunsch eingeben",
@@ -250,7 +250,7 @@ export const translations: Record<Language, Translations> = {
       ablaufEyebrow: "How it works",
       ablaufTitle: "Three steps, no hold music",
       ablaufSubtitle:
-        "No appointment, no documents up front, no call you did not ask for.",
+        "No appointment and no documents up front.",
       schritte: [
         {
           titel: "Enter what you need",
