@@ -28,7 +28,7 @@ export default function StepAdresse() {
       onNext={goNext}
       nextDisabled={!valid}
     >
-      <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4">
+      <div className="grid grid-cols-[1fr_auto] gap-4">
         <FormField
           id="strasse"
           label={wt.step5.strasse}
@@ -40,16 +40,16 @@ export default function StepAdresse() {
           label={wt.step5.hausnummer}
           value={data.hausnummer}
           onChange={(e) => update({ hausnummer: e.target.value })}
-          className="sm:w-28"
+          className="w-28"
         />
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-4">
+      <div className="grid grid-cols-[auto_1fr] gap-4">
         <FormField
           id="plz"
           label={wt.step5.plz}
           value={data.plz}
           onChange={(e) => update({ plz: e.target.value })}
-          className="sm:w-28"
+          className="w-28"
         />
         <FormField
           id="ort"

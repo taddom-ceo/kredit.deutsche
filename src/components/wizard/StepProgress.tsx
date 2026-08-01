@@ -38,12 +38,12 @@ export default function StepProgress({ current }: { current: number }) {
                   >
                     {done ? "✓" : stepNum}
                   </span>
-                  <span className="text-[11px] font-medium hidden sm:inline">
+                  <span className="text-[11px] font-medium inline">
                     {label}
                   </span>
                 </div>
                 {stepNum < TOTAL_STEPS && (
-                  <span className="w-4 sm:w-8 h-px bg-border shrink-0" />
+                  <span className="w-8 h-px bg-border shrink-0" />
                 )}
               </div>
             );

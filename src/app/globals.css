@@ -28,6 +28,24 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Feste Design-Bühne: Das Layout ist auf exakt --stage-width ausgelegt und
+   wird als Ganzes skaliert. Dadurch bleiben Widgets und Abstände auf jeder
+   Bildschirmauflösung im selben Verhältnis, statt umzubrechen. */
+:root {
+  --stage-width: 1440px;
+  --stage-zoom: 1;
+  --stage-min-height: 100vh;
+}
+
+#stage {
+  width: var(--stage-width);
+  margin-inline: auto;
+  /* Gegenrechnung zum Zoom, damit die Buehne den Viewport auch nach dem
+     Herunterskalieren vertikal ausfuellt. */
+  min-height: var(--stage-min-height);
+  zoom: var(--stage-zoom);
+}
+
 body {
   background-color: var(--background);
   background-image: radial-gradient(
