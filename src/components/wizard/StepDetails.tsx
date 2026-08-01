@@ -43,26 +43,6 @@ export default function StepDetails() {
       onBack={goBack}
       onNext={goNext}
     >
-      <div className="rounded-[16px] bg-surface-2 border border-border ring-1 ring-white/5 p-5 flex flex-col gap-1.5">
-        <span className="text-[11px] font-semibold text-muted tracking-wide">
-          {wt.step2.previewLabel}
-        </span>
-        <EditableValue
-          value={payment}
-          formatted={formatEuro(displayedPayment)}
-          onCommit={(next) =>
-            update({ amount: clampAmount(principalFromPayment(next, data.months)) })
-          }
-          label={wt.step2.editPayment}
-          className="text-4xl font-bold tracking-tight text-accent self-start"
-          inputClassName="w-48"
-        />
-        <span className="text-xs text-muted leading-relaxed">
-          {wt.step2.totalLabel} ≈ {formatEuro(displayedTotal)} · {data.months}{" "}
-          {wt.step2.monthsUnit} · {wt.step2.previewNote}
-        </span>
-      </div>
-
       <div className="flex flex-col gap-2">
         <label
           htmlFor="purpose"
@@ -99,6 +79,26 @@ export default function StepDetails() {
               ))}
           </optgroup>
         </select>
+      </div>
+
+      <div className="rounded-[16px] bg-surface-2 border border-border ring-1 ring-white/5 p-5 flex flex-col gap-1.5">
+        <span className="text-[11px] font-semibold text-muted tracking-wide">
+          {wt.step2.previewLabel}
+        </span>
+        <EditableValue
+          value={payment}
+          formatted={formatEuro(displayedPayment)}
+          onCommit={(next) =>
+            update({ amount: clampAmount(principalFromPayment(next, data.months)) })
+          }
+          label={wt.step2.editPayment}
+          className="text-4xl font-bold tracking-tight text-accent self-start"
+          inputClassName="w-48"
+        />
+        <span className="text-xs text-muted leading-relaxed">
+          {wt.step2.totalLabel} ≈ {formatEuro(displayedTotal)} · {data.months}{" "}
+          {wt.step2.monthsUnit} · {wt.step2.previewNote}
+        </span>
       </div>
 
       <div className="flex flex-col gap-3">
