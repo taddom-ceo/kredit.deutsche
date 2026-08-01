@@ -172,11 +172,13 @@ export default function StepArt() {
               className={`relative rounded-[16px] border bg-surface-2 transition-all duration-200 hover:border-foreground hover:-translate-y-px ${
                 active
                   ? "border-foreground ring-1 ring-foreground/30"
-                  : betont
-                    ? // Die vier häufigsten Zwecke bekommen einen ruhigen
-                      // Akzentrand mit leichter Tönung.
-                      "border-accent/45 bg-accent/[0.07]"
-                    : "border-border"
+                  : "border-border"
+              } ${
+                // Die vier häufigsten Zwecke heben sich allein durch eine
+                // leichte Tönung ab. Der Rahmen bleibt neutral wie bei allen
+                // übrigen, damit Weiß eindeutig für Überfahren und Auswahl
+                // steht und sonst nichts um Aufmerksamkeit konkurriert.
+                betont && !active ? "zweck-betont" : ""
               }`}
             >
               {/* Die Auswahlfläche liegt als eigene Schaltfläche unter dem
@@ -208,7 +210,14 @@ export default function StepArt() {
                         aria-expanded={offen === option.id}
                         aria-controls="zweck-hinweis"
                         aria-label={`${wt.step1.hinweisOeffnen}: ${option.title}`}
-                        className={`pointer-events-auto ml-1.5 inline-flex h-[1.35em] w-[1.35em] shrink-0 items-center justify-center rounded-full border align-[-0.1em] text-[0.7em] font-bold leading-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                        // Sichtbar 1,5rem, damit es die 24px Mindestgröße für
+                        // Tippziele erreicht. Die Fläche, die tatsächlich
+                        // annimmt, geht über ::after noch einmal 6px darüber
+                        // hinaus — man trifft es also auch knapp daneben.
+                        // align-middle und -my-1.5 halten die Zeilenhöhe des
+                        // Titels: Ohne beides zöge das größere Symbol die
+                        // Zeile und damit die Karte auseinander.
+                        className={`pointer-events-auto relative ml-1.5 -my-1.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border align-middle text-[0.72rem] font-bold leading-none transition-colors duration-200 after:absolute after:-inset-1.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-accent/40 ${
                           offen === option.id
                             ? "border-accent bg-accent text-accent-foreground"
                             : "border-accent/50 text-accent hover:bg-accent/15"
