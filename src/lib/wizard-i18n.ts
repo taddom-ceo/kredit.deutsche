@@ -22,6 +22,8 @@ export interface WizardTranslations {
     highlight: string;
     subtitle: string;
     options: WizardOption[];
+    haeufigLabel: string;
+    weitereLabel: string;
     trust: string[];
   };
   step2: {
@@ -197,14 +199,29 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
           description: "Neu- oder Gebrauchtwagen",
         },
         {
-          id: "ebike",
-          title: "E-Bike",
-          description: "Pedelec oder E-Bike",
+          id: "umschuldung",
+          title: "Umschuldung/Kredit ablösen",
+          description: "Bestehende Kredite zusammenfassen",
         },
         {
           id: "modernisierung",
           title: "Modernisierung/Baufinanzierung",
           description: "Umbau, Sanierung oder Hauskauf",
+        },
+        {
+          id: "dispo",
+          title: "Dispo/Kreditkarten Ausgleich",
+          description: "Teure Kontoüberziehung ausgleichen",
+        },
+        {
+          id: "ratenkauf",
+          title: "Tilgung Ratenkauf",
+          description: "Laufende Ratenkäufe ablösen",
+        },
+        {
+          id: "ebike",
+          title: "E-Bike",
+          description: "Pedelec oder E-Bike",
         },
         {
           id: "kueche",
@@ -222,26 +239,13 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
           description: "Umzug und Nebenkosten",
         },
         {
-          id: "umschuldung",
-          title: "Umschuldung/Kredit ablösen",
-          description: "Bestehende Kredite zusammenfassen",
-        },
-        {
-          id: "ratenkauf",
-          title: "Tilgung Ratenkauf",
-          description: "Laufende Ratenkäufe ablösen",
-        },
-        {
-          id: "dispo",
-          title: "Dispo/Kreditkarten Ausgleich",
-          description: "Teure Kontoüberziehung ausgleichen",
-        },
-        {
           id: "reise",
           title: "Reise",
           description: "Urlaub oder größere Reise",
         },
       ],
+      haeufigLabel: "Häufig gewählt",
+      weitereLabel: "Weitere Zwecke",
       trust: [
         "SCHUFA-neutrale Anfrage",
         "Vergleich von 20+ Banken",
@@ -266,14 +270,14 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       purposeOptions: [
         { value: "frei", label: "Freie Verwendung" },
         { value: "fahrzeug", label: "Fahrzeugkauf" },
-        { value: "ebike", label: "E-Bike" },
+        { value: "umschuldung", label: "Umschuldung/Kredit ablösen" },
         { value: "modernisierung", label: "Modernisierung/Baufinanzierung" },
+        { value: "dispo", label: "Dispo/Kreditkarten Ausgleich" },
+        { value: "ratenkauf", label: "Tilgung Ratenkauf" },
+        { value: "ebike", label: "E-Bike" },
         { value: "kueche", label: "Küche" },
         { value: "moebel", label: "Möbel" },
         { value: "umzug", label: "Umzug" },
-        { value: "umschuldung", label: "Umschuldung/Kredit ablösen" },
-        { value: "ratenkauf", label: "Tilgung Ratenkauf" },
-        { value: "dispo", label: "Dispo/Kreditkarten Ausgleich" },
         { value: "reise", label: "Reise" },
       ],
       amountLabel: "KREDITBETRAG",
@@ -483,14 +487,29 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
           description: "New or used car",
         },
         {
-          id: "ebike",
-          title: "E-bike",
-          description: "Pedelec or e-bike",
+          id: "umschuldung",
+          title: "Debt consolidation/loan repayment",
+          description: "Combine existing loans",
         },
         {
           id: "modernisierung",
           title: "Modernisation/mortgage",
           description: "Renovation, refurbishment or home purchase",
+        },
+        {
+          id: "dispo",
+          title: "Overdraft/credit card settlement",
+          description: "Settle an expensive overdraft",
+        },
+        {
+          id: "ratenkauf",
+          title: "Instalment purchase repayment",
+          description: "Pay off running instalment plans",
+        },
+        {
+          id: "ebike",
+          title: "E-bike",
+          description: "Pedelec or e-bike",
         },
         {
           id: "kueche",
@@ -508,26 +527,13 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
           description: "Relocation and related costs",
         },
         {
-          id: "umschuldung",
-          title: "Debt consolidation/loan repayment",
-          description: "Combine existing loans",
-        },
-        {
-          id: "ratenkauf",
-          title: "Instalment purchase repayment",
-          description: "Pay off running instalment plans",
-        },
-        {
-          id: "dispo",
-          title: "Overdraft/credit card settlement",
-          description: "Settle an expensive overdraft",
-        },
-        {
           id: "reise",
           title: "Travel",
           description: "Holiday or longer trip",
         },
       ],
+      haeufigLabel: "Frequently chosen",
+      weitereLabel: "Other purposes",
       trust: [
         "Credit-score-neutral request",
         "Compare 20+ banks",
@@ -552,14 +558,14 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       purposeOptions: [
         { value: "frei", label: "General purpose" },
         { value: "fahrzeug", label: "Vehicle purchase" },
-        { value: "ebike", label: "E-bike" },
+        { value: "umschuldung", label: "Debt consolidation/loan repayment" },
         { value: "modernisierung", label: "Modernisation/mortgage" },
+        { value: "dispo", label: "Overdraft/credit card settlement" },
+        { value: "ratenkauf", label: "Instalment purchase repayment" },
+        { value: "ebike", label: "E-bike" },
         { value: "kueche", label: "Kitchen" },
         { value: "moebel", label: "Furniture" },
         { value: "umzug", label: "Moving" },
-        { value: "umschuldung", label: "Debt consolidation/loan repayment" },
-        { value: "ratenkauf", label: "Instalment purchase repayment" },
-        { value: "dispo", label: "Overdraft/credit card settlement" },
         { value: "reise", label: "Travel" },
       ],
       amountLabel: "LOAN AMOUNT",

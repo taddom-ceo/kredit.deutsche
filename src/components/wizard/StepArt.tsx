@@ -6,6 +6,10 @@ import { wizardTranslations } from "@/lib/wizard-i18n";
 import { useWizard } from "@/lib/wizard-context";
 import WizardStepLayout from "./WizardStepLayout";
 
+// Die ersten vier Verwendungszwecke werden hervorgehoben — auf Schritt 1 durch
+// einen Akzentrand, auf Schritt 2 durch eine eigene Gruppe im Auswahlfeld.
+export const HIGHLIGHTED_COUNT = 4;
+
 // Erlaubt den Zeilenumbruch nach einem Schrägstrich. Ohne diesen Hinweis
 // bricht der Browser innerhalb des Wortes ("Baufin|anzierung"); so entsteht
 // stattdessen "Modernisierung/" und "Baufinanzierung".
@@ -45,15 +49,23 @@ export default function StepArt() {
       showNav={false}
     >
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {wt.step1.options.map((option) => {
+        {wt.step1.options.map((option, index) => {
           const active = data.kreditart === option.id;
+          // Die ersten vier decken den Großteil der Anträge ab und bekommen
+          // einen leichten Akzentrand. Bewusst schwächer als der
+          // Auswahlzustand, damit beides unterscheidbar bleibt.
+          const betont = index < HIGHLIGHTED_COUNT;
           return (
             <button
               key={option.id}
               type="button"
               onClick={() => select(option.id)}
               className={`text-left rounded-[16px] border bg-surface-2 p-4 flex items-center justify-between gap-3 transition-all duration-200 hover:border-border-strong hover:-translate-y-px focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
-                active ? "border-accent ring-1 ring-accent/40" : "border-border"
+                active
+                  ? "border-accent ring-1 ring-accent/40"
+                  : betont
+                    ? "border-accent/35 bg-accent/[0.04]"
+                    : "border-border"
               }`}
             >
               {/* min-w-0 hebt die Standard-Mindestbreite von Flex-Elementen
