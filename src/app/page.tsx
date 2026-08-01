@@ -6,6 +6,10 @@ import { PARTNERS } from "@/components/BankMarquee";
 import {
   CompareIllustration,
   HeroIllustration,
+  IconBanks,
+  IconClock,
+  IconPercent,
+  IconWallet,
   StepPayoutIllustration,
   StepShieldIllustration,
   StepSliderIllustration,
@@ -17,6 +21,8 @@ const SCHRITT_BILDER = [
   StepShieldIllustration,
   StepPayoutIllustration,
 ];
+
+const KENNZAHL_SYMBOLE = [IconBanks, IconPercent, IconClock, IconWallet];
 
 export default function Home() {
   const { t } = useLanguage();
@@ -30,52 +36,96 @@ export default function Home() {
         {/* Hero. Der Aufruf steht über der Falz und wird auf dem Handy zuerst
             gezeigt — die Illustration rutscht dort darunter, weil sie die
             Aussage begleitet und nicht trägt. */}
-        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-10 items-center">
-          <div className="flex flex-col gap-6">
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-20 lg:py-32 grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-12 items-center">
+          <div className="flex flex-col gap-7">
             <span className="inline-flex w-fit items-center rounded-full border border-accent/30 bg-accent/[0.08] px-3.5 py-1.5 text-[11px] font-semibold tracking-wide text-accent">
               {l.badge}
             </span>
-            <h1 className="text-4xl lg:text-5xl font-bold leading-[1.08] tracking-[-0.025em] text-balance">
+            {/* 3,2rem ist die groesste Stufe, bei der "Günstiger finanzieren,"
+                noch auf eine Zeile passt — ab 3,3rem bricht es und die
+                Ueberschrift laeuft auf vier Zeilen auseinander. */}
+            <h1 className="text-[2.5rem] lg:text-[3.2rem] font-bold leading-[1.06] tracking-[-0.03em] text-balance">
               {l.titleLine1}
               <br />
               <span className="text-accent">{l.titleHighlight}</span>
             </h1>
-            <p className="text-lg text-muted leading-relaxed max-w-lg">
+            <p className="text-lg lg:text-xl text-muted leading-relaxed max-w-xl">
               {l.subtitle}
             </p>
-            <div className="flex flex-wrap items-center gap-3">
+
+            <div className="flex flex-wrap items-center gap-3 mt-2">
               <Link
                 href="/rechner"
-                className="rounded-[16px] bg-accent px-6 py-3.5 text-sm font-semibold text-accent-foreground shadow-[0_10px_30px_-8px_rgba(52,211,153,0.55)] transition-all duration-200 hover:bg-accent-strong hover:-translate-y-px hover:shadow-[0_14px_36px_-8px_rgba(52,211,153,0.6)] active:translate-y-0 focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="rounded-[16px] bg-accent px-7 py-4 text-[15px] font-semibold text-accent-foreground shadow-[0_10px_30px_-8px_rgba(52,211,153,0.55)] transition-all duration-200 hover:bg-accent-strong hover:-translate-y-px hover:shadow-[0_14px_36px_-8px_rgba(52,211,153,0.6)] active:translate-y-0 focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 {l.ctaPrimary} →
               </Link>
               <a
                 href="#ablauf"
-                className="rounded-[16px] border border-border px-6 py-3.5 text-sm font-semibold text-muted transition-all duration-200 hover:border-border-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="rounded-[16px] border border-border px-7 py-4 text-[15px] font-semibold text-muted transition-all duration-200 hover:border-border-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 {l.ctaSecondary}
               </a>
             </div>
-            <span className="text-xs text-muted">{l.ctaNote}</span>
+
+            {/* Vertrauenszeichen statt Fließtext: vier Haken werden im
+                Vorbeisehen erfasst, ein Satz muss gelesen werden. */}
+            <ul className="flex flex-wrap gap-x-5 gap-y-2">
+              {l.trustBadges.map((badge) => (
+                <li
+                  key={badge}
+                  className="flex items-center gap-1.5 text-[13px] font-medium text-muted"
+                >
+                  <span aria-hidden="true" className="text-accent">
+                    ✓
+                  </span>
+                  {badge}
+                </li>
+              ))}
+            </ul>
+
+            {/* Grundlage der Zahl in der Überschrift. Ohne diese Angabe wäre
+                die Ersparnis eine Behauptung ohne Bezug. */}
+            <p className="text-[11px] leading-relaxed text-muted/70 max-w-md">
+              {l.heroFussnote}
+            </p>
           </div>
 
-          <HeroIllustration className="w-full max-w-[520px] justify-self-center lg:justify-self-end" />
+          <HeroIllustration
+            angebote={l.heroAngebote}
+            proMonat={l.heroProMonat}
+            ersparnis={l.heroErsparnis}
+            ersparnisZusatz={l.heroErsparnisZusatz}
+            beispielKopf={l.heroBeispielKopf}
+            beispielFuss1={l.heroBeispielFuss1}
+            beispielFuss2={l.heroBeispielFuss2}
+            className="w-full max-w-[500px] justify-self-center lg:justify-self-end"
+          />
         </section>
 
-        {/* Kennzahlen: die vier Angaben, nach denen sonst gesucht werden müsste. */}
+        {/* Kennzahlen als eigene Karten mit Symbol — als schlichte Zeile gingen
+            sie zwischen den Abschnitten unter. */}
         <section className="border-y border-border bg-surface/40">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {l.kennzahlen.map((k) => (
-              <div key={k.label} className="flex flex-col gap-1">
-                <span className="text-2xl lg:text-3xl font-bold tracking-tight text-accent">
-                  {k.wert}
-                </span>
-                <span className="text-xs text-muted leading-relaxed">
-                  {k.label}
-                </span>
-              </div>
-            ))}
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12 lg:py-14 grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {l.kennzahlen.map((k, i) => {
+              const Symbol = KENNZAHL_SYMBOLE[i];
+              return (
+                <div
+                  key={k.label}
+                  className="rounded-[18px] border border-border bg-background ring-1 ring-white/5 p-5 lg:p-6 flex flex-col gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-border-strong"
+                >
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/[0.12] text-accent">
+                    <Symbol className="h-5 w-5" />
+                  </span>
+                  <span className="text-3xl lg:text-4xl font-bold tracking-[-0.02em] text-accent">
+                    {k.wert}
+                  </span>
+                  <span className="text-xs text-muted leading-relaxed">
+                    {k.label}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </section>
 
