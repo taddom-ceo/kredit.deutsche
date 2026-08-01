@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { LogoMark } from "@/components/Logo";
 import { useLanguage } from "@/lib/language-context";
 import type { Language } from "@/lib/i18n";
 
@@ -37,11 +38,24 @@ export default function Header() {
   return (
     <header className="border-b border-border">
       <div className="mx-auto max-w-6xl px-6 py-5 flex items-center justify-between">
+        {/* Der Schriftzug ist echter Text und keine Grafik: Er nutzt damit die
+            Hausschrift, bleibt bei jeder Zoomstufe scharf und ist für
+            Suchmaschinen und Vorlesehilfen lesbar. Nur die Bildmarke ist eine
+            Zeichnung. */}
         <Link
           href="/"
-          className="text-lg font-semibold tracking-[-0.01em] transition-opacity duration-200 hover:opacity-80"
+          aria-label="cresolu.de — clever finanzieren"
+          className="flex items-center gap-2.5 transition-opacity duration-200 hover:opacity-80"
         >
-          kredit.deutsche
+          <LogoMark className="h-9 w-9 shrink-0 lg:h-10 lg:w-10" />
+          <span className="flex flex-col">
+            <span className="text-lg lg:text-xl font-semibold leading-none tracking-[-0.01em]">
+              cresolu<span className="text-accent">.de</span>
+            </span>
+            <span className="mt-1.5 text-[9px] lg:text-[10px] font-medium uppercase leading-none tracking-[0.2em] text-muted">
+              Clever finanzieren
+            </span>
+          </span>
         </Link>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1 rounded-full border border-border bg-surface p-1">
