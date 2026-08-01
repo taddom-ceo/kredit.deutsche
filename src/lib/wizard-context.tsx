@@ -53,18 +53,6 @@ export interface WizardData {
 
 export const TOTAL_STEPS = 8;
 
-// Verwendungszweck, der sich aus der gewählten Kreditart zwingend ergibt.
-//
-// Bewusst nicht vollständig: "privatkredit" und "kreditkarte" sind zur freien
-// Verwendung gedacht und lassen keinen Zweck erkennen. Dort einfach
-// "sonstiges" vorzubelegen würde die Angabe entwerten, die dieses Feld
-// überhaupt erheben soll — deshalb bleibt die Auswahl dort offen.
-export const PURPOSE_BY_KREDITART: Record<string, string> = {
-  autokredit: "fahrzeug",
-  umschuldung: "umschuldung",
-  baufinanzierung: "immobilie",
-};
-
 const initialData: WizardData = {
   step: 1,
   maxStep: 1,
