@@ -69,6 +69,10 @@ export interface WizardTranslations {
     optionalHint: string;
     nachname: string;
     geburtsdatum: string;
+    geburtstag: string;
+    geburtsmonat: string;
+    geburtsjahr: string;
+    auswahlPlatzhalter: string;
     email: string;
     emailInvalid: string;
     telefon: string;
@@ -282,6 +286,10 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       optionalHint: "optional",
       nachname: "Nachname",
       geburtsdatum: "Geburtsdatum",
+      geburtstag: "Tag",
+      geburtsmonat: "Monat",
+      geburtsjahr: "Jahr",
+      auswahlPlatzhalter: "–",
       email: "E-Mail-Adresse",
       emailInvalid:
         "Bitte eine vollständige E-Mail-Adresse eingeben, z. B. name@anbieter.de.",
@@ -524,6 +532,10 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       optionalHint: "optional",
       nachname: "Last name",
       geburtsdatum: "Date of birth",
+      geburtstag: "Day",
+      geburtsmonat: "Month",
+      geburtsjahr: "Year",
+      auswahlPlatzhalter: "–",
       email: "Email address",
       emailInvalid:
         "Please enter a complete email address, e.g. name@provider.com.",
