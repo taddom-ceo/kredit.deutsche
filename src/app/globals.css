@@ -176,6 +176,41 @@ input[type="range"]:active::-moz-range-thumb {
     0 0 0 7px rgba(52, 211, 153, 0.22);
 }
 
+/* Hervorhebung der häufigsten Verwendungszwecke: ein langsam atmender
+   Akzentrand. Bewusst schwächer als der Auswahlzustand, damit weiterhin
+   erkennbar bleibt, was tatsächlich angeklickt ist. */
+@keyframes accent-breathe {
+  0%,
+  100% {
+    border-color: rgba(52, 211, 153, 0.34);
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
+  }
+  50% {
+    border-color: rgba(52, 211, 153, 0.8);
+    box-shadow: 0 0 20px -5px rgba(52, 211, 153, 0.45);
+  }
+}
+
+.accent-breathe {
+  animation: accent-breathe 3.2s ease-in-out infinite;
+}
+
+/* Beim Überfahren steht der Rahmen still und bleibt kräftig — sonst würde die
+   Bewegung mit der Hover-Rückmeldung konkurrieren. */
+.accent-breathe:hover {
+  animation-play-state: paused;
+  border-color: rgba(52, 211, 153, 0.8);
+}
+
+/* Wer Bewegung reduziert haben möchte, bekommt die Hervorhebung als ruhigen,
+   dauerhaft kräftigen Rand statt als Animation. */
+@media (prefers-reduced-motion: reduce) {
+  .accent-breathe {
+    animation: none;
+    border-color: rgba(52, 211, 153, 0.6);
+  }
+}
+
 @keyframes marquee-vertical {
   from {
     transform: translateY(0);

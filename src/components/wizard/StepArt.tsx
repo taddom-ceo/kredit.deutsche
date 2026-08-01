@@ -64,7 +64,7 @@ export default function StepArt() {
                 active
                   ? "border-accent ring-1 ring-accent/40"
                   : betont
-                    ? "border-accent/35 bg-accent/[0.04]"
+                    ? "accent-breathe bg-accent/[0.07]"
                     : "border-border"
               }`}
             >
