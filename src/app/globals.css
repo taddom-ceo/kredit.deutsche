@@ -207,14 +207,18 @@ input[type="range"]:active::-moz-range-thumb {
 }
 
 .accent-breathe {
-  animation: accent-breathe 3.2s ease-in-out infinite;
+  animation: accent-breathe 5s ease-in-out infinite;
 }
 
 /* Beim Überfahren steht der Rahmen still und bleibt kräftig — sonst würde die
-   Bewegung mit der Hover-Rückmeldung konkurrieren. */
+   Bewegung mit der Hover-Rückmeldung konkurrieren.
+   Die Animation läuft dabei bewusst weiter und wird nur überschrieben
+   (!important schlägt Animationen). Ein Pausieren würde die Karte dauerhaft
+   aus dem Takt der übrigen bringen: Sie liefe nach dem Verlassen dort weiter,
+   wo sie angehalten wurde, und wäre danach für immer versetzt. */
 .accent-breathe:hover {
-  animation-play-state: paused;
-  border-color: rgba(52, 211, 153, 0.8);
+  border-color: rgba(52, 211, 153, 0.8) !important;
+  box-shadow: 0 0 20px -5px rgba(52, 211, 153, 0.45) !important;
 }
 
 /* Wer Bewegung reduziert haben möchte, bekommt die Hervorhebung als ruhigen,

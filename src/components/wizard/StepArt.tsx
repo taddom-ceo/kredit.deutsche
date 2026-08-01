@@ -55,12 +55,18 @@ export default function StepArt() {
           // einen leichten Akzentrand. Bewusst schwächer als der
           // Auswahlzustand, damit beides unterscheidbar bleibt.
           const betont = index < HIGHLIGHTED_COUNT;
+          const hinweisId = option.hinweis ? `hinweis-${option.id}` : undefined;
           return (
             <button
               key={option.id}
               type="button"
               onClick={() => select(option.id)}
-              className={`text-left rounded-[16px] border bg-surface-2 p-4 flex items-center justify-between gap-3 transition-all duration-200 hover:border-border-strong hover:-translate-y-px focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
+              aria-describedby={hinweisId}
+              // hover:z-30 hebt die ganze Karte über die nachfolgenden: Durch
+              // hover:-translate-y-px bildet sie einen eigenen Stapelkontext,
+              // in dem die Kurzinfo gefangen bleibt — ohne das Anheben läge
+              // sie hinter den Karten darunter.
+              className={`group relative hover:z-30 focus-visible:z-30 text-left rounded-[16px] border bg-surface-2 p-4 flex items-center justify-between gap-3 transition-all duration-200 hover:border-border-strong hover:-translate-y-px focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
                 active
                   ? "border-accent ring-1 ring-accent/40"
                   : betont
@@ -76,12 +82,35 @@ export default function StepArt() {
               <span className="flex min-w-0 flex-col gap-0.5">
                 <span className="text-sm font-semibold break-words">
                   {withBreakAfterSlash(option.title)}
+                  {option.hinweis && (
+                    <span
+                      aria-hidden="true"
+                      className="ml-1.5 inline-flex h-[1.15em] w-[1.15em] shrink-0 items-center justify-center rounded-full border border-accent/50 align-[0.05em] text-[0.7em] font-bold leading-none text-accent"
+                    >
+                      i
+                    </span>
+                  )}
                 </span>
                 <span className="text-xs text-muted break-words">
                   {option.description}
                 </span>
               </span>
               <span className="text-accent shrink-0">→</span>
+              {/* Kurzinfo zum Verwendungszweck. Sie hängt am Zeiger bzw. am
+                  Tastaturfokus der ganzen Karte, weil ein eigener Auslöser ein
+                  Bedienelement in einem Bedienelement wäre — das ist als
+                  Markup nicht zulässig. Absolut positioniert und ohne
+                  Zeigerereignisse, damit sie weder das Raster verschiebt noch
+                  den Klick abfängt. */}
+              {option.hinweis && (
+                <span
+                  id={hinweisId}
+                  role="tooltip"
+                  className="pointer-events-none absolute left-3 right-3 top-full z-20 mt-2 rounded-[12px] border border-accent/30 bg-surface px-3 py-2 text-xs leading-relaxed text-foreground/85 opacity-0 shadow-[0_12px_30px_-8px_rgba(0,0,0,0.7)] transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100"
+                >
+                  {option.hinweis}
+                </span>
+              )}
             </button>
           );
         })}
