@@ -6,7 +6,7 @@ import { wizardTranslations } from "@/lib/wizard-i18n";
 import { useWizard } from "@/lib/wizard-context";
 import WizardStepLayout from "./WizardStepLayout";
 import { FormField, FormSelect } from "./FormField";
-import { dialCodeOptions, dialForIso, flagEmoji } from "@/lib/country-codes";
+import { dialCodeOptions, dialForIso, flagSrc } from "@/lib/country-codes";
 
 // Volljährigkeit ist Voraussetzung für einen Kreditvertrag; die Obergrenze
 // fängt Tippfehler wie das Jahr 0511 ab, ohne reale Antragsteller auszuschließen.
@@ -243,7 +243,7 @@ export default function StepDaten() {
       >
         {countries.map(({ iso, name }) => (
           <option key={iso} value={iso}>
-            {flagEmoji(iso)} {name}
+            {name}
           </option>
         ))}
       </FormSelect>
@@ -255,7 +255,15 @@ export default function StepDaten() {
         {/* items-end richtet die feste Vorwahl an den Eingabefeldern aus,
             obwohl sie keine eigene Beschriftung trägt. */}
         <div className="grid grid-cols-[auto_5.5rem_1fr] gap-3 items-end">
-          <span className="rounded-[16px] border border-border bg-surface px-4 py-2.5 text-sm text-muted tabular-nums whitespace-nowrap">
+          <span className="flex items-center gap-2 rounded-[16px] border border-border bg-surface px-3 py-2.5 text-sm text-muted tabular-nums whitespace-nowrap">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={flagSrc(data.telefonLand)}
+              alt=""
+              width={20}
+              height={15}
+              className="h-[15px] w-5 shrink-0 rounded-[2px] object-cover ring-1 ring-white/15"
+            />
             {dialForIso(data.telefonLand)}
           </span>
           <FormField
