@@ -77,12 +77,19 @@ export default function StepDaten() {
       onNext={goNext}
       nextDisabled={!valid}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <FormField
           id="vorname"
           label={wt.step4.vorname}
           value={data.vorname}
           onChange={(e) => update({ vorname: e.target.value })}
+        />
+        <FormField
+          id="zweiterVorname"
+          label={wt.step4.zweiterVorname}
+          value={data.zweiterVorname}
+          onChange={(e) => update({ zweiterVorname: e.target.value })}
+          placeholder={wt.step4.optionalHint}
         />
         <FormField
           id="nachname"
@@ -91,12 +98,6 @@ export default function StepDaten() {
           onChange={(e) => update({ nachname: e.target.value })}
         />
       </div>
-      <FormField
-        id="zweiterVorname"
-        label={wt.step4.zweiterVorname}
-        value={data.zweiterVorname}
-        onChange={(e) => update({ zweiterVorname: e.target.value })}
-      />
       <FormField
         id="geburtsdatum"
         type="date"
