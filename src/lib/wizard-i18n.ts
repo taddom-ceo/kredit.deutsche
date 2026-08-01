@@ -74,6 +74,7 @@ export interface WizardTranslations {
     geburtsjahr: string;
     auswahlPlatzhalter: string;
     email: string;
+    nameInvalid: string;
     emailInvalid: string;
     telefon: string;
     telefonLand: string;
@@ -295,6 +296,7 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       geburtsjahr: "Jahr",
       auswahlPlatzhalter: "–",
       email: "E-Mail-Adresse",
+      nameInvalid: "Bitte einen Namen ohne Ziffern eingeben.",
       emailInvalid:
         "Bitte eine vollständige E-Mail-Adresse eingeben, z. B. name@anbieter.de.",
       telefon: "Telefonnummer",
@@ -545,6 +547,7 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       geburtsjahr: "Year",
       auswahlPlatzhalter: "–",
       email: "Email address",
+      nameInvalid: "Please enter a name without digits.",
       emailInvalid:
         "Please enter a complete email address, e.g. name@provider.com.",
       telefon: "Phone number",
