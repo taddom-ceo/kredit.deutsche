@@ -13,6 +13,8 @@ export interface Translations {
     year: string;
     years: string;
     paymentLabel: string;
+    editAmount: string;
+    editPayment: string;
     totalLabel: string;
     rateLabel: string;
     cta: string;
@@ -36,6 +38,8 @@ export const translations: Record<Language, Translations> = {
       year: "Jahr",
       years: "Jahre",
       paymentLabel: "Monatliche Rate ab",
+      editAmount: "Kreditbetrag eingeben",
+      editPayment: "Monatliche Rate eingeben",
       totalLabel: "Gesamtbetrag",
       rateLabel: "eff. Jahreszins",
       cta: "Mit anderen Angeboten vergleichen",
@@ -74,6 +78,8 @@ export const translations: Record<Language, Translations> = {
       year: "year",
       years: "years",
       paymentLabel: "Monthly rate from",
+      editAmount: "Enter loan amount",
+      editPayment: "Enter monthly rate",
       totalLabel: "Total amount",
       rateLabel: "effective annual rate",
       cta: "Compare with other offers",

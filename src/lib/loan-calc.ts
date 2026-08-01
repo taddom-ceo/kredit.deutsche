@@ -27,3 +27,23 @@ export function monthlyPayment(
   const factor = Math.pow(1 + monthlyRate, months);
   return (principal * monthlyRate * factor) / (factor - 1);
 }
+
+// Inverse of monthlyPayment: which loan amount produces a given monthly rate?
+// Solving P = A·r·f/(f−1) for A gives A = P·(f−1)/(r·f).
+export function principalFromPayment(
+  payment: number,
+  months: number,
+  annualRate: number = SAMPLE_ANNUAL_RATE
+) {
+  const monthlyRate = annualRate / 12;
+  if (monthlyRate === 0) return payment * months;
+  const factor = Math.pow(1 + monthlyRate, months);
+  return (payment * (factor - 1)) / (monthlyRate * factor);
+}
+
+// A freely typed amount has to land on the same grid the slider moves on,
+// and inside its range, so slider and readout can never disagree.
+export function clampAmount(value: number) {
+  const snapped = Math.round(value / AMOUNT_STEP) * AMOUNT_STEP;
+  return Math.min(AMOUNT_MAX, Math.max(AMOUNT_MIN, snapped));
+}
