@@ -39,7 +39,7 @@ export default function StepConfirmation() {
       <span className="flex items-center justify-center w-14 h-14 rounded-full bg-accent text-accent-foreground text-2xl font-bold shadow-[0_8px_24px_-6px_rgba(52,211,153,0.45)]">
         ✓
       </span>
-      <h1 className="text-4xl font-bold tracking-[-0.02em]">
+      <h1 className="text-3xl lg:text-4xl font-bold tracking-[-0.02em]">
         {wt.confirmation.title}{" "}
         <span className="text-accent">{wt.confirmation.highlight}</span>
       </h1>
@@ -47,7 +47,7 @@ export default function StepConfirmation() {
         {wt.confirmation.subtitle}
       </p>
 
-      <div className="w-full rounded-[24px] border border-border bg-surface p-8 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.55)] ring-1 ring-white/5 flex flex-col gap-4 text-left">
+      <div className="w-full rounded-[24px] border border-border bg-surface p-6 lg:p-8 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.55)] ring-1 ring-white/5 flex flex-col gap-4 text-left">
         <span className="text-[11px] font-semibold text-muted tracking-wide">
           {wt.confirmation.summaryLabel}
         </span>

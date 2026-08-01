@@ -14,9 +14,9 @@ export default function Home() {
       <BankMarquee />
 
       <main className="flex-1">
-        <section className="mx-auto max-w-6xl px-6 py-24 grid grid-cols-2 gap-12 items-center">
+        <section className="mx-auto max-w-6xl px-6 py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="flex flex-col gap-6">
-            <h1 className="text-5xl font-bold leading-[1.08] tracking-[-0.02em]">
+            <h1 className="text-4xl lg:text-5xl font-bold leading-[1.08] tracking-[-0.02em]">
               {t.hero.titleLine1}
               <br />
               {t.hero.titleLine2}
@@ -26,13 +26,13 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-center lg:justify-end">
             <CreditCalculator />
           </div>
         </section>
 
         <section className="border-t border-border">
-          <div className="mx-auto max-w-6xl px-6 py-16 grid grid-cols-3 gap-6">
+          <div className="mx-auto max-w-6xl px-6 py-16 grid grid-cols-1 lg:grid-cols-3 gap-6">
             {t.features.map((feature) => (
               <div
                 key={feature.title}

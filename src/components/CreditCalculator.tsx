@@ -32,7 +32,7 @@ export default function CreditCalculator() {
   const displayedTotal = useAnimatedNumber(total);
 
   return (
-    <div className="w-full max-w-md rounded-[24px] border border-border bg-surface p-9 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.55)] ring-1 ring-white/5">
+    <div className="w-full max-w-md rounded-[24px] border border-border bg-surface p-7 lg:p-9 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.55)] ring-1 ring-white/5">
       <div className="flex flex-col gap-7">
         <div className="flex flex-col gap-3">
           <div className="flex items-baseline justify-between">

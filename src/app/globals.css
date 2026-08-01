@@ -28,9 +28,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Feste Design-Bühne: Das Layout ist auf exakt --stage-width ausgelegt und
-   wird als Ganzes skaliert. Dadurch bleiben Widgets und Abstände auf jeder
-   Bildschirmauflösung im selben Verhältnis, statt umzubrechen. */
+/* Feste Design-Bühne: Ab 1024px ist das Layout auf exakt 1440px ausgelegt und
+   wird als Ganzes skaliert. Dadurch bleiben Widgets und Abstände über alle
+   Desktop-Auflösungen im selben Verhältnis, statt umzubrechen.
+   Darunter schaltet das Skript auf eine fluide Handy-Ansicht in natürlicher
+   Größe um (Zoom 1), damit dort nichts winzig skaliert wird. */
 :root {
   --stage-width: 1440px;
   --stage-zoom: 1;
