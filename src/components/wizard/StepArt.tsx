@@ -227,13 +227,27 @@ export default function StepArt() {
             // erreicht. Die Fläche, die tatsächlich annimmt, geht über ::after
             // noch einmal 6px darüber hinaus — man trifft es also auch knapp
             // daneben.
-            className={`absolute top-3 right-3 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full border text-[0.72rem] font-bold leading-none transition-colors duration-200 after:absolute after:-inset-1.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-accent/40 ${
+            className={`absolute top-3 right-3 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full border transition-colors duration-200 after:absolute after:-inset-1.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-accent/40 ${
               offen === option.id
                 ? "border-accent bg-accent text-accent-foreground"
                 : "border-accent/50 text-accent hover:bg-accent/15"
             }`}
           >
-            i
+            {/* Das i als Zeichnung statt als Buchstabe. Zentriert wird sonst
+                die Zeilenbox, nicht die Tinte — und weil das i keine
+                Unterlänge hat, saß es gemessen 4,5px über der Kreismitte.
+                Wie stark, hinge zudem an der jeweils geladenen Schrift und
+                fiele auf anderen Geräten wieder anders aus. Hier liegt die
+                Tinte per Konstruktion genau in der Mitte. */}
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="h-4 w-4"
+            >
+              <circle cx="12" cy="7.6" r="1.7" />
+              <rect x="10.5" y="11" width="3" height="7" rx="1.5" />
+            </svg>
           </button>
         )}
       </div>
