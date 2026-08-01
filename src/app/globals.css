@@ -205,6 +205,16 @@ input[type="range"]:active::-moz-range-thumb {
     0 0 0 7px rgba(52, 211, 153, 0.22);
 }
 
+/* Hervorhebung der vier häufigsten Verwendungszwecke: nur eine leicht
+   angehobene Fläche, kein eigener Rahmen. Als eigene Regel statt als
+   Hilfsklasse, weil zwei Hintergrundklassen an derselben Karte einander
+   aufheben — welche gewinnt, entscheidet die Reihenfolge im Stylesheet und
+   nicht die im Markup. Diese Regel steht nach Tailwind und gewinnt deshalb
+   zuverlässig. */
+.zweck-betont {
+  background-color: color-mix(in oklab, var(--accent) 10%, var(--surface-2));
+}
+
 /* Der Zweck-Hinweis fährt hinter dem Hauptfenster hervor. Die Kurve setzt
    zügig an und läuft weich aus — das liest sich als Herausziehen statt als
    Sprung. Die Deckkraft folgt schneller, damit er beim Verlassen des Fensters

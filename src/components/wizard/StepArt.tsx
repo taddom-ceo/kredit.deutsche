@@ -172,11 +172,13 @@ export default function StepArt() {
               className={`relative rounded-[16px] border bg-surface-2 transition-all duration-200 hover:border-foreground hover:-translate-y-px ${
                 active
                   ? "border-foreground ring-1 ring-foreground/30"
-                  : betont
-                    ? // Die vier häufigsten Zwecke bekommen einen ruhigen
-                      // Akzentrand mit leichter Tönung.
-                      "border-accent/45 bg-accent/[0.07]"
-                    : "border-border"
+                  : "border-border"
+              } ${
+                // Die vier häufigsten Zwecke heben sich allein durch eine
+                // leichte Tönung ab. Der Rahmen bleibt neutral wie bei allen
+                // übrigen, damit Weiß eindeutig für Überfahren und Auswahl
+                // steht und sonst nichts um Aufmerksamkeit konkurriert.
+                betont && !active ? "zweck-betont" : ""
               }`}
             >
               {/* Die Auswahlfläche liegt als eigene Schaltfläche unter dem
