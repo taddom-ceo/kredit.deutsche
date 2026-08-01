@@ -212,7 +212,11 @@ export default function StepArt() {
                   // trifft es also auch knapp daneben. align-middle und -my-1.5
                   // halten die Zeilenhöhe des Titels: Ohne beides zöge das
                   // größere Symbol die Zeile und damit die Karte auseinander.
-                  className={`pointer-events-auto relative ml-1.5 -my-1.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border align-middle text-[0.72rem] font-bold leading-none transition-colors duration-200 after:absolute after:-inset-1.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                  // align-middle richtet an der Mittellänge aus, nicht an den
+                  // Versalien — gemessen saß das Symbol dadurch rund einen
+                  // Pixel zu tief. -top-px gleicht das rein optisch aus, ohne
+                  // am Textfluss etwas zu ändern.
+                  className={`pointer-events-auto relative -top-px ml-1.5 -my-1.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border align-middle text-[0.72rem] font-bold leading-none transition-colors duration-200 after:absolute after:-inset-1.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-accent/40 ${
                     offen === option.id
                       ? "border-accent bg-accent text-accent-foreground"
                       : "border-accent/50 text-accent hover:bg-accent/15"

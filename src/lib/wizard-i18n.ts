@@ -11,6 +11,8 @@ export interface WizardTranslations {
     stepLabels: string[];
     timeRemaining: string;
     stepAriaPrefix: string;
+    // "Schritt 3 von 8" — {n} und {gesamt} werden ersetzt.
+    stepCounter: string;
     saved: string;
   };
   nav: {
@@ -180,6 +182,7 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       ],
       timeRemaining: "Ca. 4 Min. verbleibend",
       stepAriaPrefix: "Schritt",
+      stepCounter: "Schritt {n} von {gesamt}",
       saved: "Gespeichert",
     },
     nav: {
@@ -476,6 +479,7 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       ],
       timeRemaining: "Approx. 4 min. remaining",
       stepAriaPrefix: "Step",
+      stepCounter: "Step {n} of {gesamt}",
       saved: "Saved",
     },
     nav: {
