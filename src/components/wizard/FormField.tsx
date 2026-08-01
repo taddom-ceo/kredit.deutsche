@@ -32,11 +32,16 @@ export function FormSelect({
   label,
   children,
   className,
+  // Erlaubt es, den Innenabstand des Auswahlfeldes zu überschreiben. Nötig
+  // dort, wo mehrere Felder eine Zeile teilen: Der Standardabstand kostet
+  // Platz, den der Text auf schmalen Handys braucht.
+  selectClassName,
   ...selectProps
 }: {
   label: string;
   children: React.ReactNode;
   className?: string;
+  selectClassName?: string;
 } & React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <div className={`flex flex-col gap-2 ${className ?? ""}`}>
@@ -45,7 +50,9 @@ export function FormSelect({
       </label>
       <select
         {...selectProps}
-        className="rounded-[16px] border border-border bg-surface-2 px-4 py-2.5 text-sm text-foreground transition-colors duration-200 hover:border-border-strong focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+        className={`rounded-[16px] border border-border bg-surface-2 py-2.5 text-sm text-foreground transition-colors duration-200 hover:border-border-strong focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
+          selectClassName ?? "px-4"
+        }`}
       >
         {children}
       </select>
