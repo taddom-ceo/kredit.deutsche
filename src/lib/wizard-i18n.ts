@@ -65,10 +65,13 @@ export interface WizardTranslations {
     subtitle: string;
     trust: string[];
     vorname: string;
+    zweiterVorname: string;
     nachname: string;
     geburtsdatum: string;
     email: string;
     telefon: string;
+    geburtsdatumTooYoung: string;
+    geburtsdatumImplausible: string;
   };
   step5: {
     eyebrow: string;
@@ -267,10 +270,14 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
         "Kostenlos und unverbindlich",
       ],
       vorname: "Vorname",
+      zweiterVorname: "Zweiter Vorname (optional)",
       nachname: "Nachname",
       geburtsdatum: "Geburtsdatum",
       email: "E-Mail-Adresse",
       telefon: "Telefonnummer",
+      geburtsdatumTooYoung:
+        "Für einen Kreditantrag müssen Sie mindestens 18 Jahre alt sein.",
+      geburtsdatumImplausible: "Bitte prüfen Sie das Geburtsdatum.",
     },
     step5: {
       eyebrow: "5/8 · Adresse",
@@ -494,10 +501,14 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
         "Free and non-binding",
       ],
       vorname: "First name",
+      zweiterVorname: "Middle name (optional)",
       nachname: "Last name",
       geburtsdatum: "Date of birth",
       email: "Email address",
       telefon: "Phone number",
+      geburtsdatumTooYoung:
+        "You must be at least 18 years old to apply for a loan.",
+      geburtsdatumImplausible: "Please check the date of birth.",
     },
     step5: {
       eyebrow: "5/8 · Address",

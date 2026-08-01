@@ -19,6 +19,7 @@ export interface WizardData {
   months: number;
   personCount: 1 | 2 | null;
   vorname: string;
+  zweiterVorname: string;
   nachname: string;
   geburtsdatum: string;
   email: string;
@@ -49,6 +50,7 @@ const initialData: WizardData = {
   months: 72,
   personCount: null,
   vorname: "",
+  zweiterVorname: "",
   nachname: "",
   geburtsdatum: "",
   email: "",
