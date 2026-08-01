@@ -77,6 +77,22 @@ export const COUNTRY_DIAL_CODES: { iso: string; dial: string }[] = [
 export const PINNED_ISO = ["DE", "AT", "CH"];
 
 export const DEFAULT_DIAL_CODE = "+49";
+export const DEFAULT_COUNTRY_ISO = "DE";
+
+// Flaggen-Emoji aus dem ISO-Code: Jeder Buchstabe wird auf sein
+// Regional-Indicator-Zeichen abgebildet, aus "DE" wird so 🇩🇪. Dadurch werden
+// keine Bilddateien gebraucht.
+export function flagEmoji(iso: string) {
+  return String.fromCodePoint(
+    ...[...iso.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65)
+  );
+}
+
+// Die Vorwahl wird aus dem Land abgeleitet statt gespeichert — sonst wären
+// Länder mit gleicher Vorwahl nicht unterscheidbar (USA und Kanada teilen +1).
+export function dialForIso(iso: string) {
+  return COUNTRY_DIAL_CODES.find((c) => c.iso === iso)?.dial ?? "";
+}
 
 // Liefert die Auswahlliste, alphabetisch nach dem lokalisierten Ländernamen,
 // mit den angehefteten Ländern zuerst.

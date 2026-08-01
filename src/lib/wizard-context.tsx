@@ -6,7 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { DEFAULT_DIAL_CODE } from "./country-codes";
+import { DEFAULT_COUNTRY_ISO } from "./country-codes";
 
 export interface WizardData {
   step: number;
@@ -69,7 +69,8 @@ const initialData: WizardData = {
   geburtsjahr: "",
   geburtsdatum: "",
   email: "",
-  telefonLand: DEFAULT_DIAL_CODE,
+  // ISO-Code des Landes; die Vorwahl wird daraus abgeleitet.
+  telefonLand: DEFAULT_COUNTRY_ISO,
   telefonVorwahl: "",
   telefon: "",
   strasse: "",

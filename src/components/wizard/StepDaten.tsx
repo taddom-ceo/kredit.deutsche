@@ -6,7 +6,7 @@ import { wizardTranslations } from "@/lib/wizard-i18n";
 import { useWizard } from "@/lib/wizard-context";
 import WizardStepLayout from "./WizardStepLayout";
 import { FormField, FormSelect } from "./FormField";
-import { dialCodeOptions } from "@/lib/country-codes";
+import { dialCodeOptions, dialForIso, flagEmoji } from "@/lib/country-codes";
 
 // Volljährigkeit ist Voraussetzung für einen Kreditvertrag; die Obergrenze
 // fängt Tippfehler wie das Jahr 0511 ab, ohne reale Antragsteller auszuschließen.
@@ -235,48 +235,61 @@ export default function StepDaten() {
         onChange={(e) => update({ email: e.target.value })}
         error={emailError}
       />
-      <div className="grid grid-cols-1 lg:grid-cols-[9.5rem_5.5rem_1fr] gap-4">
-        <FormSelect
-          id="telefonLand"
-          label={wt.step4.telefonLand}
-          value={data.telefonLand}
-          onChange={(e) => update({ telefonLand: e.target.value })}
-        >
-          {countries.map(({ iso, dial, name }) => (
-            <option key={iso} value={dial}>
-              {dial} {name}
-            </option>
-          ))}
-        </FormSelect>
-        <FormField
-          id="telefonVorwahl"
-          type="tel"
-          inputMode="numeric"
-          label={wt.step4.telefonVorwahl}
-          value={data.telefonVorwahl}
-          maxLength={AREA_CODE_MAX}
-          onChange={(e) =>
-            update({
-              telefonVorwahl: e.target.value
-                .replace(/\D/g, "")
-                .slice(0, AREA_CODE_MAX),
-            })
-          }
-          error={areaCodeError}
-        />
-        <FormField
-          id="telefon"
-          type="tel"
-          inputMode="numeric"
-          label={wt.step4.telefon}
-          value={data.telefon}
-          maxLength={SUBSCRIBER_MAX}
-          onChange={(e) =>
-            update({
-              telefon: e.target.value.replace(/\D/g, "").slice(0, SUBSCRIBER_MAX),
-            })
-          }
-        />
+      <FormSelect
+        id="telefonLand"
+        label={wt.step4.telefonLand}
+        value={data.telefonLand}
+        onChange={(e) => update({ telefonLand: e.target.value })}
+      >
+        {countries.map(({ iso, name }) => (
+          <option key={iso} value={iso}>
+            {flagEmoji(iso)} {name}
+          </option>
+        ))}
+      </FormSelect>
+
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-medium text-muted">
+          {wt.step4.telefon}
+        </span>
+        {/* items-end richtet die feste Vorwahl an den Eingabefeldern aus,
+            obwohl sie keine eigene Beschriftung trägt. */}
+        <div className="grid grid-cols-[auto_5.5rem_1fr] gap-3 items-end">
+          <span className="rounded-[16px] border border-border bg-surface px-4 py-2.5 text-sm text-muted tabular-nums whitespace-nowrap">
+            {dialForIso(data.telefonLand)}
+          </span>
+          <FormField
+            id="telefonVorwahl"
+            type="tel"
+            inputMode="numeric"
+            label={wt.step4.telefonVorwahl}
+            value={data.telefonVorwahl}
+            maxLength={AREA_CODE_MAX}
+            onChange={(e) =>
+              update({
+                telefonVorwahl: e.target.value
+                  .replace(/\D/g, "")
+                  .slice(0, AREA_CODE_MAX),
+              })
+            }
+            error={areaCodeError}
+          />
+          <FormField
+            id="telefon"
+            type="tel"
+            inputMode="numeric"
+            label={wt.step4.telefonNummer}
+            value={data.telefon}
+            maxLength={SUBSCRIBER_MAX}
+            onChange={(e) =>
+              update({
+                telefon: e.target.value
+                  .replace(/\D/g, "")
+                  .slice(0, SUBSCRIBER_MAX),
+              })
+            }
+          />
+        </div>
       </div>
     </WizardStepLayout>
   );
