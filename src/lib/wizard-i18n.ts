@@ -201,6 +201,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
           id: "frei",
           title: "Freie Verwendung",
           description: "Ohne festgelegten Zweck",
+          hinweis:
+            "Sie müssen nicht angeben, wofür das Geld gedacht ist, und keine Belege nachreichen. Das ist der flexibelste Weg — und meist auch der schnellste bis zur Auszahlung.",
         },
         {
           id: "fahrzeug",
@@ -220,11 +222,15 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
           id: "modernisierung",
           title: "Modernisierung/Baufinanzierung",
           description: "Umbau, Sanierung oder Hauskauf",
+          hinweis:
+            "Für Umbau und Sanierung ist meist kein Grundbucheintrag nötig — das spart Notarkosten und Wochen an Bearbeitungszeit. Viele Banken vergeben hier längere Laufzeiten und damit niedrigere Monatsraten.",
         },
         {
           id: "dispo",
           title: "Dispo/Kreditkarten Ausgleich",
           description: "Teure Kontoüberziehung ausgleichen",
+          hinweis:
+            "Dispozinsen liegen häufig im zweistelligen Bereich, ein Ratenkredit deutlich darunter. Wer den Dispo ablöst, senkt die monatliche Belastung spürbar und hat wieder einen festen Tilgungsplan.",
         },
         {
           id: "ratenkauf",
@@ -498,6 +504,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
           id: "frei",
           title: "General purpose",
           description: "No specific purpose",
+          hinweis:
+            "You do not have to state what the money is for, and no receipts are required. This is the most flexible option — and usually the quickest to pay out.",
         },
         {
           id: "fahrzeug",
@@ -517,11 +525,15 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
           id: "modernisierung",
           title: "Modernisation/mortgage",
           description: "Renovation, refurbishment or home purchase",
+          hinweis:
+            "Renovation and refurbishment rarely require a land register entry — that saves notary fees and weeks of processing. Many banks also offer longer terms here, and therefore lower monthly instalments.",
         },
         {
           id: "dispo",
           title: "Overdraft/credit card settlement",
           description: "Settle an expensive overdraft",
+          hinweis:
+            "Overdraft rates are often in double digits, an instalment loan well below that. Clearing the overdraft noticeably lowers the monthly burden and restores a fixed repayment plan.",
         },
         {
           id: "ratenkauf",
