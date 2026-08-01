@@ -13,6 +13,13 @@ import { dialCodeOptions, dialForIso, flagSrc } from "@/lib/country-codes";
 const MIN_AGE = 18;
 const MAX_AGE = 100;
 
+// Ein Name beginnt mit einem Buchstaben und enthält danach keine Ziffern.
+// Bewusst weit gefasst: Umlaute und diakritische Zeichen (Öztürk, Nguyễn),
+// Bindestriche (Anna-Maria), Apostrophe (O'Brien) und Leerzeichen
+// (van der Berg) müssen durchgehen — eine zu enge Regel weist echte
+// Antragsteller ab, was teurer ist als eine erfundene Eingabe.
+const NAME = /^\p{L}[\p{L}\p{M}\s.'’-]*$/u;
+
 // Deutsche Ortsnetzkennzahlen sind 2 bis 5 Ziffern lang, mit führender Null
 // also 3 bis 6 — von "30"/"030" (Berlin) bis "036841". Mobilfunkvorwahlen wie
 // "0170" liegen dazwischen. Sechs Ziffern decken damit beide Schreibweisen ab.
@@ -127,9 +134,20 @@ export default function StepDaten() {
   const emailOk = atIndex > 0 && atIndex < email.length - 1;
   const emailError = email !== "" && !emailOk ? wt.step4.emailInvalid : undefined;
 
+  const vornameOk = NAME.test(data.vorname.trim());
+  const nachnameOk = NAME.test(data.nachname.trim());
+  // Der zweite Vorname ist freiwillig — leer ist in Ordnung, gefüllt muss er
+  // aber denselben Anforderungen genügen.
+  const zweiterVornameOk =
+    data.zweiterVorname.trim() === "" || NAME.test(data.zweiterVorname.trim());
+
+  const nameError = (value: string, ok: boolean) =>
+    value.trim() !== "" && !ok ? wt.step4.nameInvalid : undefined;
+
   const valid =
-    data.vorname.trim() !== "" &&
-    data.nachname.trim() !== "" &&
+    vornameOk &&
+    nachnameOk &&
+    zweiterVornameOk &&
     birthCheck.ok &&
     emailOk &&
     data.telefonLand !== "" &&
@@ -158,6 +176,7 @@ export default function StepDaten() {
           label={wt.step4.vorname}
           value={data.vorname}
           onChange={(e) => update({ vorname: e.target.value })}
+          error={nameError(data.vorname, vornameOk)}
         />
         <FormField
           id="zweiterVorname"
@@ -165,12 +184,14 @@ export default function StepDaten() {
           value={data.zweiterVorname}
           onChange={(e) => update({ zweiterVorname: e.target.value })}
           placeholder={wt.step4.optionalHint}
+          error={nameError(data.zweiterVorname, zweiterVornameOk)}
         />
         <FormField
           id="nachname"
           label={wt.step4.nachname}
           value={data.nachname}
           onChange={(e) => update({ nachname: e.target.value })}
+          error={nameError(data.nachname, nachnameOk)}
         />
       </div>
       <div className="flex flex-col gap-2">
