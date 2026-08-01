@@ -1,6 +1,13 @@
 @import "tailwindcss";
 
 :root {
+  /* Die Kalender-Popups von Datums- und Monatsfeldern sind Browser-Oberfläche
+     und liegen außerhalb der Seite — sie lassen sich nicht per CSS einfärben.
+     color-scheme ist der einzige Hebel: Er weist den Browser an, seine
+     eigenen Bedienelemente dunkel zu rendern. Wirkt außerdem auf
+     Auswahllisten, Bildlaufleisten und Autofill. */
+  color-scheme: dark;
+
   --background: #070c18;
   --surface: #0f1c37;
   --surface-2: #15264a;
@@ -71,6 +78,30 @@ body {
 :focus-visible {
   outline: 2px solid transparent;
   outline-offset: 2px;
+}
+
+/* Kalendersymbol in Datums- und Monatsfeldern: durch color-scheme wird es
+   bereits hell gezeichnet, hier bekommt es nur noch die Zurückhaltung der
+   übrigen Bedienelemente. */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 200ms ease;
+}
+
+input[type="date"]:hover::-webkit-calendar-picker-indicator,
+input[type="month"]:hover::-webkit-calendar-picker-indicator,
+input[type="date"]:focus-visible::-webkit-calendar-picker-indicator,
+input[type="month"]:focus-visible::-webkit-calendar-picker-indicator {
+  opacity: 1;
+}
+
+/* Noch nicht ausgefülltes Datum ("tt.mm.jjjj") gedämpft wie ein Platzhalter,
+   der eingegebene Wert dagegen in voller Textfarbe. */
+input[type="date"]:invalid::-webkit-datetime-edit,
+input[type="month"]:invalid::-webkit-datetime-edit {
+  color: var(--muted);
 }
 
 /* Premium range slider */
