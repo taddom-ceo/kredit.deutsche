@@ -205,12 +205,16 @@ export default function StepDaten() {
         <span className="text-sm font-medium text-muted">
           {wt.step4.geburtsdatum}
         </span>
-        {/* Der Tag braucht kaum Platz, das Jahr eine feste Breite — der Rest
-            geht an den Monat, damit "September" und "Dezember" auch auf
-            schmalen Bildschirmen vollständig lesbar bleiben. */}
-        <div className="grid grid-cols-[4.75rem_1fr_5.75rem] gap-3">
+        {/* Anteile statt fester Breiten: Feste rem-Breiten wachsen mit der
+            Schriftgröße, die Kartenbreite nicht — auf schmalen Bildschirmen
+            ragte das Jahr dadurch über den Rand. Der Monat bekommt den
+            größten Anteil, damit "September" vollständig lesbar bleibt.
+            Auf dem Handy fallen Abstand und Innenabstand knapper aus, weil
+            drei Felder dort sonst keinen Platz für ihren Text lassen. */}
+        <div className="grid grid-cols-[minmax(0,5fr)_minmax(0,10fr)_minmax(0,7fr)] gap-2 sm:gap-3">
           <FormSelect
             id="geburtstag"
+            selectClassName="px-2 sm:px-4"
             label={wt.step4.geburtstag}
             value={data.geburtstag}
             onChange={(e) => updateBirthPart({ geburtstag: e.target.value })}
@@ -226,6 +230,7 @@ export default function StepDaten() {
           </FormSelect>
           <FormSelect
             id="geburtsmonat"
+            selectClassName="px-2 sm:px-4"
             label={wt.step4.geburtsmonat}
             value={data.geburtsmonat}
             onChange={(e) => updateBirthPart({ geburtsmonat: e.target.value })}
@@ -239,6 +244,7 @@ export default function StepDaten() {
           </FormSelect>
           <FormSelect
             id="geburtsjahr"
+            selectClassName="px-2 sm:px-4"
             label={wt.step4.geburtsjahr}
             value={data.geburtsjahr}
             onChange={(e) => updateBirthPart({ geburtsjahr: e.target.value })}
@@ -281,8 +287,12 @@ export default function StepDaten() {
           {wt.step4.telefon}
         </span>
         {/* items-end richtet die feste Vorwahl an den Eingabefeldern aus,
-            obwohl sie keine eigene Beschriftung trägt. */}
-        <div className="grid grid-cols-[auto_5.5rem_1fr] gap-3 items-end">
+            obwohl sie keine eigene Beschriftung trägt.
+            Auf schmalen Handys reicht die Zeile für drei Felder nicht: Nach
+            Ländervorwahl und Ortsvorwahl bliebe für die Rufnummer zu wenig
+            Platz, ihr Text würde weggescrollt. Dort rutscht die Rufnummer
+            deshalb in eine eigene Zeile über die volle Breite. */}
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] sm:grid-cols-[auto_minmax(0,4fr)_minmax(0,6fr)] gap-3 items-end">
           <span className="flex items-center gap-2 rounded-[16px] border border-border bg-surface px-3 py-2.5 text-sm text-muted tabular-nums whitespace-nowrap">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -312,6 +322,7 @@ export default function StepDaten() {
           />
           <FormField
             id="telefon"
+            className="col-span-2 sm:col-span-1"
             type="tel"
             inputMode="numeric"
             label={wt.step4.telefonNummer}

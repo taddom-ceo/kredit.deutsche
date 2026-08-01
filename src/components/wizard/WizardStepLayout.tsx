@@ -33,7 +33,7 @@ export default function WizardStepLayout({
   const wt = wizardTranslations[lang];
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
       <div className="flex flex-col gap-6">
         <span className="inline-flex w-fit items-center rounded-full border border-border bg-surface px-3 py-1 text-[11px] font-semibold text-muted tracking-wide">
           {eyebrow}
@@ -55,7 +55,10 @@ export default function WizardStepLayout({
         </ul>
       </div>
 
-      <div className="rounded-[24px] border border-border bg-surface p-7 lg:p-9 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.55)] ring-1 ring-white/5 flex flex-col gap-7">
+      {/* Auf schmalen Handys fällt der Innenabstand knapper aus: Mit der
+          größeren Schrift braucht der Inhalt die Breite dringender als der
+          Rahmen. */}
+      <div className="rounded-[24px] border border-border bg-surface p-5 sm:p-7 lg:p-9 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.55)] ring-1 ring-white/5 flex flex-col gap-7">
         {children}
 
         {showNav && (
