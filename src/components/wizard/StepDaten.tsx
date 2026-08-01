@@ -5,7 +5,8 @@ import { useLanguage } from "@/lib/language-context";
 import { wizardTranslations } from "@/lib/wizard-i18n";
 import { useWizard } from "@/lib/wizard-context";
 import WizardStepLayout from "./WizardStepLayout";
-import { FormField } from "./FormField";
+import { FormField, FormSelect } from "./FormField";
+import { dialCodeOptions } from "@/lib/country-codes";
 
 // Volljährigkeit ist Voraussetzung für einen Kreditvertrag; die Obergrenze
 // fängt Tippfehler wie das Jahr 0511 ab, ohne reale Antragsteller auszuschließen.
@@ -59,11 +60,19 @@ export default function StepDaten() {
     return { ok: true, error: undefined };
   }, [birth, wt]);
 
+  const countries = useMemo(() => dialCodeOptions(lang), [lang]);
+
+  const email = data.email.trim();
+  const emailOk = email !== "" && email.includes("@");
+  const emailError = email !== "" && !emailOk ? wt.step4.emailInvalid : undefined;
+
   const valid =
     data.vorname.trim() !== "" &&
     data.nachname.trim() !== "" &&
     birthCheck.ok &&
-    data.email.trim() !== "" &&
+    emailOk &&
+    data.telefonLand !== "" &&
+    data.telefonVorwahl.trim() !== "" &&
     data.telefon.trim() !== "";
 
   return (
@@ -114,14 +123,42 @@ export default function StepDaten() {
         label={wt.step4.email}
         value={data.email}
         onChange={(e) => update({ email: e.target.value })}
+        error={emailError}
       />
-      <FormField
-        id="telefon"
-        type="tel"
-        label={wt.step4.telefon}
-        value={data.telefon}
-        onChange={(e) => update({ telefon: e.target.value })}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-[9.5rem_5.5rem_1fr] gap-4">
+        <FormSelect
+          id="telefonLand"
+          label={wt.step4.telefonLand}
+          value={data.telefonLand}
+          onChange={(e) => update({ telefonLand: e.target.value })}
+        >
+          {countries.map(({ iso, dial, name }) => (
+            <option key={iso} value={dial}>
+              {dial} {name}
+            </option>
+          ))}
+        </FormSelect>
+        <FormField
+          id="telefonVorwahl"
+          type="tel"
+          inputMode="numeric"
+          label={wt.step4.telefonVorwahl}
+          value={data.telefonVorwahl}
+          onChange={(e) =>
+            update({ telefonVorwahl: e.target.value.replace(/\D/g, "") })
+          }
+        />
+        <FormField
+          id="telefon"
+          type="tel"
+          inputMode="numeric"
+          label={wt.step4.telefon}
+          value={data.telefon}
+          onChange={(e) =>
+            update({ telefon: e.target.value.replace(/\D/g, "") })
+          }
+        />
+      </div>
     </WizardStepLayout>
   );
 }

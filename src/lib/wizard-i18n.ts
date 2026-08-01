@@ -70,7 +70,10 @@ export interface WizardTranslations {
     nachname: string;
     geburtsdatum: string;
     email: string;
+    emailInvalid: string;
     telefon: string;
+    telefonLand: string;
+    telefonVorwahl: string;
     geburtsdatumTooYoung: string;
     geburtsdatumImplausible: string;
   };
@@ -276,7 +279,10 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       nachname: "Nachname",
       geburtsdatum: "Geburtsdatum",
       email: "E-Mail-Adresse",
+      emailInvalid: "Die E-Mail-Adresse muss ein @-Zeichen enthalten.",
       telefon: "Telefonnummer",
+      telefonLand: "Ländervorwahl",
+      telefonVorwahl: "Vorwahl",
       geburtsdatumTooYoung:
         "Für einen Kreditantrag müssen Sie mindestens 18 Jahre alt sein.",
       geburtsdatumImplausible: "Bitte prüfen Sie das Geburtsdatum.",
@@ -508,7 +514,10 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       nachname: "Last name",
       geburtsdatum: "Date of birth",
       email: "Email address",
+      emailInvalid: "The email address must contain an @ sign.",
       telefon: "Phone number",
+      telefonLand: "Country code",
+      telefonVorwahl: "Area code",
       geburtsdatumTooYoung:
         "You must be at least 18 years old to apply for a loan.",
       geburtsdatumImplausible: "Please check the date of birth.",
