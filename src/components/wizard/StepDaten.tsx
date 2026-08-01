@@ -29,16 +29,14 @@ const AREA_CODE_MAX = 6;
 // für den Teilnehmeranschluss bleiben damit höchstens zwölf.
 const SUBSCRIBER_MAX = 12;
 
-// Wie viele Tage der gewählte Monat hat.
-//
-// Ohne Monat steht die Länge noch nicht fest, dann sind 31 Tage die Obergrenze.
-// Ist der Monat gewählt, aber noch kein Jahr, wird die größtmögliche Länge
-// dieses Monats angesetzt — über ein Schaltjahr als Bezug. Sonst stünde bei
-// gewähltem Februar weiterhin der 31. zur Auswahl, obwohl es ihn nie gibt.
-function daysInMonth(year: number, month: number) {
-  if (!month) return 31;
-  const reference = year || 2000; // 2000 ist ein Schaltjahr
-  return new Date(reference, month, 0).getDate();
+// Größtmögliche Tageszahl je Monat, unabhängig vom Jahr. Der Februar steht
+// mit 29 darin, weil es diesen Tag in Schaltjahren gibt.
+const MAX_DAYS_PER_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+// Ohne gewählten Monat steht die Länge noch nicht fest, dann sind 31 Tage die
+// Obergrenze.
+function maxDaysInMonth(month: number) {
+  return MAX_DAYS_PER_MONTH[month - 1] ?? 31;
 }
 
 function composeIsoDate(year: string, month: string, day: string) {
@@ -80,10 +78,7 @@ export default function StepDaten() {
     }));
   }, [lang]);
 
-  const dayCount = daysInMonth(
-    Number(data.geburtsjahr),
-    Number(data.geburtsmonat)
-  );
+  const dayCount = maxDaysInMonth(Number(data.geburtsmonat));
 
   // Jede Teiländerung setzt zugleich den zusammengesetzten ISO-Wert neu.
   function updateBirthPart(patch: {
@@ -95,10 +90,10 @@ export default function StepDaten() {
     const month = patch.geburtsmonat ?? data.geburtsmonat;
     const year = patch.geburtsjahr ?? data.geburtsjahr;
     // Ein bereits gewählter 31. passt nicht mehr, wenn danach ein kürzerer
-    // Monat gewählt wird. Stillschweigend auf den 28. zu ändern wäre bei einem
+    // Monat gewählt wird. Stillschweigend zu kürzen wäre bei einem
     // Geburtsdatum falsch — deshalb wird der Tag geleert und neu abgefragt.
     const validDay =
-      day && Number(day) > daysInMonth(Number(year), Number(month)) ? "" : day;
+      day && Number(day) > maxDaysInMonth(Number(month)) ? "" : day;
     update({
       geburtstag: validDay,
       geburtsmonat: month,
@@ -111,7 +106,14 @@ export default function StepDaten() {
   const birthCheck = useMemo(() => {
     if (birth === "") return { ok: false, error: undefined as string | undefined };
     const parsed = new Date(birth);
-    if (Number.isNaN(parsed.getTime())) {
+    // Ein nicht existierender Tag ergibt kein ungültiges Datum, sondern rutscht
+    // weiter: Aus dem 29.02.1990 wird stillschweigend der 01.03.1990. Der
+    // Rückvergleich deckt das auf, statt ein falsches Geburtsdatum zu
+    // übernehmen. Der 29. Februar bleibt in Schaltjahren gültig.
+    if (
+      Number.isNaN(parsed.getTime()) ||
+      parsed.toISOString().slice(0, 10) !== birth
+    ) {
       return { ok: false, error: wt.step4.geburtsdatumImplausible };
     }
     const age = ageAt(parsed, new Date());
