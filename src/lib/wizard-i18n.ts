@@ -279,7 +279,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       nachname: "Nachname",
       geburtsdatum: "Geburtsdatum",
       email: "E-Mail-Adresse",
-      emailInvalid: "Die E-Mail-Adresse muss ein @-Zeichen enthalten.",
+      emailInvalid:
+        "Bitte eine vollständige E-Mail-Adresse eingeben, z. B. name@anbieter.de.",
       telefon: "Telefonnummer",
       telefonLand: "Ländervorwahl",
       telefonVorwahl: "Vorwahl",
@@ -514,7 +515,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       nachname: "Last name",
       geburtsdatum: "Date of birth",
       email: "Email address",
-      emailInvalid: "The email address must contain an @ sign.",
+      emailInvalid:
+        "Please enter a complete email address, e.g. name@provider.com.",
       telefon: "Phone number",
       telefonLand: "Country code",
       telefonVorwahl: "Area code",
