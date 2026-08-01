@@ -68,7 +68,12 @@ export default function StepArt() {
               // sie hinter den Karten darunter.
               className={`group relative hover:z-30 focus-visible:z-30 text-left rounded-[16px] border bg-surface-2 p-4 flex items-center justify-between gap-3 transition-all duration-200 hover:border-border-strong hover:-translate-y-px focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
                 active
-                  ? "border-accent ring-1 ring-accent/40"
+                  ? // Der gewählte Zweck bekommt einen weißen Rahmen: Grün ist
+                    // hier bereits die Farbe der Hervorhebung, beides wäre
+                    // nicht auseinanderzuhalten. Der Rahmen wird beim
+                    // Überfahren ausdrücklich gehalten, sonst überschriebe ihn
+                    // hover:border-border-strong.
+                    "border-foreground hover:border-foreground ring-1 ring-foreground/30"
                   : betont
                     ? "accent-breathe bg-accent/[0.07]"
                     : "border-border"
