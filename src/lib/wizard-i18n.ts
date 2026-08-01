@@ -77,6 +77,7 @@ export interface WizardTranslations {
     emailInvalid: string;
     telefon: string;
     telefonLand: string;
+    telefonNummer: string;
     telefonVorwahl: string;
     telefonVorwahlTooShort: string;
     geburtsdatumTooYoung: string;
@@ -297,7 +298,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       emailInvalid:
         "Bitte eine vollständige E-Mail-Adresse eingeben, z. B. name@anbieter.de.",
       telefon: "Telefonnummer",
-      telefonLand: "Ländervorwahl",
+      telefonLand: "Land",
+      telefonNummer: "Rufnummer",
       telefonVorwahl: "Vorwahl",
       telefonVorwahlTooShort: "Mindestens zwei Ziffern.",
       geburtsdatumTooYoung:
@@ -546,7 +548,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       emailInvalid:
         "Please enter a complete email address, e.g. name@provider.com.",
       telefon: "Phone number",
-      telefonLand: "Country code",
+      telefonLand: "Country",
+      telefonNummer: "Number",
       telefonVorwahl: "Area code",
       telefonVorwahlTooShort: "At least two digits.",
       geburtsdatumTooYoung:
