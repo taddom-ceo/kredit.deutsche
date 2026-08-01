@@ -188,50 +188,54 @@ export default function StepArt() {
           className="absolute inset-0 rounded-[16px] focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
         />
         {/* Der Inhalt liegt darüber, lässt Klicks aber durch — nur das ⓘ
-            nimmt sie wieder an. */}
-        <span className="pointer-events-none relative flex items-center justify-between gap-3 p-4">
+            nimmt sie wieder an.
+            pr-11 hält die rechte Spalte frei: Dort stehen ⓘ und Pfeil, der
+            Text soll nicht darunter laufen. */}
+        <span className="pointer-events-none relative flex flex-col gap-0.5 p-4 pr-11">
           {/* min-w-0 hebt die Standard-Mindestbreite von Flex-Elementen auf,
               sonst schrumpft der Textblock nicht unter seine Inhaltsbreite und
               lange Bezeichnungen wie "Modernisierung/Baufinanzierung" ragen
               über die Karte hinaus. break-words erlaubt den Umbruch innerhalb
               des Wortes. */}
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="text-sm font-semibold break-words">
-              {withBreakAfterSlash(option.title)}
-              {option.hinweis && (
-                <button
-                  type="button"
-                  data-hinweis-knopf
-                  onClick={(e) => umschalten(option.id, e.currentTarget)}
-                  aria-expanded={offen === option.id}
-                  aria-controls="zweck-hinweis"
-                  aria-label={`${wt.step1.hinweisOeffnen}: ${option.title}`}
-                  // Sichtbar 1,5rem, damit es die 24px Mindestgröße für
-                  // Tippziele erreicht. Die Fläche, die tatsächlich annimmt,
-                  // geht über ::after noch einmal 6px darüber hinaus — man
-                  // trifft es also auch knapp daneben. align-middle und -my-1.5
-                  // halten die Zeilenhöhe des Titels: Ohne beides zöge das
-                  // größere Symbol die Zeile und damit die Karte auseinander.
-                  // align-middle richtet an der Mittellänge aus, nicht an den
-                  // Versalien — gemessen saß das Symbol dadurch rund einen
-                  // Pixel zu tief. -top-px gleicht das rein optisch aus, ohne
-                  // am Textfluss etwas zu ändern.
-                  className={`pointer-events-auto relative -top-px ml-1.5 -my-1.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border align-middle text-[0.72rem] font-bold leading-none transition-colors duration-200 after:absolute after:-inset-1.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-accent/40 ${
-                    offen === option.id
-                      ? "border-accent bg-accent text-accent-foreground"
-                      : "border-accent/50 text-accent hover:bg-accent/15"
-                  }`}
-                >
-                  i
-                </button>
-              )}
-            </span>
-            <span className="text-xs text-muted break-words">
-              {option.description}
-            </span>
+          <span className="min-w-0 text-sm font-semibold break-words">
+            {withBreakAfterSlash(option.title)}
           </span>
-          <span className="text-accent shrink-0">→</span>
+          <span className="min-w-0 text-xs text-muted break-words">
+            {option.description}
+          </span>
         </span>
+
+        {/* Der Pfeil sitzt unten rechts, weil die obere rechte Ecke dem ⓘ
+            gehört. Mittig rechts überschnitten sich beide auf den einzeiligen
+            Kacheln, die nur 79px hoch sind. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-3.5 right-4 text-accent leading-none"
+        >
+          →
+        </span>
+
+        {option.hinweis && (
+          <button
+            type="button"
+            data-hinweis-knopf
+            onClick={(e) => umschalten(option.id, e.currentTarget)}
+            aria-expanded={offen === option.id}
+            aria-controls="zweck-hinweis"
+            aria-label={`${wt.step1.hinweisOeffnen}: ${option.title}`}
+            // Sichtbar 1,5rem, damit es die 24px Mindestgröße für Tippziele
+            // erreicht. Die Fläche, die tatsächlich annimmt, geht über ::after
+            // noch einmal 6px darüber hinaus — man trifft es also auch knapp
+            // daneben.
+            className={`absolute top-3 right-3 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full border text-[0.72rem] font-bold leading-none transition-colors duration-200 after:absolute after:-inset-1.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-accent/40 ${
+              offen === option.id
+                ? "border-accent bg-accent text-accent-foreground"
+                : "border-accent/50 text-accent hover:bg-accent/15"
+            }`}
+          >
+            i
+          </button>
+        )}
       </div>
     );
   }
