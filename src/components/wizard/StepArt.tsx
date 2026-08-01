@@ -1,9 +1,26 @@
 "use client";
 
+import { Fragment } from "react";
 import { useLanguage } from "@/lib/language-context";
 import { wizardTranslations } from "@/lib/wizard-i18n";
 import { useWizard } from "@/lib/wizard-context";
 import WizardStepLayout from "./WizardStepLayout";
+
+// Erlaubt den Zeilenumbruch nach einem Schrägstrich. Ohne diesen Hinweis
+// bricht der Browser innerhalb des Wortes ("Baufin|anzierung"); so entsteht
+// stattdessen "Modernisierung/" und "Baufinanzierung".
+function withBreakAfterSlash(text: string) {
+  return text.split("/").map((part, i, parts) => (
+    <Fragment key={i}>
+      {part}
+      {i < parts.length - 1 && (
+        <>
+          /<wbr />
+        </>
+      )}
+    </Fragment>
+  ));
+}
 
 export default function StepArt() {
   const { lang } = useLanguage();
@@ -39,13 +56,20 @@ export default function StepArt() {
                 active ? "border-accent ring-1 ring-accent/40" : "border-border"
               }`}
             >
-              <span className="flex flex-col gap-0.5">
-                <span className="text-sm font-semibold">{option.title}</span>
-                <span className="text-xs text-muted">
+              {/* min-w-0 hebt die Standard-Mindestbreite von Flex-Elementen
+                  auf, sonst schrumpft der Textblock nicht unter seine
+                  Inhaltsbreite und lange Bezeichnungen wie
+                  "Modernisierung/Baufinanzierung" ragen über die Karte
+                  hinaus. break-words erlaubt den Umbruch innerhalb des Wortes. */}
+              <span className="flex min-w-0 flex-col gap-0.5">
+                <span className="text-sm font-semibold break-words">
+                  {withBreakAfterSlash(option.title)}
+                </span>
+                <span className="text-xs text-muted break-words">
                   {option.description}
                 </span>
               </span>
-              <span className="text-accent">→</span>
+              <span className="text-accent shrink-0">→</span>
             </button>
           );
         })}

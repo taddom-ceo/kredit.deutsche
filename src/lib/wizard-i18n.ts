@@ -197,9 +197,29 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
           description: "Neu- oder Gebrauchtwagen",
         },
         {
+          id: "ebike",
+          title: "E-Bike",
+          description: "Pedelec oder E-Bike",
+        },
+        {
           id: "modernisierung",
           title: "Modernisierung/Baufinanzierung",
           description: "Umbau, Sanierung oder Hauskauf",
+        },
+        {
+          id: "kueche",
+          title: "Küche",
+          description: "Einbauküche oder Geräte",
+        },
+        {
+          id: "moebel",
+          title: "Möbel",
+          description: "Einrichtung und Möbel",
+        },
+        {
+          id: "umzug",
+          title: "Umzug",
+          description: "Umzug und Nebenkosten",
         },
         {
           id: "umschuldung",
@@ -246,7 +266,11 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       purposeOptions: [
         { value: "frei", label: "Freie Verwendung" },
         { value: "fahrzeug", label: "Fahrzeugkauf" },
+        { value: "ebike", label: "E-Bike" },
         { value: "modernisierung", label: "Modernisierung/Baufinanzierung" },
+        { value: "kueche", label: "Küche" },
+        { value: "moebel", label: "Möbel" },
+        { value: "umzug", label: "Umzug" },
         { value: "umschuldung", label: "Umschuldung/Kredit ablösen" },
         { value: "ratenkauf", label: "Tilgung Ratenkauf" },
         { value: "dispo", label: "Dispo/Kreditkarten Ausgleich" },
@@ -459,9 +483,29 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
           description: "New or used car",
         },
         {
+          id: "ebike",
+          title: "E-bike",
+          description: "Pedelec or e-bike",
+        },
+        {
           id: "modernisierung",
           title: "Modernisation/mortgage",
           description: "Renovation, refurbishment or home purchase",
+        },
+        {
+          id: "kueche",
+          title: "Kitchen",
+          description: "Fitted kitchen or appliances",
+        },
+        {
+          id: "moebel",
+          title: "Furniture",
+          description: "Furnishings and furniture",
+        },
+        {
+          id: "umzug",
+          title: "Moving",
+          description: "Relocation and related costs",
         },
         {
           id: "umschuldung",
@@ -508,7 +552,11 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       purposeOptions: [
         { value: "frei", label: "General purpose" },
         { value: "fahrzeug", label: "Vehicle purchase" },
+        { value: "ebike", label: "E-bike" },
         { value: "modernisierung", label: "Modernisation/mortgage" },
+        { value: "kueche", label: "Kitchen" },
+        { value: "moebel", label: "Furniture" },
+        { value: "umzug", label: "Moving" },
         { value: "umschuldung", label: "Debt consolidation/loan repayment" },
         { value: "ratenkauf", label: "Instalment purchase repayment" },
         { value: "dispo", label: "Overdraft/credit card settlement" },
