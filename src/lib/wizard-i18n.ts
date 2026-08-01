@@ -80,6 +80,15 @@ export interface WizardTranslations {
     hausnummer: string;
     plz: string;
     ort: string;
+    ortPlaceholder: string;
+    ortAwaitingPlz: string;
+    plzChecking: string;
+    plzUnknown: string;
+    plzLookupFailed: string;
+    plzVerified: string;
+    strasseInvalid: string;
+    hausnummerInvalid: string;
+    addressNote: string;
   };
   step6: {
     eyebrow: string;
@@ -277,6 +286,17 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       hausnummer: "Hausnummer",
       plz: "Postleitzahl",
       ort: "Ort",
+      ortPlaceholder: "Bitte Ort wählen",
+      ortAwaitingPlz: "Erst Postleitzahl eingeben",
+      plzChecking: "Postleitzahl wird geprüft …",
+      plzUnknown: "Diese Postleitzahl gibt es in Deutschland nicht.",
+      plzLookupFailed:
+        "Prüfung derzeit nicht möglich. Bitte später erneut versuchen.",
+      plzVerified: "Postleitzahl bestätigt",
+      strasseInvalid: "Bitte einen gültigen Straßennamen eingeben.",
+      hausnummerInvalid: "Bitte eine gültige Hausnummer eingeben, z. B. 12a.",
+      addressNote:
+        "Postleitzahl und Ort werden gegen das amtliche Verzeichnis geprüft.",
     },
     step6: {
       eyebrow: "6/8 · Beruf",
@@ -493,6 +513,16 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       hausnummer: "House number",
       plz: "Postal code",
       ort: "City",
+      ortPlaceholder: "Please select a city",
+      ortAwaitingPlz: "Enter a postal code first",
+      plzChecking: "Checking postal code …",
+      plzUnknown: "This postal code does not exist in Germany.",
+      plzLookupFailed: "Check currently unavailable. Please try again later.",
+      plzVerified: "Postal code confirmed",
+      strasseInvalid: "Please enter a valid street name.",
+      hausnummerInvalid: "Please enter a valid house number, e.g. 12a.",
+      addressNote:
+        "Postal code and city are checked against the official directory.",
     },
     step6: {
       eyebrow: "6/8 · Employment",
