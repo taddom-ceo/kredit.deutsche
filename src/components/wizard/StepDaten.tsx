@@ -105,14 +105,19 @@ export default function StepDaten() {
   const birth = data.geburtsdatum.trim();
   const birthCheck = useMemo(() => {
     if (birth === "") return { ok: false, error: undefined as string | undefined };
-    const parsed = new Date(birth);
+    // Bewusst aus den Bestandteilen als lokales Datum gebaut. new Date("…")
+    // liest die Zeichenkette als UTC, das Alter unten aber lokal — in
+    // westlichen Zeitzonen verschöbe das die 18-Jahres-Grenze um einen Tag.
+    const [y, m, d] = birth.split("-").map(Number);
+    const parsed = new Date(y, m - 1, d);
     // Ein nicht existierender Tag ergibt kein ungültiges Datum, sondern rutscht
     // weiter: Aus dem 29.02.1990 wird stillschweigend der 01.03.1990. Der
     // Rückvergleich deckt das auf, statt ein falsches Geburtsdatum zu
-    // übernehmen. Der 29. Februar bleibt in Schaltjahren gültig.
+    // übernehmen. In Schaltjahren besteht der 29. Februar die Prüfung.
     if (
-      Number.isNaN(parsed.getTime()) ||
-      parsed.toISOString().slice(0, 10) !== birth
+      parsed.getFullYear() !== y ||
+      parsed.getMonth() !== m - 1 ||
+      parsed.getDate() !== d
     ) {
       return { ok: false, error: wt.step4.geburtsdatumImplausible };
     }
