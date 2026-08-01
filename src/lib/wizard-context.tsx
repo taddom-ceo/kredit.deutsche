@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { DEFAULT_DIAL_CODE } from "./country-codes";
 
 export interface WizardData {
   step: number;
@@ -23,6 +24,8 @@ export interface WizardData {
   nachname: string;
   geburtsdatum: string;
   email: string;
+  telefonLand: string;
+  telefonVorwahl: string;
   telefon: string;
   strasse: string;
   hausnummer: string;
@@ -54,6 +57,8 @@ const initialData: WizardData = {
   nachname: "",
   geburtsdatum: "",
   email: "",
+  telefonLand: DEFAULT_DIAL_CODE,
+  telefonVorwahl: "",
   telefon: "",
   strasse: "",
   hausnummer: "",
