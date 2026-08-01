@@ -2,7 +2,7 @@
 
 import { useLanguage } from "@/lib/language-context";
 import { wizardTranslations } from "@/lib/wizard-i18n";
-import { PURPOSE_BY_KREDITART, useWizard } from "@/lib/wizard-context";
+import { useWizard } from "@/lib/wizard-context";
 import WizardStepLayout from "./WizardStepLayout";
 
 export default function StepArt() {
@@ -10,11 +10,11 @@ export default function StepArt() {
   const wt = wizardTranslations[lang];
   const { data, update, goNext } = useWizard();
 
-  // Die Kreditart legt den Verwendungszweck fest, wo er sich zwingend ergibt.
-  // Wer die Art nachträglich ändert, bekommt den Zweck entsprechend
-  // mitgeführt; wo sich kein Zweck ableiten lässt, bleibt die Auswahl offen.
+  // Beide Schritte verwenden dieselben Werte, deshalb ist der
+  // Verwendungszweck schlicht die hier gewählte Art. Wer sie nachträglich
+  // ändert, bekommt den Zweck entsprechend mitgeführt.
   function select(id: string) {
-    update({ kreditart: id, purpose: PURPOSE_BY_KREDITART[id] ?? "" });
+    update({ kreditart: id, purpose: id });
     goNext();
   }
 
