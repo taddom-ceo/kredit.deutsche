@@ -1,4 +1,4 @@
-const PARTNERS = [
+export const PARTNERS = [
   "NordKapital",
   "Vertrauensbank",
   "BankNova",
