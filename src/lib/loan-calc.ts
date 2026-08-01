@@ -1,12 +1,8 @@
-// Calibrated against a reference German loan-comparison calculator:
-// 15.000 € / 72 Monate → 255 €/Monat, and 53.000 € / 72 Monate → 901 €/Monat.
-//
-// This is a NOMINAL annual rate (Sollzins): monthlyPayment divides it by 12
-// rather than converting geometrically, which is what reproduces those two
-// reference figures. The corresponding effective annual rate (effektiver
-// Jahreszins) is higher — (1 + 0.069/12)^12 − 1 ≈ 7.12 % — so this constant
-// must never be labelled as an effective rate in the UI.
-export const SAMPLE_ANNUAL_RATE = 0.069;
+// EFFECTIVE annual rate (effektiver Jahreszins), i.e. the figure the UI shows.
+// Because it is effective rather than nominal, the monthly rate is derived
+// geometrically via monthlyRate() — dividing by 12 would silently turn 2.89 %
+// into an effective 2.93 % and make the displayed number wrong.
+export const SAMPLE_ANNUAL_RATE = 0.0289;
 
 export const AMOUNT_MIN = 1000;
 export const AMOUNT_MAX = 100000;
@@ -22,28 +18,36 @@ export function formatEuro(value: number) {
   }).format(value);
 }
 
+// Converts an effective annual rate into the monthly rate that compounds to
+// it over twelve months: (1 + i_eff)^(1/12) − 1. This is the conversion the
+// German effective-rate definition implies; annualRate / 12 would be the
+// nominal (Sollzins) convention and would overstate the cost.
+export function monthlyRate(annualRate: number = SAMPLE_ANNUAL_RATE) {
+  return Math.pow(1 + annualRate, 1 / 12) - 1;
+}
+
 export function monthlyPayment(
   principal: number,
   months: number,
   annualRate: number = SAMPLE_ANNUAL_RATE
 ) {
-  const monthlyRate = annualRate / 12;
-  if (monthlyRate === 0) return principal / months;
-  const factor = Math.pow(1 + monthlyRate, months);
-  return (principal * monthlyRate * factor) / (factor - 1);
+  const i = monthlyRate(annualRate);
+  if (i === 0) return principal / months;
+  const factor = Math.pow(1 + i, months);
+  return (principal * i * factor) / (factor - 1);
 }
 
 // Inverse of monthlyPayment: which loan amount produces a given monthly rate?
-// Solving P = A·r·f/(f−1) for A gives A = P·(f−1)/(r·f).
+// Solving P = A·i·f/(f−1) for A gives A = P·(f−1)/(i·f).
 export function principalFromPayment(
   payment: number,
   months: number,
   annualRate: number = SAMPLE_ANNUAL_RATE
 ) {
-  const monthlyRate = annualRate / 12;
-  if (monthlyRate === 0) return payment * months;
-  const factor = Math.pow(1 + monthlyRate, months);
-  return (payment * (factor - 1)) / (monthlyRate * factor);
+  const i = monthlyRate(annualRate);
+  if (i === 0) return payment * months;
+  const factor = Math.pow(1 + i, months);
+  return (payment * (factor - 1)) / (i * factor);
 }
 
 // A freely typed amount has to land on the same grid the slider moves on,
