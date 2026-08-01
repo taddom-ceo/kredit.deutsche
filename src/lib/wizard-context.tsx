@@ -22,6 +22,11 @@ export interface WizardData {
   vorname: string;
   zweiterVorname: string;
   nachname: string;
+  // Die drei Teile sind die Eingabe, geburtsdatum bleibt der daraus
+  // zusammengesetzte ISO-Wert und damit die Grundlage für Prüfung und Versand.
+  geburtstag: string;
+  geburtsmonat: string;
+  geburtsjahr: string;
   geburtsdatum: string;
   email: string;
   telefonLand: string;
@@ -55,6 +60,9 @@ const initialData: WizardData = {
   vorname: "",
   zweiterVorname: "",
   nachname: "",
+  geburtstag: "",
+  geburtsmonat: "",
+  geburtsjahr: "",
   geburtsdatum: "",
   email: "",
   telefonLand: DEFAULT_DIAL_CODE,

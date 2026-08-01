@@ -22,8 +22,16 @@ const AREA_CODE_MAX = 6;
 // für den Teilnehmeranschluss bleiben damit höchstens zwölf.
 const SUBSCRIBER_MAX = 12;
 
-function toIsoDate(date: Date) {
-  return date.toISOString().slice(0, 10);
+// Wie viele Tage der gewählte Monat hat. Ohne Monat oder Jahr wird die
+// Obergrenze angenommen, damit die Tagesliste nie künstlich kurz ist.
+function daysInMonth(year: number, month: number) {
+  if (!year || !month) return 31;
+  return new Date(year, month, 0).getDate();
+}
+
+function composeIsoDate(year: string, month: string, day: string) {
+  if (!year || !month || !day) return "";
+  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 }
 
 // Alter in vollen Jahren am Stichtag.
@@ -41,16 +49,51 @@ export default function StepDaten() {
   const wt = wizardTranslations[lang];
   const { data, update, goNext, goBack } = useWizard();
 
-  // Grenzen für den Datumswähler, damit unplausible Werte gar nicht erst
-  // auswählbar sind — die Prüfung unten fängt getippte Eingaben zusätzlich ab.
-  const { minDate, maxDate } = useMemo(() => {
-    const today = new Date();
-    const latest = new Date(today);
-    latest.setFullYear(latest.getFullYear() - MIN_AGE);
-    const earliest = new Date(today);
-    earliest.setFullYear(earliest.getFullYear() - MAX_AGE);
-    return { minDate: toIsoDate(earliest), maxDate: toIsoDate(latest) };
+  // Jahresliste genau im erlaubten Bereich: vom jüngsten zulässigen Jahrgang
+  // absteigend bis zum ältesten. Die Randjahrgänge sind nur teilweise gültig
+  // (wer heute noch nicht 18 ist), das fängt die tagesgenaue Prüfung unten ab.
+  const years = useMemo(() => {
+    const thisYear = new Date().getFullYear();
+    const newest = thisYear - MIN_AGE;
+    const oldest = thisYear - MAX_AGE;
+    return Array.from({ length: newest - oldest + 1 }, (_, i) => newest - i);
   }, []);
+
+  // Monatsnamen ausgeschrieben und in der aktuellen Sprache.
+  const months = useMemo(() => {
+    const fmt = new Intl.DateTimeFormat(lang, { month: "long" });
+    return Array.from({ length: 12 }, (_, i) => ({
+      value: String(i + 1),
+      label: fmt.format(new Date(Date.UTC(2000, i, 1))),
+    }));
+  }, [lang]);
+
+  const dayCount = daysInMonth(
+    Number(data.geburtsjahr),
+    Number(data.geburtsmonat)
+  );
+
+  // Jede Teiländerung setzt zugleich den zusammengesetzten ISO-Wert neu.
+  function updateBirthPart(patch: {
+    geburtstag?: string;
+    geburtsmonat?: string;
+    geburtsjahr?: string;
+  }) {
+    const day = patch.geburtstag ?? data.geburtstag;
+    const month = patch.geburtsmonat ?? data.geburtsmonat;
+    const year = patch.geburtsjahr ?? data.geburtsjahr;
+    // Ein bereits gewählter 31. passt nicht mehr, wenn danach ein kürzerer
+    // Monat gewählt wird. Stillschweigend auf den 28. zu ändern wäre bei einem
+    // Geburtsdatum falsch — deshalb wird der Tag geleert und neu abgefragt.
+    const validDay =
+      day && Number(day) > daysInMonth(Number(year), Number(month)) ? "" : day;
+    update({
+      geburtstag: validDay,
+      geburtsmonat: month,
+      geburtsjahr: year,
+      geburtsdatum: composeIsoDate(year, month, validDay),
+    });
+  }
 
   const birth = data.geburtsdatum.trim();
   const birthCheck = useMemo(() => {
@@ -125,16 +168,60 @@ export default function StepDaten() {
           onChange={(e) => update({ nachname: e.target.value })}
         />
       </div>
-      <FormField
-        id="geburtsdatum"
-        type="date"
-        label={wt.step4.geburtsdatum}
-        value={data.geburtsdatum}
-        onChange={(e) => update({ geburtsdatum: e.target.value })}
-        min={minDate}
-        max={maxDate}
-        error={birthCheck.error}
-      />
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-medium text-muted">
+          {wt.step4.geburtsdatum}
+        </span>
+        {/* Der Tag braucht kaum Platz, das Jahr eine feste Breite — der Rest
+            geht an den Monat, damit "September" und "Dezember" auch auf
+            schmalen Bildschirmen vollständig lesbar bleiben. */}
+        <div className="grid grid-cols-[4.75rem_1fr_5.75rem] gap-3">
+          <FormSelect
+            id="geburtstag"
+            label={wt.step4.geburtstag}
+            value={data.geburtstag}
+            onChange={(e) => updateBirthPart({ geburtstag: e.target.value })}
+          >
+            <option value="">{wt.step4.auswahlPlatzhalter}</option>
+            {Array.from({ length: dayCount }, (_, i) => String(i + 1)).map(
+              (day) => (
+                <option key={day} value={day}>
+                  {day}
+                </option>
+              )
+            )}
+          </FormSelect>
+          <FormSelect
+            id="geburtsmonat"
+            label={wt.step4.geburtsmonat}
+            value={data.geburtsmonat}
+            onChange={(e) => updateBirthPart({ geburtsmonat: e.target.value })}
+          >
+            <option value="">{wt.step4.auswahlPlatzhalter}</option>
+            {months.map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </FormSelect>
+          <FormSelect
+            id="geburtsjahr"
+            label={wt.step4.geburtsjahr}
+            value={data.geburtsjahr}
+            onChange={(e) => updateBirthPart({ geburtsjahr: e.target.value })}
+          >
+            <option value="">{wt.step4.auswahlPlatzhalter}</option>
+            {years.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </FormSelect>
+        </div>
+        {birthCheck.error && (
+          <span className="text-xs text-red-400">{birthCheck.error}</span>
+        )}
+      </div>
       <FormField
         id="email"
         type="email"
