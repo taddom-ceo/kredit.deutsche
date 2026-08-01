@@ -16,6 +16,7 @@ export default function WizardStepLayout({
   nextLabel,
   nextDisabled,
   showNav = true,
+  ausfahrer,
 }: {
   eyebrow: string;
   title: string;
@@ -28,6 +29,11 @@ export default function WizardStepLayout({
   nextLabel?: string;
   nextDisabled?: boolean;
   showNav?: boolean;
+  // Element, das hinter dem Hauptfenster liegt und daraus hervorfahren kann.
+  // Es muss ein Geschwister des Fensters sein: Innerhalb davon liesse es sich
+  // nicht dahinter legen, weil der undurchsichtige Hintergrund des Fensters
+  // es sonst nie verdecken koennte.
+  ausfahrer?: ReactNode;
 }) {
   const { lang } = useLanguage();
   const wt = wizardTranslations[lang];
@@ -55,33 +61,42 @@ export default function WizardStepLayout({
         </ul>
       </div>
 
-      {/* Auf schmalen Handys fällt der Innenabstand knapper aus: Mit der
-          größeren Schrift braucht der Inhalt die Breite dringender als der
-          Rahmen. */}
-      <div className="rounded-[24px] border border-border bg-surface p-5 sm:p-7 lg:p-9 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.55)] ring-1 ring-white/5 flex flex-col gap-7">
-        {children}
+      <div className="relative">
+        {ausfahrer}
+        {/* Auf schmalen Handys fällt der Innenabstand knapper aus: Mit der
+            größeren Schrift braucht der Inhalt die Breite dringender als der
+            Rahmen.
+            relative ist nötig, damit das Fenster ein positioniertes Element
+            ist: Nur dann entscheidet die Reihenfolge im Markup darüber, was
+            oben liegt, und der Ausfahrer bleibt dahinter verborgen. */}
+        <div
+          data-wizard-panel
+          className="relative rounded-[24px] border border-border bg-surface p-5 sm:p-7 lg:p-9 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.55)] ring-1 ring-white/5 flex flex-col gap-7"
+        >
+          {children}
 
-        {showNav && (
-          <div className="flex items-center gap-3 pt-2">
-            {onBack && (
+          {showNav && (
+            <div className="flex items-center gap-3 pt-2">
+              {onBack && (
+                <button
+                  type="button"
+                  onClick={onBack}
+                  className="rounded-[16px] border border-border px-4 py-3.5 text-sm font-medium text-muted transition-all duration-200 hover:text-foreground hover:border-border-strong focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                >
+                  ← {wt.nav.back}
+                </button>
+              )}
               <button
                 type="button"
-                onClick={onBack}
-                className="rounded-[16px] border border-border px-4 py-3.5 text-sm font-medium text-muted transition-all duration-200 hover:text-foreground hover:border-border-strong focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                onClick={onNext}
+                disabled={nextDisabled}
+                className="flex-1 text-center rounded-[16px] bg-accent text-accent-foreground font-semibold px-4 py-3.5 text-sm shadow-[0_8px_24px_-6px_rgba(52,211,153,0.45)] transition-all duration-200 hover:bg-accent-strong hover:shadow-[0_10px_30px_-6px_rgba(52,211,153,0.55)] hover:-translate-y-px active:translate-y-0 active:scale-[0.99] disabled:opacity-40 disabled:pointer-events-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
               >
-                ← {wt.nav.back}
+                {nextLabel ?? wt.nav.next} →
               </button>
-            )}
-            <button
-              type="button"
-              onClick={onNext}
-              disabled={nextDisabled}
-              className="flex-1 text-center rounded-[16px] bg-accent text-accent-foreground font-semibold px-4 py-3.5 text-sm shadow-[0_8px_24px_-6px_rgba(52,211,153,0.45)] transition-all duration-200 hover:bg-accent-strong hover:shadow-[0_10px_30px_-6px_rgba(52,211,153,0.55)] hover:-translate-y-px active:translate-y-0 active:scale-[0.99] disabled:opacity-40 disabled:pointer-events-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-            >
-              {nextLabel ?? wt.nav.next} →
-            </button>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

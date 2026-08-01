@@ -205,42 +205,20 @@ input[type="range"]:active::-moz-range-thumb {
     0 0 0 7px rgba(52, 211, 153, 0.22);
 }
 
-/* Hervorhebung der häufigsten Verwendungszwecke: ein langsam atmender
-   Akzentrand. Bewusst schwächer als der Auswahlzustand, damit weiterhin
-   erkennbar bleibt, was tatsächlich angeklickt ist. */
-@keyframes accent-breathe {
-  0%,
-  100% {
-    border-color: rgba(52, 211, 153, 0.34);
-    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
-  }
-  50% {
-    border-color: rgba(52, 211, 153, 0.8);
-    box-shadow: 0 0 20px -5px rgba(52, 211, 153, 0.45);
-  }
+/* Der Zweck-Hinweis fährt hinter dem Hauptfenster hervor. Die Kurve setzt
+   zügig an und läuft weich aus — das liest sich als Herausziehen statt als
+   Sprung. Die Deckkraft folgt schneller, damit er beim Verlassen des Fensters
+   bereits vollständig da ist. */
+.hinweis-ausfahrer {
+  transition:
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 240ms ease-out;
+  will-change: transform;
 }
 
-.accent-breathe {
-  animation: accent-breathe 5s ease-in-out infinite;
-}
-
-/* Beim Überfahren steht der Rahmen still und bleibt kräftig — sonst würde die
-   Bewegung mit der Hover-Rückmeldung konkurrieren.
-   Die Animation läuft dabei bewusst weiter und wird nur überschrieben
-   (!important schlägt Animationen). Ein Pausieren würde die Karte dauerhaft
-   aus dem Takt der übrigen bringen: Sie liefe nach dem Verlassen dort weiter,
-   wo sie angehalten wurde, und wäre danach für immer versetzt. */
-.accent-breathe:hover {
-  border-color: rgba(52, 211, 153, 0.8) !important;
-  box-shadow: 0 0 20px -5px rgba(52, 211, 153, 0.45) !important;
-}
-
-/* Wer Bewegung reduziert haben möchte, bekommt die Hervorhebung als ruhigen,
-   dauerhaft kräftigen Rand statt als Animation. */
 @media (prefers-reduced-motion: reduce) {
-  .accent-breathe {
-    animation: none;
-    border-color: rgba(52, 211, 153, 0.6);
+  .hinweis-ausfahrer {
+    transition-duration: 1ms;
   }
 }
 

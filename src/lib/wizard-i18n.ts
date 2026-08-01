@@ -26,6 +26,8 @@ export interface WizardTranslations {
     options: WizardOption[];
     haeufigLabel: string;
     weitereLabel: string;
+    hinweisOeffnen: string;
+    hinweisSchliessen: string;
     trust: string[];
   };
   step2: {
@@ -252,6 +254,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       ],
       haeufigLabel: "Häufig gewählt",
       weitereLabel: "Weitere Zwecke",
+      hinweisOeffnen: "Hinweis anzeigen",
+      hinweisSchliessen: "Hinweis schließen",
       trust: [
         "SCHUFA-neutrale Anfrage",
         "Vergleich von 20+ Banken",
@@ -544,6 +548,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       ],
       haeufigLabel: "Frequently chosen",
       weitereLabel: "Other purposes",
+      hinweisOeffnen: "Show details",
+      hinweisSchliessen: "Close details",
       trust: [
         "Credit-score-neutral request",
         "Compare 20+ banks",
