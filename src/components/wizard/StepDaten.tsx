@@ -22,11 +22,16 @@ const AREA_CODE_MAX = 6;
 // für den Teilnehmeranschluss bleiben damit höchstens zwölf.
 const SUBSCRIBER_MAX = 12;
 
-// Wie viele Tage der gewählte Monat hat. Ohne Monat oder Jahr wird die
-// Obergrenze angenommen, damit die Tagesliste nie künstlich kurz ist.
+// Wie viele Tage der gewählte Monat hat.
+//
+// Ohne Monat steht die Länge noch nicht fest, dann sind 31 Tage die Obergrenze.
+// Ist der Monat gewählt, aber noch kein Jahr, wird die größtmögliche Länge
+// dieses Monats angesetzt — über ein Schaltjahr als Bezug. Sonst stünde bei
+// gewähltem Februar weiterhin der 31. zur Auswahl, obwohl es ihn nie gibt.
 function daysInMonth(year: number, month: number) {
-  if (!year || !month) return 31;
-  return new Date(year, month, 0).getDate();
+  if (!month) return 31;
+  const reference = year || 2000; // 2000 ist ein Schaltjahr
+  return new Date(reference, month, 0).getDate();
 }
 
 function composeIsoDate(year: string, month: string, day: string) {
