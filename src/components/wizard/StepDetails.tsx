@@ -17,6 +17,7 @@ import {
 } from "@/lib/loan-calc";
 import EditableValue from "@/components/EditableValue";
 import WizardStepLayout from "./WizardStepLayout";
+import { HIGHLIGHTED_COUNT } from "./StepArt";
 
 export default function StepDetails() {
   const { lang } = useLanguage();
@@ -76,11 +77,27 @@ export default function StepDetails() {
           className="rounded-[16px] border border-border bg-surface-2 px-4 py-2.5 text-sm text-foreground transition-colors duration-200 hover:border-border-strong focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
         >
           <option value="">{wt.step2.purposePlaceholder}</option>
-          {wt.step2.purposeOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
+          {/* Dieselben vier wie auf Schritt 1 hervorgehoben. Ein natives
+              Auswahlfeld lässt einzelne Einträge nicht zuverlässig gestalten —
+              eine Gruppe mit Überschrift ist der Weg, den es dafür vorsieht. */}
+          <optgroup label={wt.step1.haeufigLabel}>
+            {wt.step2.purposeOptions
+              .slice(0, HIGHLIGHTED_COUNT)
+              .map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+          </optgroup>
+          <optgroup label={wt.step1.weitereLabel}>
+            {wt.step2.purposeOptions
+              .slice(HIGHLIGHTED_COUNT)
+              .map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+          </optgroup>
         </select>
       </div>
 
