@@ -165,16 +165,17 @@ export default function StepArt() {
             <div
               key={option.id}
               data-zweck-karte
-              className={`relative rounded-[16px] border bg-surface-2 transition-all duration-200 hover:border-border-strong hover:-translate-y-px ${
+              // Weiß ist die Farbe der Auswahl. Beim Überfahren erscheint sie
+              // bereits, damit vorab erkennbar ist, was ein Klick auswählt;
+              // der Ring bleibt dem tatsächlich gewählten Zweck vorbehalten,
+              // sodass beides unterscheidbar bleibt.
+              className={`relative rounded-[16px] border bg-surface-2 transition-all duration-200 hover:border-foreground hover:-translate-y-px ${
                 active
-                  ? // Der gewählte Zweck bekommt einen weißen Rahmen: Grün ist
-                    // hier bereits die Farbe der Hervorhebung, beides wäre
-                    // nicht auseinanderzuhalten. Der Rahmen wird beim
-                    // Überfahren ausdrücklich gehalten, sonst überschriebe ihn
-                    // hover:border-border-strong.
-                    "border-foreground hover:border-foreground ring-1 ring-foreground/30"
+                  ? "border-foreground ring-1 ring-foreground/30"
                   : betont
-                    ? "accent-breathe bg-accent/[0.07]"
+                    ? // Die vier häufigsten Zwecke bekommen einen ruhigen
+                      // Akzentrand mit leichter Tönung.
+                      "border-accent/45 bg-accent/[0.07]"
                     : "border-border"
               }`}
             >
