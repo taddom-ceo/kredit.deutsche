@@ -116,6 +116,9 @@ export interface WizardTranslations {
     beschaeftigungsartOptions: string[];
     arbeitgeber: string;
     beschaeftigtSeit: string;
+    monat: string;
+    jahr: string;
+    auswahlPlatzhalter: string;
   };
   step7: {
     eyebrow: string;
@@ -354,6 +357,9 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       ],
       arbeitgeber: "Arbeitgeber",
       beschaeftigtSeit: "Beschäftigt seit",
+      monat: "Monat",
+      jahr: "Jahr",
+      auswahlPlatzhalter: "–",
     },
     step7: {
       eyebrow: "7/8 · Einkommen",
@@ -598,6 +604,9 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       ],
       arbeitgeber: "Employer",
       beschaeftigtSeit: "Employed since",
+      monat: "Month",
+      jahr: "Year",
+      auswahlPlatzhalter: "–",
     },
     step7: {
       eyebrow: "7/8 · Income",

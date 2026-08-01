@@ -38,6 +38,10 @@ export interface WizardData {
   ort: string;
   beschaeftigungsart: string;
   arbeitgeber: string;
+  // Wie beim Geburtsdatum: Monat und Jahr sind die Eingabe,
+  // beschaeftigtSeit bleibt der zusammengesetzte Wert im Format JJJJ-MM.
+  beschaeftigtSeitMonat: string;
+  beschaeftigtSeitJahr: string;
   beschaeftigtSeit: string;
   nettoeinkommen: string;
   ausgaben: string;
@@ -74,6 +78,8 @@ const initialData: WizardData = {
   ort: "",
   beschaeftigungsart: "",
   arbeitgeber: "",
+  beschaeftigtSeitMonat: "",
+  beschaeftigtSeitJahr: "",
   beschaeftigtSeit: "",
   nettoeinkommen: "",
   ausgaben: "",
