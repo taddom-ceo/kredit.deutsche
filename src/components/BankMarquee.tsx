@@ -14,7 +14,7 @@ export default function BankMarquee() {
 
   return (
     <div
-      className="block fixed top-1/2 right-6 -translate-y-1/2 h-[540px] w-40 pointer-events-none z-0"
+      className="hidden lg:block fixed top-1/2 right-6 -translate-y-1/2 h-[540px] w-40 pointer-events-none z-0"
       style={{
         maskImage:
           "linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)",
