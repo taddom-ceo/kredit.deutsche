@@ -13,6 +13,15 @@ import { dialCodeOptions } from "@/lib/country-codes";
 const MIN_AGE = 18;
 const MAX_AGE = 100;
 
+// Deutsche Ortsnetzkennzahlen sind 2 bis 5 Ziffern lang, mit führender Null
+// also 3 bis 6 — von "30"/"030" (Berlin) bis "036841". Mobilfunkvorwahlen wie
+// "0170" liegen dazwischen. Sechs Ziffern decken damit beide Schreibweisen ab.
+const AREA_CODE_MIN = 2;
+const AREA_CODE_MAX = 6;
+// E.164 erlaubt 15 Ziffern für die gesamte Rufnummer inklusive Ländervorwahl;
+// für den Teilnehmeranschluss bleiben damit höchstens zwölf.
+const SUBSCRIBER_MAX = 12;
+
 function toIsoDate(date: Date) {
   return date.toISOString().slice(0, 10);
 }
@@ -75,8 +84,13 @@ export default function StepDaten() {
     birthCheck.ok &&
     emailOk &&
     data.telefonLand !== "" &&
-    data.telefonVorwahl.trim() !== "" &&
+    data.telefonVorwahl.length >= AREA_CODE_MIN &&
     data.telefon.trim() !== "";
+
+  const areaCodeError =
+    data.telefonVorwahl !== "" && data.telefonVorwahl.length < AREA_CODE_MIN
+      ? wt.step4.telefonVorwahlTooShort
+      : undefined;
 
   return (
     <WizardStepLayout
@@ -147,9 +161,15 @@ export default function StepDaten() {
           inputMode="numeric"
           label={wt.step4.telefonVorwahl}
           value={data.telefonVorwahl}
+          maxLength={AREA_CODE_MAX}
           onChange={(e) =>
-            update({ telefonVorwahl: e.target.value.replace(/\D/g, "") })
+            update({
+              telefonVorwahl: e.target.value
+                .replace(/\D/g, "")
+                .slice(0, AREA_CODE_MAX),
+            })
           }
+          error={areaCodeError}
         />
         <FormField
           id="telefon"
@@ -157,8 +177,11 @@ export default function StepDaten() {
           inputMode="numeric"
           label={wt.step4.telefon}
           value={data.telefon}
+          maxLength={SUBSCRIBER_MAX}
           onChange={(e) =>
-            update({ telefon: e.target.value.replace(/\D/g, "") })
+            update({
+              telefon: e.target.value.replace(/\D/g, "").slice(0, SUBSCRIBER_MAX),
+            })
           }
         />
       </div>

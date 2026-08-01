@@ -74,6 +74,7 @@ export interface WizardTranslations {
     telefon: string;
     telefonLand: string;
     telefonVorwahl: string;
+    telefonVorwahlTooShort: string;
     geburtsdatumTooYoung: string;
     geburtsdatumImplausible: string;
   };
@@ -284,6 +285,7 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       telefon: "Telefonnummer",
       telefonLand: "Ländervorwahl",
       telefonVorwahl: "Vorwahl",
+      telefonVorwahlTooShort: "Mindestens zwei Ziffern.",
       geburtsdatumTooYoung:
         "Für einen Kreditantrag müssen Sie mindestens 18 Jahre alt sein.",
       geburtsdatumImplausible: "Bitte prüfen Sie das Geburtsdatum.",
@@ -520,6 +522,7 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       telefon: "Phone number",
       telefonLand: "Country code",
       telefonVorwahl: "Area code",
+      telefonVorwahlTooShort: "At least two digits.",
       geburtsdatumTooYoung:
         "You must be at least 18 years old to apply for a loan.",
       geburtsdatumImplausible: "Please check the date of birth.",
