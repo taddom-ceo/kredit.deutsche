@@ -25,6 +25,8 @@ export type RestschuldEingabe = {
   rate: number;
   /** Effektiver Jahreszins in Prozent. Unbekannt, wenn nicht angegeben. */
   zins?: number;
+  /** Gesamtlaufzeit in Monaten. Unbekannt, wenn nicht angegeben. */
+  laufzeit?: number;
   /** Stichtag der Schätzung. Vorgabe ist heute. */
   stichtag?: Date;
 };
@@ -38,7 +40,43 @@ export type RestschuldErgebnis = {
   abbezahlt: boolean;
   /** Ohne Zinssatz gerechnet und damit nur grob. */
   ohneZins: boolean;
+  /** Der Zinssatz war nicht angegeben, liess sich aber aus der Laufzeit
+      herleiten — die Schaetzung ist dann so genau wie mit Angabe. */
+  zinsHergeleitet: boolean;
 };
+
+/**
+ * Sucht den Monatszins, bei dem sich die Summe mit der genannten Rate in
+ * genau der genannten Laufzeit tilgt.
+ *
+ * Die Annuitaetenformel laesst sich nach dem Zins nicht aufloesen, wohl aber
+ * einschachteln: Der Barwert faellt streng mit steigendem Zins, deshalb
+ * findet eine Intervallhalbierung die Loesung sicher.
+ *
+ * Ohne Ergebnis bleibt es, wenn die Raten zusammen die Summe nicht
+ * uebersteigen — dann traegt der Kredit ueberhaupt keine Zinsen.
+ */
+function leiteMonatszinsAb(
+  summe: number,
+  rate: number,
+  laufzeit: number
+): number | null {
+  if (laufzeit <= 0) return null;
+  if (rate * laufzeit <= summe) return null;
+
+  const barwert = (i: number) => (rate * (1 - Math.pow(1 + i, -laufzeit))) / i;
+
+  let unten = 1e-9;
+  let oben = 0.5; // 0,5 % im Monat waeren ueber 70 % im Jahr — daraufkommt nichts
+  if (barwert(oben) > summe) return null;
+
+  for (let n = 0; n < 80; n++) {
+    const mitte = (unten + oben) / 2;
+    if (barwert(mitte) > summe) unten = mitte;
+    else oben = mitte;
+  }
+  return (unten + oben) / 2;
+}
 
 /** Volle Monate zwischen einem Auszahlungsmonat (JJJJ-MM) und dem Stichtag. */
 function monateSeit(auszahlung: string, stichtag: Date): number | null {
@@ -57,32 +95,60 @@ export function berechneRestschuld({
   auszahlung,
   rate,
   zins,
+  laufzeit,
   stichtag = new Date(),
 }: RestschuldEingabe): RestschuldErgebnis | null {
   if (!Number.isFinite(summe) || summe <= 0) return null;
   if (!Number.isFinite(rate) || rate <= 0) return null;
 
-  const monate = monateSeit(auszahlung, stichtag);
-  if (monate === null) return null;
+  const vergangen = monateSeit(auszahlung, stichtag);
+  if (vergangen === null) return null;
+
+  // Nach dem Ende der Laufzeit ist nichts mehr offen. Ohne diese Grenze liefe
+  // die Rechnung weiter und ergaebe ein Guthaben statt einer Restschuld.
+  const monate =
+    laufzeit != null && Number.isFinite(laufzeit) && laufzeit > 0
+      ? Math.min(vergangen, laufzeit)
+      : vergangen;
 
   // Ein Auszahlungsdatum in der Zukunft ergibt keine Tilgung — dann steht die
   // volle Summe. Ohne diesen Fall lieferte die Formel eine Restschuld über
   // der Darlehenssumme.
   if (monate <= 0) {
-    return { wert: summe, monate: 0, abbezahlt: false, ohneZins: zins == null };
+    return {
+      wert: summe,
+      monate: 0,
+      abbezahlt: false,
+      ohneZins: true,
+      zinsHergeleitet: false,
+    };
   }
 
-  const ohneZins = zins == null || !Number.isFinite(zins) || zins <= 0;
+  // Der angegebene Zinssatz hat Vorrang. Fehlt er, liefert die Laufzeit ihn
+  // mit: Summe, Rate und Laufzeit legen ihn eindeutig fest.
+  let i: number | null = null;
+  let zinsHergeleitet = false;
+  if (zins != null && Number.isFinite(zins) && zins > 0) {
+    i = Math.pow(1 + zins / 100, 1 / 12) - 1;
+  } else if (laufzeit != null && Number.isFinite(laufzeit) && laufzeit > 0) {
+    i = leiteMonatszinsAb(summe, rate, laufzeit);
+    zinsHergeleitet = i !== null;
+  }
 
   let wert: number;
-  if (ohneZins) {
+  if (i === null) {
     wert = summe - rate * monate;
   } else {
-    const i = Math.pow(1 + (zins as number) / 100, 1 / 12) - 1;
     const q = Math.pow(1 + i, monate);
     wert = summe * q - (rate * (q - 1)) / i;
   }
 
   const abbezahlt = wert <= 0;
-  return { wert: abbezahlt ? 0 : wert, monate, abbezahlt, ohneZins };
+  return {
+    wert: abbezahlt ? 0 : wert,
+    monate,
+    abbezahlt,
+    ohneZins: i === null,
+    zinsHergeleitet,
+  };
 }

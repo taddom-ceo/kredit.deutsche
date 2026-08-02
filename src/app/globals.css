@@ -133,6 +133,24 @@ input[type="month"]:invalid::-webkit-datetime-edit {
   color: var(--muted);
 }
 
+/* Die kleinen Pfeile in Zahlenfeldern zeichnet der Browser selbst. Sie kamen
+   als helles Kaestchen und stachen auf den dunklen Feldern heraus; anfassen
+   laesst sich daran fast nichts, weil es Browseroberflaeche ist.
+   Deshalb sind sie abgeschaltet. Verloren geht nichts: Die Betraege lassen
+   sich ohnehin nur tippen, und fuer Zahlen mit Nachkommastellen ist ein
+   Klick-um-Klick-Schrittwerk der umstaendlichere Weg. */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
 /* Premium range slider */
 input[type="range"] {
   -webkit-appearance: none;
