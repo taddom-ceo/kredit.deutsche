@@ -348,6 +348,59 @@ input[type="range"]:active::-moz-range-thumb {
   animation: schein-atmen 11s ease-in-out infinite;
 }
 
+/* Ein Streifen, der aus der festen Buehne ausbricht und den Bildschirm von
+   Rand zu Rand fuellt. Die Buehne ist 1440px breit und wird skaliert — 100vw
+   waere darin also um den Zoom verfaelscht. --stage-vollbreite liefert die
+   Sichtfensterbreite bereits gegengerechnet, und weil sie aus clientWidth
+   stammt, zaehlt eine Bildlaufleiste nicht mit und erzeugt keinen Ueberlauf. */
+.vollbreite {
+  position: relative;
+  left: 50%;
+  width: var(--stage-vollbreite, 100%);
+  transform: translateX(-50%);
+}
+
+/* Laufband der Partnerbanken. Die Liste steht viermal hintereinander; ein
+   Versatz um genau ein Viertel zeigt wieder dasselbe Bild, dadurch laeuft es
+   ohne sichtbaren Sprung. Von links nach rechts, also von -25% auf 0. */
+@keyframes bankenlauf {
+  from {
+    transform: translateX(-25%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.bankenlauf {
+  animation: bankenlauf 46s linear infinite;
+}
+
+/* An beiden Raendern weich auslaufen, damit die Namen nicht abgeschnitten
+   auftauchen. Der Streifen bleibt dabei ueber die volle Breite. */
+.bankenband {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 7%,
+    black 93%,
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 7%,
+    black 93%,
+    transparent
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bankenlauf {
+    animation: none;
+  }
+}
+
 /* Bewegung in den uebrigen Illustrationen. Jede laeuft in einer eigenen
    Laenge, damit die Zeichnungen nie im Gleichschritt zucken — genau das
    liesse eine Seite unruhig statt lebendig wirken. */
