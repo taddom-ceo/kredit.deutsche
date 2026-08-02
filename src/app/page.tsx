@@ -136,8 +136,8 @@ export default function Home() {
                 // eigene, schnellere Uebergangszeit fuers Ueberfahren — beides
                 // auf einem Element wuerde sich in die Quere kommen.
                 <Reveal key={k.label} delay={i * 110} className="h-full">
-                  <div className="h-full rounded-[18px] border border-border bg-background ring-1 ring-white/5 p-5 lg:p-6 flex flex-col gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-border-strong">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/[0.12] text-accent">
+                  <div className="group h-full rounded-[18px] border border-border bg-background ring-1 ring-white/5 p-5 lg:p-6 flex flex-col gap-3 transition-all duration-300 hover:-translate-y-1 hover:border-border-strong">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/[0.12] text-accent transition-all duration-500 group-hover:bg-accent/20 group-hover:scale-105">
                       <Symbol className="h-5 w-5" />
                     </span>
                     <span className="text-3xl lg:text-4xl font-bold tracking-[-0.02em] text-accent">
@@ -192,11 +192,11 @@ export default function Home() {
                 const Bild = SCHRITT_BILDER[i];
                 return (
                   <Reveal key={schritt.titel} delay={i * 130} className="h-full">
-                    <div className="relative h-full rounded-[20px] border border-border bg-surface ring-1 ring-white/5 p-6 flex flex-col gap-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-border-strong">
+                    <div className="group relative h-full rounded-[20px] border border-border bg-surface ring-1 ring-white/5 p-6 flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1 hover:border-border-strong">
                     <span className="absolute top-5 right-6 text-4xl font-bold leading-none text-foreground/[0.07]">
                       {i + 1}
                     </span>
-                    <Bild className="h-14 w-14" />
+                    <Bild className="h-14 w-14 transition-transform duration-500 group-hover:scale-105" />
                     <div className="flex flex-col gap-1.5">
                       <h3 className="text-base font-semibold tracking-[-0.01em]">
                         {schritt.titel}
@@ -262,7 +262,7 @@ export default function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               {l.stimmen.map((stimme, i) => (
                 <Reveal key={stimme.name} delay={i * 130} className="h-full">
-                  <figure className="h-full rounded-[20px] border border-border bg-surface ring-1 ring-white/5 p-6 flex flex-col gap-4">
+                  <figure className="h-full rounded-[20px] border border-border bg-surface ring-1 ring-white/5 p-6 flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1 hover:border-border-strong">
                   <span aria-hidden="true" className="text-accent text-sm">
                     ★★★★★
                   </span>
@@ -295,7 +295,7 @@ export default function Home() {
             <div className="flex flex-col gap-3">
               {l.faq.map((eintrag, i) => (
                 <Reveal key={eintrag.frage} delay={i * 90}>
-                  <details className="group rounded-[16px] border border-border bg-surface px-5 py-4 transition-colors duration-200 hover:border-border-strong">
+                  <details className="group rounded-[16px] border border-border bg-surface px-5 py-4 transition-all duration-300 hover:border-border-strong hover:-translate-y-0.5">
                   <summary className="flex items-center justify-between gap-4 text-sm font-semibold marker:content-none [&::-webkit-details-marker]:hidden">
                     {eintrag.frage}
                     <svg

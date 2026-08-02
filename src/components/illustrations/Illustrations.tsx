@@ -227,12 +227,37 @@ export function StepSliderIllustration({ className }: { className?: string }) {
         fill="rgba(52,211,153,0.07)"
         stroke="rgba(52,211,153,0.28)"
       />
+      {/* Die Regler wandern minimal hin und her. Die gefuellte Strecke folgt
+          ueber stroke-dashoffset im selben Takt — bewegte sich nur der Knopf,
+          loeste er sich vom Ende der Linie. */}
       <line x1="16" y1="26" x2="48" y2="26" stroke="rgba(148,163,196,0.4)" strokeWidth="3" strokeLinecap="round" />
-      <line x1="16" y1="26" x2="38" y2="26" stroke="#34d399" strokeWidth="3" strokeLinecap="round" />
-      <circle cx="38" cy="26" r="6" fill="#34d399" />
+      <line
+        className="regler-strecke-a"
+        x1="16"
+        y1="26"
+        x2="48"
+        y2="26"
+        stroke="#34d399"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeDasharray="32"
+        strokeDashoffset="10"
+      />
+      <circle className="regler-knopf-a" cx="38" cy="26" r="6" fill="#34d399" />
       <line x1="16" y1="40" x2="48" y2="40" stroke="rgba(148,163,196,0.4)" strokeWidth="3" strokeLinecap="round" />
-      <line x1="16" y1="40" x2="27" y2="40" stroke="#34d399" strokeWidth="3" strokeLinecap="round" />
-      <circle cx="27" cy="40" r="6" fill="#34d399" />
+      <line
+        className="regler-strecke-b"
+        x1="16"
+        y1="40"
+        x2="48"
+        y2="40"
+        stroke="#34d399"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeDasharray="32"
+        strokeDashoffset="21"
+      />
+      <circle className="regler-knopf-b" cx="27" cy="40" r="6" fill="#34d399" />
     </svg>
   );
 }
@@ -249,6 +274,7 @@ export function StepShieldIllustration({ className }: { className?: string }) {
         strokeLinejoin="round"
       />
       <path
+        className="schild-haken"
         d="M23 32 L29.5 38.5 L42 25"
         fill="none"
         stroke="#34d399"
@@ -275,6 +301,7 @@ export function StepPayoutIllustration({ className }: { className?: string }) {
       />
       <circle cx="32" cy="32" r="8" fill="none" stroke="rgba(148,163,196,0.5)" strokeWidth="2.4" />
       <path
+        className="blitz"
         d="M33 25.5 L27.5 33.5 H32 L30.5 39.5 L36.5 31 H32 Z"
         fill="#34d399"
       />
@@ -310,32 +337,38 @@ export function CompareIllustration({ className }: { className?: string }) {
       </g>
 
       {/* Mit Vergleich */}
-      <rect x="190" y="92" width="72" height="78" rx="12" fill="rgba(52,211,153,0.16)" />
-      <rect x="190" y="92" width="72" height="78" rx="12" fill="none" stroke="rgba(52,211,153,0.45)" />
-      <g
-        stroke="rgba(52,211,153,0.85)"
-        fill="rgba(52,211,153,0.85)"
-        strokeLinecap="round"
-      >
-        <circle cx="219" cy="118" r="4" stroke="none" />
-        <circle cx="233" cy="132" r="4" stroke="none" />
-        <line x1="218" y1="133" x2="234" y2="117" strokeWidth="4.5" />
+      <g className="vergleich-gruen">
+        <rect x="190" y="92" width="72" height="78" rx="12" fill="rgba(52,211,153,0.16)" />
+        <rect x="190" y="92" width="72" height="78" rx="12" fill="none" stroke="rgba(52,211,153,0.45)" />
+        <g
+          stroke="rgba(52,211,153,0.85)"
+          fill="rgba(52,211,153,0.85)"
+          strokeLinecap="round"
+        >
+          <circle cx="219" cy="118" r="4" stroke="none" />
+          <circle cx="233" cy="132" r="4" stroke="none" />
+          <line x1="218" y1="133" x2="234" y2="117" strokeWidth="4.5" />
+        </g>
       </g>
 
-      {/* Verbindung vom hohen zum niedrigen Balken. Die Kurve setzt rechts
-          neben dem grauen Balken an, führt über den grünen und endet mit
-          senkrechter Tangente über dessen Mitte (x=226) — dadurch zeigt die
-          Spitze von oben auf den grünen Kasten und nicht daneben ins Leere. */}
+      {/* Verbindung vom hohen zum niedrigen Balken: ein durchgehender Bogen,
+          der rechts neben dem grauen Balken ansetzt, aufsteigt und mit
+          nahezu senkrechter Tangente über der Mitte des grünen Kastens
+          ausläuft (x=226). Sie steigt bewusst nicht über ihren Anfang: Der
+          Verlauf soll ruhig abfallen, nicht als Bogen über den Balken
+          springen. Der Strich wandert langsam entlang der Kurve und zeigt so
+          die Richtung. */}
       <path
-        d="M142 52 C188 52 226 58 226 76"
+        className="vergleich-bogen"
+        d="M141 54 C185 54 224 60 226 78"
         fill="none"
         stroke="#34d399"
         strokeWidth="2.5"
         strokeLinecap="round"
-        strokeDasharray="5 6"
+        strokeDasharray="5 7"
       />
       <path
-        d="M219 77 L226 84 L233 77"
+        d="M219 79 L226 86 L233 79"
         fill="none"
         stroke="#34d399"
         strokeWidth="2.5"

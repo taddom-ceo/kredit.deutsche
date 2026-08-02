@@ -348,11 +348,147 @@ input[type="range"]:active::-moz-range-thumb {
   animation: schein-atmen 11s ease-in-out infinite;
 }
 
+/* Bewegung in den uebrigen Illustrationen. Jede laeuft in einer eigenen
+   Laenge, damit die Zeichnungen nie im Gleichschritt zucken — genau das
+   liesse eine Seite unruhig statt lebendig wirken. */
+
+/* Vergleich: Der gestrichelte Bogen wandert langsam in Richtung des
+   guenstigeren Angebots, die gruene Saeule hebt sich minimal. */
+@keyframes bogen-wandern {
+  to {
+    stroke-dashoffset: -48;
+  }
+}
+
+.vergleich-bogen {
+  animation: bogen-wandern 3.4s linear infinite;
+}
+
+@keyframes saeule-heben {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.vergleich-gruen {
+  animation: saeule-heben 6.2s ease-in-out infinite;
+}
+
+/* Schritt 1: Die Regler wandern minimal. Knopf und gefuellte Strecke teilen
+   sich denselben Takt, sonst loeste sich der Knopf vom Linienende. */
+@keyframes knopf-a {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes strecke-a {
+  0%,
+  100% {
+    stroke-dashoffset: 10;
+  }
+  50% {
+    stroke-dashoffset: 5;
+  }
+}
+
+@keyframes knopf-b {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-4px);
+  }
+}
+
+@keyframes strecke-b {
+  0%,
+  100% {
+    stroke-dashoffset: 21;
+  }
+  50% {
+    stroke-dashoffset: 25;
+  }
+}
+
+.regler-knopf-a {
+  animation: knopf-a 5.5s ease-in-out infinite;
+}
+
+.regler-strecke-a {
+  animation: strecke-a 5.5s ease-in-out infinite;
+}
+
+.regler-knopf-b {
+  animation: knopf-b 7s ease-in-out infinite;
+}
+
+.regler-strecke-b {
+  animation: strecke-b 7s ease-in-out infinite;
+}
+
+/* Schritt 2: Der Haken zieht sich in ruhigem Abstand einmal nach. */
+@keyframes haken-ziehen {
+  0% {
+    stroke-dashoffset: 28;
+  }
+  22%,
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.schild-haken {
+  stroke-dasharray: 28;
+  animation: haken-ziehen 6.5s ease-in-out infinite;
+}
+
+/* Schritt 3: Der Blitz pulst leicht — das Zeichen fuer Tempo darf sich
+   bewegen, aber nur eben so viel, dass man es bemerkt. */
+@keyframes blitz-pulsen {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.09);
+  }
+}
+
+.blitz {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: blitz-pulsen 4.8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-geraet,
   .hero-plakette,
-  .hero-schein {
+  .hero-schein,
+  .vergleich-bogen,
+  .vergleich-gruen,
+  .regler-knopf-a,
+  .regler-strecke-a,
+  .regler-knopf-b,
+  .regler-strecke-b,
+  .schild-haken,
+  .blitz {
     animation: none;
+  }
+
+  .schild-haken {
+    stroke-dasharray: none;
   }
 }
 
