@@ -325,7 +325,7 @@ export const translations: Record<Language, Translations> = {
       kennzahlen: [
         { wert: "20+", label: "banks compared" },
         { wert: "2.89%", label: "effective annual rate from" },
-        { wert: "2 min", label: "to your offer" },
+        { wert: "2 min", label: "for your offer" },
         { wert: "€0", label: "cost to you" },
       ],
       ablaufEyebrow: "How it works",
