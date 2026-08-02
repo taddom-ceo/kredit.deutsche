@@ -154,6 +154,8 @@ export interface WizardTranslations {
     kreditFrage: string;
     kreditartTitel: string;
     kreditarten: string[];
+    kreditartAndere: string;
+    kreditartenWeitere: string[];
     kreditNummer: string;
     kreditBetrag: string;
     kreditRate: string;
@@ -502,8 +504,9 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
         "Kreditkarte",
         "Rahmenkredit",
         "Ratenkauf (z. B. Klarna, PayPal)",
-        "Andere",
       ],
+      kreditartAndere: "Andere",
+      kreditartenWeitere: ["Kredit mit Schlussrate"],
       kreditNummer: "Bestehender Kredit",
       kreditBetrag: "Kreditbetrag",
       kreditRate: "Monatliche Rate",
@@ -856,8 +859,9 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
         "Credit card",
         "Credit line",
         "Instalments (e.g. Klarna, PayPal)",
-        "Other",
       ],
+      kreditartAndere: "Other",
+      kreditartenWeitere: ["Loan with balloon payment"],
       kreditNummer: "Existing loan",
       kreditBetrag: "Loan amount",
       kreditRate: "Monthly payment",

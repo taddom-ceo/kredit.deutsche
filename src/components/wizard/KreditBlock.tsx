@@ -90,6 +90,17 @@ export function KreditBlock({
 
   const zahl = useMemo(() => new Intl.NumberFormat(lang), [lang]);
 
+  // Die selteneren Arten stehen erst zur Wahl, wenn "Andere" sie freigegeben
+  // hat. Eine bereits gewaehlte gehoert dazu — sonst verschwaende der Wert
+  // beim Zurueckspringen aus einem spaeteren Schritt aus der Reihe.
+  const arten = useMemo(() => {
+    const zeigeWeitere =
+      kredit.weitereArten || t.kreditartenWeitere.includes(kredit.art);
+    return zeigeWeitere
+      ? [...t.kreditarten, ...t.kreditartenWeitere]
+      : t.kreditarten;
+  }, [kredit.weitereArten, kredit.art, t.kreditarten, t.kreditartenWeitere]);
+
   // "72" allein sagt wenig — die Jahre daneben machen die Laufzeit greifbar.
   const laufzeitInJahren = useMemo(() => {
     const m = Number(kredit.laufzeit);
@@ -110,7 +121,7 @@ export function KreditBlock({
       <div className="flex flex-col gap-3">
         <span className="text-sm font-medium text-muted">{t.kreditartTitel}</span>
         <div className="flex flex-wrap gap-2">
-          {t.kreditarten.map((art) => {
+          {arten.map((art) => {
             const aktiv = kredit.art === art;
             return (
               <button
@@ -128,6 +139,21 @@ export function KreditBlock({
               </button>
             );
           })}
+
+          {/* "Andere" ist keine Kreditart, sondern der Weg zu den selteneren.
+              Angetippt macht es ihnen Platz und verschwindet dabei selbst — es
+              hat dann seinen Zweck erfuellt, und als Auswahl stehenzubleiben
+              waere neben der genaueren Angabe nur verwirrend. */}
+          {!kredit.weitereArten && t.kreditartenWeitere.length > 0 && (
+            <button
+              type="button"
+              aria-expanded={false}
+              onClick={() => onAendern({ weitereArten: true })}
+              className="rounded-full border border-border bg-surface-2 px-4 py-2 text-sm text-muted transition-all duration-200 hover:border-border-strong hover:-translate-y-px focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+            >
+              {t.kreditartAndere}
+            </button>
+          )}
         </div>
       </div>
 
