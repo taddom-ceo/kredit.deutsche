@@ -324,7 +324,7 @@ export const translations: Record<Language, Translations> = {
       partnerLabel: "Our partner banks",
       kennzahlen: [
         { wert: "20+", label: "banks compared" },
-        { wert: "2.89%", label: "effective annual rate from" },
+        { wert: "2.89%", label: "effective annual rate" },
         { wert: "2 min", label: "for your offer" },
         { wert: "€0", label: "cost for you" },
       ],
