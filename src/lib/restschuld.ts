@@ -2,22 +2,29 @@
  * Schätzt die Restschuld eines laufenden Annuitätendarlehens zum heutigen Tag.
  *
  * Grundlage sind die Angaben, die ein Kunde ohne Unterlagen zur Hand hat:
- * ursprünglich finanzierte Summe, Auszahlungsdatum, monatliche Rate und —
- * wenn bekannt — der effektive Jahreszins.
+ * Kreditbetrag, Auszahlungsdatum, monatliche Rate und — je nachdem, was er
+ * weiß — die Gesamtlaufzeit oder der effektive Jahreszins.
  *
- * Mit Zinssatz wird sauber gerechnet: Jede Rate deckt zuerst die aufgelaufenen
- * Zinsen, nur der Rest tilgt. Ohne Zinssatz bleibt allein die lineare
- * Schätzung „Summe minus gezahlte Raten". Sie fällt zu niedrig aus, weil ein
- * Teil jeder Rate in Wirklichkeit Zinsen waren — deshalb weist die Oberfläche
- * darauf hin, dass die Angabe des Zinssatzes die Schätzung verbessert.
+ * Gerechnet wird als Annuitätendarlehen: Jede Rate deckt zuerst die
+ * aufgelaufenen Zinsen, nur der Rest tilgt. Der Monatszins wird wie überall
+ * auf der Seite aus dem effektiven Jahreszins gezogen —
+ * i = (1 + p)^(1/12) − 1, nicht p/12.
  *
- * Der Monatszins wird wie überall auf der Seite aus dem effektiven Jahreszins
- * gezogen: i = (1 + p)^(1/12) − 1. Das ist die zinseszinsrichtige Umrechnung,
- * nicht die verbreitete Division durch zwölf.
+ * Ist der Zinssatz nicht bekannt, liefert die Laufzeit ihn mit: Betrag, Rate
+ * und Laufzeit legen ihn eindeutig fest.
  */
 
+/**
+ * Über diesem effektiven Jahreszins gilt eine Angabe als unplausibel. Wer
+ * 10.000 € aufnimmt und 72 Monate lang 300 € zahlt, käme rechnerisch auf über
+ * 34 % — das ist fast immer ein Vertipper in einer der drei Zahlen. Statt eine
+ * Zahl auszuweisen, die niemand glauben kann, wird bei dieser Grenze gekappt
+ * und darauf hingewiesen.
+ */
+export const ZINS_OBERGRENZE = 20;
+
 export type RestschuldEingabe = {
-  /** Ursprünglich finanzierte Summe in Euro. */
+  /** Ursprünglicher Kreditbetrag in Euro. */
   summe: number;
   /** Auszahlungsmonat als JJJJ-MM. */
   auszahlung: string;
@@ -34,54 +41,17 @@ export type RestschuldEingabe = {
 export type RestschuldErgebnis = {
   /** Geschätzte Restschuld in Euro, nie unter null. */
   wert: number;
-  /** Zahl der seit der Auszahlung vergangenen vollen Monate. */
+  /** Seit der Auszahlung vergangene, auf die Laufzeit begrenzte Monate. */
   monate: number;
+  /** Effektiver Jahreszins in Prozent, mit dem gerechnet wurde. */
+  zinsProzent: number;
+  /** Der Zinssatz stand nicht in der Eingabe, sondern kam aus der Laufzeit. */
+  hergeleitet: boolean;
+  /** Der hergeleitete Zins lag über der Grenze und wurde darauf gekappt. */
+  gekappt: boolean;
   /** Rechnerisch bereits vollständig zurückgeführt. */
   abbezahlt: boolean;
-  /** Ohne Zinssatz gerechnet und damit nur grob. */
-  ohneZins: boolean;
-  /** Der Zinssatz war nicht angegeben, liess sich aber aus der Laufzeit
-      herleiten — die Schaetzung ist dann so genau wie mit Angabe. */
-  zinsHergeleitet: boolean;
-  /** Eine Laufzeit war angegeben, passt aber nicht zu Summe und Rate: Die
-      Raten reichen zusammen nicht aus, den Kredit je zu tilgen. Meist ein
-      Vertipper — deshalb wird darauf hingewiesen, statt still auf die grobe
-      Schaetzung auszuweichen. */
-  laufzeitPasstNicht: boolean;
 };
-
-/**
- * Sucht den Monatszins, bei dem sich die Summe mit der genannten Rate in
- * genau der genannten Laufzeit tilgt.
- *
- * Die Annuitaetenformel laesst sich nach dem Zins nicht aufloesen, wohl aber
- * einschachteln: Der Barwert faellt streng mit steigendem Zins, deshalb
- * findet eine Intervallhalbierung die Loesung sicher.
- *
- * Ohne Ergebnis bleibt es, wenn die Raten zusammen die Summe nicht
- * uebersteigen — dann traegt der Kredit ueberhaupt keine Zinsen.
- */
-function leiteMonatszinsAb(
-  summe: number,
-  rate: number,
-  laufzeit: number
-): number | null {
-  if (laufzeit <= 0) return null;
-  if (rate * laufzeit <= summe) return null;
-
-  const barwert = (i: number) => (rate * (1 - Math.pow(1 + i, -laufzeit))) / i;
-
-  let unten = 1e-9;
-  let oben = 0.5; // 0,5 % im Monat waeren ueber 70 % im Jahr — daraufkommt nichts
-  if (barwert(oben) > summe) return null;
-
-  for (let n = 0; n < 80; n++) {
-    const mitte = (unten + oben) / 2;
-    if (barwert(mitte) > summe) unten = mitte;
-    else oben = mitte;
-  }
-  return (unten + oben) / 2;
-}
 
 /** Volle Monate zwischen einem Auszahlungsmonat (JJJJ-MM) und dem Stichtag. */
 function monateSeit(auszahlung: string, stichtag: Date): number | null {
@@ -93,6 +63,38 @@ function monateSeit(auszahlung: string, stichtag: Date): number | null {
   return (
     (stichtag.getFullYear() - jahr) * 12 + (stichtag.getMonth() + 1 - monat)
   );
+}
+
+/**
+ * Sucht den Monatszins, bei dem sich der Betrag mit der genannten Rate in
+ * genau der genannten Laufzeit tilgt.
+ *
+ * Die Annuitätenformel lässt sich nach dem Zins nicht auflösen, wohl aber
+ * einschachteln: Der Barwert fällt streng mit steigendem Zins, deshalb findet
+ * eine Intervallhalbierung die Lösung sicher.
+ *
+ * Ohne Ergebnis bleibt es, wenn die Raten zusammen den Betrag nicht
+ * übersteigen — dann trägt der Kredit überhaupt keine Zinsen.
+ */
+function leiteMonatszinsAb(
+  summe: number,
+  rate: number,
+  laufzeit: number
+): number | null {
+  if (laufzeit <= 0 || rate * laufzeit <= summe) return null;
+
+  const barwert = (i: number) => (rate * (1 - Math.pow(1 + i, -laufzeit))) / i;
+
+  let unten = 1e-9;
+  let oben = 1; // 100 % im Monat — darüber liegt nichts Denkbares
+  if (barwert(oben) > summe) return null;
+
+  for (let n = 0; n < 90; n++) {
+    const mitte = (unten + oben) / 2;
+    if (barwert(mitte) > summe) unten = mitte;
+    else oben = mitte;
+  }
+  return (unten + oben) / 2;
 }
 
 export function berechneRestschuld({
@@ -109,55 +111,51 @@ export function berechneRestschuld({
   const vergangen = monateSeit(auszahlung, stichtag);
   if (vergangen === null) return null;
 
+  const hatLaufzeit =
+    laufzeit != null && Number.isFinite(laufzeit) && laufzeit > 0;
+
   // Nach dem Ende der Laufzeit ist nichts mehr offen. Ohne diese Grenze liefe
-  // die Rechnung weiter und ergaebe ein Guthaben statt einer Restschuld.
-  const monate =
-    laufzeit != null && Number.isFinite(laufzeit) && laufzeit > 0
-      ? Math.min(vergangen, laufzeit)
-      : vergangen;
+  // die Rechnung weiter und ergäbe ein Guthaben statt einer Restschuld.
+  const monate = hatLaufzeit
+    ? Math.min(vergangen, laufzeit as number)
+    : vergangen;
 
-  // Ein Auszahlungsdatum in der Zukunft ergibt keine Tilgung — dann steht die
-  // volle Summe. Ohne diesen Fall lieferte die Formel eine Restschuld über
-  // der Darlehenssumme.
-  if (monate <= 0) {
-    return {
-      wert: summe,
-      monate: 0,
-      abbezahlt: false,
-      ohneZins: true,
-      zinsHergeleitet: false,
-      laufzeitPasstNicht: false,
-    };
-  }
-
-  // Der angegebene Zinssatz hat Vorrang. Fehlt er, liefert die Laufzeit ihn
-  // mit: Summe, Rate und Laufzeit legen ihn eindeutig fest.
+  // Der angegebene Zinssatz hat Vorrang; sonst kommt er aus der Laufzeit.
   let i: number | null = null;
-  let zinsHergeleitet = false;
-  let laufzeitPasstNicht = false;
+  let hergeleitet = false;
+  let gekappt = false;
+
   if (zins != null && Number.isFinite(zins) && zins > 0) {
     i = Math.pow(1 + zins / 100, 1 / 12) - 1;
-  } else if (laufzeit != null && Number.isFinite(laufzeit) && laufzeit > 0) {
-    i = leiteMonatszinsAb(summe, rate, laufzeit);
-    zinsHergeleitet = i !== null;
-    laufzeitPasstNicht = i === null;
+  } else if (hatLaufzeit) {
+    const abgeleitet = leiteMonatszinsAb(summe, rate, laufzeit as number);
+    if (abgeleitet !== null) {
+      hergeleitet = true;
+      const jahr = (Math.pow(1 + abgeleitet, 12) - 1) * 100;
+      if (jahr > ZINS_OBERGRENZE) {
+        gekappt = true;
+        i = Math.pow(1 + ZINS_OBERGRENZE / 100, 1 / 12) - 1;
+      } else {
+        i = abgeleitet;
+      }
+    }
   }
 
-  let wert: number;
-  if (i === null) {
-    wert = summe - rate * monate;
-  } else {
-    const q = Math.pow(1 + i, monate);
-    wert = summe * q - (rate * (q - 1)) / i;
-  }
+  // Ohne jeden Anhaltspunkt für den Zins lässt sich keine Restschuld schätzen,
+  // die diesen Namen verdient. Die frühere lineare Näherung fiel um über einen
+  // Tausender zu niedrig aus und wäre als Zahl im Feld irreführend gewesen.
+  if (i === null) return null;
 
-  const abbezahlt = wert <= 0;
+  // Ein Auszahlungsdatum in der Zukunft ergibt keine Tilgung.
+  const q = Math.pow(1 + i, monate);
+  const wert = monate <= 0 ? summe : summe * q - (rate * (q - 1)) / i;
+
   return {
-    wert: abbezahlt ? 0 : wert,
-    monate,
-    abbezahlt,
-    ohneZins: i === null,
-    zinsHergeleitet,
-    laufzeitPasstNicht,
+    wert: wert <= 0 ? 0 : wert,
+    monate: Math.max(monate, 0),
+    zinsProzent: (Math.pow(1 + i, 12) - 1) * 100,
+    hergeleitet,
+    gekappt,
+    abbezahlt: wert <= 0,
   };
 }
