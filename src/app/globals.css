@@ -712,6 +712,50 @@ input[type="range"]:active::-moz-range-thumb {
   animation: hero-plakette-puls 15s ease-in-out infinite;
 }
 
+/* Das Handy startet seine Schleifen erst, wenn es zum ersten Mal ins Bild
+   scrollt (siehe VisibilityGate) — sonst liefe die 15-Sekunden-Szene beim
+   Oeffnen der Seite schon mehrfach durch, bevor sie ueberhaupt zu sehen ist,
+   und man saehe beim Hinscrollen nur noch die Mitte eines Durchgangs. */
+.js .hero-geraet,
+.js .hero-plakette,
+.js .hero-plakette-puls,
+.js .hero-schein,
+.js .hero-szene-start,
+.js .hero-szene-a,
+.js .hero-szene-b,
+.js .hero-szene-c,
+.js .hero-start-balken,
+.js .hero-feld-knopf-a,
+.js .hero-feld-strecke-a,
+.js .hero-feld-knopf-b,
+.js .hero-feld-strecke-b,
+.js .hero-knopf,
+.js .hero-zeile,
+.js .hero-haken,
+.js .hero-betrag {
+  animation-play-state: paused;
+}
+
+.js .im-blick .hero-geraet,
+.js .im-blick .hero-plakette,
+.js .im-blick .hero-plakette-puls,
+.js .im-blick .hero-schein,
+.js .im-blick .hero-szene-start,
+.js .im-blick .hero-szene-a,
+.js .im-blick .hero-szene-b,
+.js .im-blick .hero-szene-c,
+.js .im-blick .hero-start-balken,
+.js .im-blick .hero-feld-knopf-a,
+.js .im-blick .hero-feld-strecke-a,
+.js .im-blick .hero-feld-knopf-b,
+.js .im-blick .hero-feld-strecke-b,
+.js .im-blick .hero-knopf,
+.js .im-blick .hero-zeile,
+.js .im-blick .hero-haken,
+.js .im-blick .hero-betrag {
+  animation-play-state: running;
+}
+
 /* Vertrauensplaketten unter dem Handlungsaufruf. Ein Lichtstreifen wandert
    in langen Abstaenden durch die Reihe und laesst sie kurz aufleuchten.
    Bewusst nur ein Weiss von 12 Prozent und nichts Gruenes: Der Akzent gehoert

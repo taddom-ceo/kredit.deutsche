@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Reveal from "@/components/Reveal";
+import VisibilityGate from "@/components/VisibilityGate";
 import PartnerLaufband from "@/components/PartnerLaufband";
 import {
   CompareIllustration,
@@ -149,7 +150,14 @@ export default function Home() {
               der Text die Zeilenhoehe und das Bild passt sich an — vorher war
               es umgekehrt: Das Bild erzwang ueber sein Seitenverhaeltnis 715px
               Hoehe, und kuerzere Abstaende im Text aenderten daran nichts. */}
-          <div className="relative w-full max-w-[560px] justify-self-center lg:max-w-none lg:h-full lg:justify-self-end">
+          {/* VisibilityGate von origin/main bleibt: Es haelt die Bewegung
+              an, solange das Bild nicht im Sichtfeld steht.
+              Der Verweis auf /rechner ist dagegen aus der Umhuellung in die
+              Zeichnung gewandert. Als Umhuellung deckte er die ganze Spalte
+              ab, und weil die Zeichnung darin eingepasst und zentriert wird,
+              wurde der Zeiger schon deutlich neben dem Handy zur Hand. In der
+              Zeichnung trifft er nur, was auch gezeichnet ist. */}
+          <VisibilityGate className="relative w-full max-w-[560px] justify-self-center lg:max-w-none lg:h-full lg:justify-self-end">
             <HeroIllustration
               angebote={l.heroAngebote}
               proMonat={l.heroProMonat}
@@ -161,7 +169,7 @@ export default function Home() {
               href="/rechner"
               className="auftakt w-full h-full lg:absolute lg:inset-0 [animation-delay:340ms]"
             />
-          </div>
+          </VisibilityGate>
         </section>
 
         {/* Partnerbanken als durchlaufendes Band ueber die volle Breite.

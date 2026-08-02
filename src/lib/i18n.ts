@@ -324,18 +324,18 @@ export const translations: Record<Language, Translations> = {
       partnerLabel: "Our partner banks",
       kennzahlen: [
         { wert: "20+", label: "banks compared" },
-        { wert: "2.89%", label: "effective annual rate from" },
-        { wert: "2 min", label: "to your offer" },
-        { wert: "€0", label: "cost to you" },
+        { wert: "2.89%", label: "effective annual rate" },
+        { wert: "2 min", label: "for your offer" },
+        { wert: "€0", label: "cost for you" },
       ],
       ablaufEyebrow: "How it works",
-      ablaufTitle: "Three steps, no hold music",
+      ablaufTitle: "Three easy steps, no call center",
       ablaufSubtitle:
         "No appointment and no documents up front.",
       schritte: [
         {
           titel: "Enter what you need",
-          text: "Set the amount and term — the instalment updates as you go.",
+          text: "Set the amount and the terms — the instalment updates as you go.",
         },
         {
           titel: "Compare offers",
@@ -343,7 +343,7 @@ export const translations: Record<Language, Translations> = {
         },
         {
           titel: "Get your payout",
-          text: "Sign digitally instead of queuing at the post office. With many banks, same day.",
+          text: "Sign digitally instead of queuing at the post office. More banks, same day.",
         },
       ],
       vergleichEyebrow: "Why compare",
