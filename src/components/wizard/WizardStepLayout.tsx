@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useLanguage } from "@/lib/language-context";
+import { useWizard } from "@/lib/wizard-context";
 import { wizardTranslations } from "@/lib/wizard-i18n";
 
 export default function WizardStepLayout({
@@ -37,6 +38,7 @@ export default function WizardStepLayout({
 }) {
   const { lang } = useLanguage();
   const wt = wizardTranslations[lang];
+  const { data } = useWizard();
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
@@ -73,7 +75,12 @@ export default function WizardStepLayout({
           data-wizard-panel
           className="relative rounded-[24px] border border-border bg-surface p-5 sm:p-7 lg:p-9 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.55)] ring-1 ring-white/5 flex flex-col gap-7"
         >
-          {children}
+          {/* key am Schritt: React tauscht den Block dadurch aus statt ihn zu
+              aktualisieren, und die Einblendung laeuft bei jedem Wechsel neu.
+              Bewusst kurz — der Ablauf soll nicht ausgebremst werden. */}
+          <div key={data.step} className="schritt-wechsel flex flex-col gap-7">
+            {children}
+          </div>
 
           {showNav && (
             <div className="flex items-center gap-3 pt-2">
