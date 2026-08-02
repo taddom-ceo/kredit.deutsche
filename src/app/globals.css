@@ -965,20 +965,39 @@ input[type="range"]:active::-moz-range-thumb {
   animation: haken-ziehen 6.5s ease-in-out infinite;
 }
 
-/* Schritt 3: Der vordere Geldschein hebt sich langsam an — die Bewegung des
-   Ueberreichens. Nur so weit, dass man sie bemerkt. */
+/* Schritt 3: Der Geldschein hebt sich an und ein Lichtstreifen wandert
+   darueber. Das Anheben allein trug zuvor 3,5 Einheiten, am Bildschirm keine
+   dreieinhalb Pixel ueber zweieinhalb Sekunden — gemessen lief die Bewegung,
+   zu sehen war sie nicht. Der Weg ist jetzt fast doppelt so lang, und der
+   Lichtstreifen traegt den sichtbaren Teil. */
 @keyframes schein-heben {
   0%,
   100% {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-3.5px);
+    transform: translateY(-6px);
   }
 }
 
 .geldschein {
-  animation: schein-heben 5.2s ease-in-out infinite;
+  animation: schein-heben 4.4s ease-in-out infinite;
+}
+
+/* Der Streifen laeuft in einem Fuenftel des Takts durch und ruht dann. Liefe
+   er ohne Pause, waere das Symbol unruhiger als seine beiden Nachbarn. */
+@keyframes schein-glanz {
+  0% {
+    transform: translateX(0);
+  }
+  20%,
+  100% {
+    transform: translateX(98px);
+  }
+}
+
+.schein-glanz {
+  animation: schein-glanz 4.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1006,7 +1025,8 @@ input[type="range"]:active::-moz-range-thumb {
   .regler-knopf-b,
   .regler-strecke-b,
   .schild-haken,
-  .geldschein {
+  .geldschein,
+  .schein-glanz {
     animation: none;
   }
 
