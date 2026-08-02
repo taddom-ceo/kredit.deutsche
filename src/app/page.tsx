@@ -38,16 +38,17 @@ export default function Home() {
             Aussage begleitet und nicht trägt. */}
         <section className="mx-auto max-w-6xl px-4 sm:px-6 py-20 lg:py-32 grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-12 items-center">
           <div className="flex flex-col gap-7">
-            <span className="inline-flex w-fit items-center rounded-full border border-accent/30 bg-accent/[0.08] px-3.5 py-1.5 text-[11px] font-semibold tracking-wide text-accent">
+            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-[13px] font-semibold text-foreground">
+              <span aria-hidden="true" className="h-2 w-2 rounded-full bg-accent" />
               {l.badge}
             </span>
-            {/* 3,2rem ist die groesste Stufe, bei der "Günstiger finanzieren,"
-                noch auf eine Zeile passt — ab 3,3rem bricht es und die
-                Ueberschrift laeuft auf vier Zeilen auseinander. */}
-            <h1 className="text-[2.5rem] lg:text-[3.2rem] font-bold leading-[1.06] tracking-[-0.03em] text-balance">
+            {/* Die zweite Zeile kursiv und in der Akzentfarbe: Sie trägt die
+                Aussage und hebt sich dadurch ab, ohne dass die Überschrift
+                zwei Größen bräuchte. */}
+            <h1 className="text-[2.9rem] lg:text-[4.1rem] font-bold leading-[1.02] tracking-[-0.035em]">
               {l.titleLine1}
               <br />
-              <span className="text-accent">{l.titleHighlight}</span>
+              <span className="italic text-accent">{l.titleHighlight}</span>
             </h1>
             <p className="text-lg lg:text-xl text-muted leading-relaxed max-w-xl">
               {l.subtitle}
@@ -56,7 +57,10 @@ export default function Home() {
             <div className="flex flex-wrap items-center gap-3 mt-2">
               <Link
                 href="/rechner"
-                className="rounded-[16px] bg-accent px-7 py-4 text-[15px] font-semibold text-accent-foreground shadow-[0_10px_30px_-8px_rgba(52,211,153,0.55)] transition-all duration-200 hover:bg-accent-strong hover:-translate-y-px hover:shadow-[0_14px_36px_-8px_rgba(52,211,153,0.6)] active:translate-y-0 focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                // Weißer Rahmen als Hervorhebung. Als ring statt border, weil
+                // ring außerhalb des Kastens gezeichnet wird und die Größe der
+                // Schaltfläche damit unverändert bleibt.
+                className="rounded-[16px] bg-accent px-7 py-4 text-[15px] font-semibold text-accent-foreground ring-2 ring-white shadow-[0_10px_34px_-8px_rgba(52,211,153,0.6)] transition-all duration-200 hover:bg-accent-strong hover:-translate-y-px hover:shadow-[0_16px_40px_-8px_rgba(52,211,153,0.65)] active:translate-y-0 focus-visible:ring-4 focus-visible:ring-white"
               >
                 {l.ctaPrimary} →
               </Link>
