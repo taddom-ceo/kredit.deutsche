@@ -351,16 +351,17 @@ export function CompareIllustration({ className }: { className?: string }) {
         </g>
       </g>
 
-      {/* Verbindung vom hohen zum niedrigen Balken: ein durchgehender Bogen,
-          der rechts neben dem grauen Balken ansetzt, aufsteigt und mit
-          nahezu senkrechter Tangente über der Mitte des grünen Kastens
-          ausläuft (x=226). Sie steigt bewusst nicht über ihren Anfang: Der
-          Verlauf soll ruhig abfallen, nicht als Bogen über den Balken
-          springen. Der Strich wandert langsam entlang der Kurve und zeigt so
-          die Richtung. */}
+      {/* Verbindung vom hohen zum niedrigen Balken: ein hoher Bogen, der
+          rechts oben am grauen Balken ansetzt, deutlich über dessen Oberkante
+          steigt (Scheitel bei y≈23, der Balken beginnt bei y=40) und dann
+          steil auf den grünen Kasten fällt.
+          Der zweite Kontrollpunkt liegt genau senkrecht über dem Endpunkt
+          (beide x=226): Nur dadurch läuft die Kurve senkrecht aus und die
+          Spitze zeigt von oben auf die Mitte des Kastens. Der Strich wandert
+          langsam entlang der Kurve und zeigt so die Richtung. */}
       <path
         className="vergleich-bogen"
-        d="M141 54 C185 54 224 60 226 78"
+        d="M132 48 C155 8 226 14 226 78"
         fill="none"
         stroke="#34d399"
         strokeWidth="2.5"
