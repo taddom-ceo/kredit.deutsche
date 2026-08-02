@@ -29,6 +29,17 @@ export interface Translations {
     ctaPrimary: string;
     ctaSecondary: string;
     ctaNote: string;
+    heroFussnote: string;
+    // Beispielangebote im Aufmacher. Die Raten sind mit derselben Formel
+    // gerechnet wie im Rechner: 20.000 € über 72 Monate.
+    heroAngebote: { rate: string; zins: string }[];
+    heroProMonat: string;
+    heroErsparnis: string;
+    heroErsparnisZusatz: string;
+    heroBeispielKopf: string;
+    heroBeispielFuss1: string;
+    heroBeispielFuss2: string;
+    trustBadges: string[];
     partnerLabel: string;
     kennzahlen: { wert: string; label: string }[];
     ablaufEyebrow: string;
@@ -98,10 +109,32 @@ export const translations: Record<Language, Translations> = {
       titleLine1: "Günstiger finanzieren,",
       titleHighlight: "ohne Bank\u2011Marathon.",
       subtitle:
-        "Ein Antrag, über 20 Banken im Vergleich. Sie sehen Ihre Rate sofort — und die Anfrage bleibt ohne Wirkung auf Ihre Bonität.",
-      ctaPrimary: "Rate berechnen",
+        "Ein Antrag, über 20 Banken im Vergleich. Sie sehen sofort, welches Angebot Sie am wenigsten kostet — ohne Wirkung auf Ihre Bonität.",
+      ctaPrimary: "Kostenlos vergleichen",
       ctaSecondary: "So funktioniert es",
       ctaNote: "Keine Kosten, keine Verpflichtung, kein Papierkram.",
+      heroFussnote:
+        "Die gezeigten Angebote sind unverbindliche Beispiele. Ihr effektiver Jahreszins hängt von Bonität und Anbieter ab.",
+      heroAngebote: [
+        { rate: "303 €", zins: "2,89 %" },
+        { rate: "325 €", zins: "5,49 %" },
+        { rate: "352 €", zins: "8,50 %" },
+      ],
+      heroProMonat: "pro Monat",
+      heroErsparnis: "3.595 € gespart",
+      heroErsparnisZusatz: "2,89 % statt 8,50 % eff. Jahreszins",
+      heroBeispielKopf:
+        "Beispielrechnung · 20.000 € Nettodarlehen · 72 Monate Laufzeit",
+      heroBeispielFuss1:
+        "Ersparnis = Differenz der Gesamtkosten über 72 Monate Laufzeit",
+      heroBeispielFuss2:
+        "Beispielrechnung, kein verbindliches Angebot.",
+      trustBadges: [
+        "Schufa-neutral",
+        "Kostenlos",
+        "Unverbindlich",
+        "DSGVO-konform",
+      ],
       partnerLabel: "Unsere Partnerbanken",
       kennzahlen: [
         { wert: "20+", label: "Banken im Vergleich" },
@@ -236,10 +269,31 @@ export const translations: Record<Language, Translations> = {
       titleLine1: "Finance smarter,",
       titleHighlight: "without the bank marathon.",
       subtitle:
-        "One application, more than 20 banks compared. You see your instalment right away — and the enquiry leaves your credit score untouched.",
-      ctaPrimary: "Calculate instalment",
+        "One application, more than 20 banks compared. You see straight away which offer costs you the least — with no effect on your credit score.",
+      ctaPrimary: "Compare for free",
       ctaSecondary: "How it works",
       ctaNote: "No cost, no obligation, no paperwork.",
+      heroFussnote:
+        "The offers shown are non-binding examples. Your effective annual rate depends on creditworthiness and provider.",
+      heroAngebote: [
+        { rate: "€303", zins: "2.89%" },
+        { rate: "€325", zins: "5.49%" },
+        { rate: "€352", zins: "8.50%" },
+      ],
+      heroProMonat: "per month",
+      heroErsparnis: "€3,595 saved",
+      heroErsparnisZusatz: "2.89% instead of 8.50% effective",
+      heroBeispielKopf:
+        "Example calculation · €20,000 net loan · 72-month term",
+      heroBeispielFuss1:
+        "Saving = difference in total cost over the 72-month term",
+      heroBeispielFuss2: "Example calculation, not a binding offer.",
+      trustBadges: [
+        "Credit-score-neutral",
+        "Free of charge",
+        "Non-binding",
+        "GDPR-compliant",
+      ],
       partnerLabel: "Our partner banks",
       kennzahlen: [
         { wert: "20+", label: "banks compared" },
