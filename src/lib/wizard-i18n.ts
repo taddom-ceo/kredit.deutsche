@@ -156,6 +156,8 @@ export interface WizardTranslations {
     jahr: string;
     auswahlPlatzhalter: string;
     kreditRate: string;
+    kreditLaufzeit: string;
+    kreditLaufzeitEinheit: string;
     kreditZins: string;
     optional: string;
     restschuld: string;
@@ -163,6 +165,9 @@ export interface WizardTranslations {
     restschuldOhneZins: string;
     restschuldOffen: string;
     restschuldAbbezahlt: string;
+    restschuldHergeleitet: string;
+    restschuldSelbst: string;
+    restschuldNeuBerechnen: string;
   };
   step8: {
     eyebrow: string;
@@ -465,7 +470,7 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       mieteinnahmenFrage: "Haben Sie Mieteinnahmen?",
       ja: "Ja",
       nein: "Nein",
-      mieteinnahmenBetrag: "Monatliche Mieteinnahmen",
+      mieteinnahmenBetrag: "Monatliche warme Mieteinnahmen",
       kreditFrage: "Welche Kredite haben Sie aktuell?",
       kreditHint: "Mehrfachauswahl möglich",
       keineKredite: "Keine",
@@ -483,16 +488,22 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       jahr: "Jahr",
       auswahlPlatzhalter: "Bitte wählen",
       kreditRate: "Monatliche Rate",
+      kreditLaufzeit: "Gesamtlaufzeit",
+      kreditLaufzeitEinheit: "Monate",
       kreditZins: "Effektiver Jahreszins",
       optional: "optional",
       restschuld: "Geschätzte Restschuld heute",
       restschuldMitZins:
         "Geschätzt aus Summe, Rate und Zinssatz über die seit der Auszahlung vergangenen Monate. Unverbindlich — maßgeblich ist die Abrechnung Ihrer Bank.",
       restschuldOhneZins:
-        "Ohne Zinssatz nur grob geschätzt: Summe abzüglich der gezahlten Raten. Da ein Teil jeder Rate Zinsen sind, liegt die tatsächliche Restschuld höher. Mit Zinssatz wird die Schätzung genau.",
+        "Nur grob geschätzt: Summe abzüglich der gezahlten Raten. Da ein Teil jeder Rate Zinsen sind, liegt die tatsächliche Restschuld höher. Mit Laufzeit oder Zinssatz wird die Schätzung genau.",
       restschuldOffen:
         "Wird berechnet, sobald Summe, Auszahlungsdatum und Rate ausgefüllt sind.",
       restschuldAbbezahlt: "Rechnerisch bereits vollständig zurückgeführt.",
+      restschuldHergeleitet:
+        "Aus Summe, Rate und Laufzeit ergibt sich der Zinssatz von selbst — die Schätzung ist damit so genau wie mit eigener Zinsangabe. Unverbindlich.",
+      restschuldSelbst: "Von Ihnen angepasst.",
+      restschuldNeuBerechnen: "Neu berechnen",
     },
     step8: {
       eyebrow: "8/8 · Bankverbindung",
@@ -797,7 +808,7 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       mieteinnahmenFrage: "Do you have rental income?",
       ja: "Yes",
       nein: "No",
-      mieteinnahmenBetrag: "Monthly rental income",
+      mieteinnahmenBetrag: "Monthly gross rental income",
       kreditFrage: "Which loans do you currently have?",
       kreditHint: "Select all that apply",
       keineKredite: "None",
@@ -815,16 +826,22 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       jahr: "Year",
       auswahlPlatzhalter: "Please select",
       kreditRate: "Monthly payment",
+      kreditLaufzeit: "Total term",
+      kreditLaufzeitEinheit: "months",
       kreditZins: "Effective annual rate",
       optional: "optional",
       restschuld: "Estimated balance outstanding today",
       restschuldMitZins:
         "Estimated from the amount, the payment and the rate over the months since payout. Non-binding — your bank's statement is what counts.",
       restschuldOhneZins:
-        "Without an interest rate this is only a rough estimate: amount less the payments made. Since part of every payment is interest, the real balance is higher. Adding the rate makes the estimate exact.",
+        "Only a rough estimate: amount less the payments made. Since part of every payment is interest, the real balance is higher. Adding the term or the rate makes the estimate exact.",
       restschuldOffen:
         "Calculated as soon as amount, payout date and monthly payment are filled in.",
       restschuldAbbezahlt: "Already fully repaid according to the calculation.",
+      restschuldHergeleitet:
+        "The amount, payment and term imply the interest rate, so this estimate is as precise as with a rate you enter yourself. Non-binding.",
+      restschuldSelbst: "Adjusted by you.",
+      restschuldNeuBerechnen: "Recalculate",
     },
     step8: {
       eyebrow: "8/8 · Bank details",

@@ -1,16 +1,20 @@
 "use client";
 
-import type { InputHTMLAttributes } from "react";
+import type { InputHTMLAttributes, Ref } from "react";
 
 export function FormField({
   label,
   error,
   className,
+  inputRef,
   ...inputProps
 }: {
   label: string;
   error?: string;
   className?: string;
+  /** Zugriff auf das Eingabefeld selbst — gebraucht dort, wo der
+      Schreibzeiger nach dem Neuformatieren zurückgesetzt werden muss. */
+  inputRef?: Ref<HTMLInputElement>;
 } & InputHTMLAttributes<HTMLInputElement>) {
   return (
     <div className={`flex flex-col gap-2 ${className ?? ""}`}>
@@ -18,6 +22,7 @@ export function FormField({
         {label}
       </label>
       <input
+        ref={inputRef}
         {...inputProps}
         className={`w-full rounded-[16px] border bg-surface-2 px-4 py-2.5 text-sm text-foreground transition-colors duration-200 hover:border-border-strong focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
           error ? "border-red-400/60" : "border-border"

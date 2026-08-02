@@ -7,6 +7,7 @@ import { useWizard, KEINE_KREDITE } from "@/lib/wizard-context";
 import { berechneRestschuld } from "@/lib/restschuld";
 import WizardStepLayout from "./WizardStepLayout";
 import { FormField, FormSelect } from "./FormField";
+import { BetragFeld } from "./BetragFeld";
 
 // Ein Kredit, der laenger als 40 Jahre laeuft, kommt praktisch nicht vor;
 // Immobilienfinanzierungen bilden die Obergrenze. Nach vorne ist der laufende
@@ -153,6 +154,10 @@ export default function StepEinkommen() {
       auszahlung: data.kreditAuszahlung,
       rate: Number(data.kreditRate),
       zins: data.kreditZins.trim() === "" ? undefined : Number(data.kreditZins),
+      laufzeit:
+        data.kreditLaufzeit.trim() === ""
+          ? undefined
+          : Number(data.kreditLaufzeit),
       stichtag: jetzt,
     });
   }, [
@@ -161,18 +166,19 @@ export default function StepEinkommen() {
     data.kreditAuszahlung,
     data.kreditRate,
     data.kreditZins,
+    data.kreditLaufzeit,
     jetzt,
   ]);
 
-  const geld = useMemo(
-    () =>
-      new Intl.NumberFormat(lang, {
-        style: "currency",
-        currency: "EUR",
-        maximumFractionDigits: 0,
-      }),
-    [lang]
-  );
+  // Die Schaetzung ist ein Vorschlag. Traegt der Kunde einen eigenen Wert ein,
+  // gilt seiner — er kennt seinen Kontostand besser als jede Formel. Ein
+  // geleertes Feld faellt auf die Schaetzung zurueck.
+  const eigeneRestschuld = data.kreditRestschuld !== "";
+  const restschuldWert = eigeneRestschuld
+    ? data.kreditRestschuld
+    : restschuld
+      ? String(Math.round(restschuld.wert))
+      : "";
 
   const valid =
     data.nettoeinkommen.trim() !== "" &&
@@ -197,27 +203,19 @@ export default function StepEinkommen() {
       onNext={goNext}
       nextDisabled={!valid}
     >
-      <FormField
+      <BetragFeld
         id="nettoeinkommen"
-        type="number"
-        min={0}
-        step={50}
-        inputMode="decimal"
-        placeholder="z. B. 2.800"
+        placeholder="2.800"
         label={`${wt.step7.nettoeinkommen} (€)`}
-        value={data.nettoeinkommen}
-        onChange={(e) => update({ nettoeinkommen: e.target.value })}
+        wert={data.nettoeinkommen}
+        onWert={(z) => update({ nettoeinkommen: z })}
       />
-      <FormField
+      <BetragFeld
         id="ausgaben"
-        type="number"
-        min={0}
-        step={50}
-        inputMode="decimal"
-        placeholder="z. B. 900"
+        placeholder="900"
         label={`${wt.step7.ausgaben} (€)`}
-        value={data.ausgaben}
-        onChange={(e) => update({ ausgaben: e.target.value })}
+        wert={data.ausgaben}
+        onWert={(z) => update({ ausgaben: z })}
       />
       <p className="text-xs text-muted -mt-3">{wt.step7.ausgabenHint}</p>
 
@@ -243,16 +241,12 @@ export default function StepEinkommen() {
           </Wahl>
         </div>
         <Ausklapp offen={hatMiete}>
-          <FormField
+          <BetragFeld
             id="mieteinnahmenBetrag"
-            type="number"
-            min={0}
-            step={50}
-            inputMode="decimal"
-            placeholder="z. B. 650"
+            placeholder="650"
             label={`${wt.step7.mieteinnahmenBetrag} (€)`}
-            value={data.mieteinnahmenBetrag}
-            onChange={(e) => update({ mieteinnahmenBetrag: e.target.value })}
+            wert={data.mieteinnahmenBetrag}
+            onWert={(z) => update({ mieteinnahmenBetrag: z })}
           />
         </Ausklapp>
       </fieldset>
@@ -284,16 +278,12 @@ export default function StepEinkommen() {
         <Ausklapp offen={hatKredite}>
           <p className="text-sm font-semibold">{wt.step7.kreditAngabenTitel}</p>
 
-          <FormField
+          <BetragFeld
             id="kreditSumme"
-            type="number"
-            min={0}
-            step={500}
-            inputMode="decimal"
-            placeholder="z. B. 15.000"
+            placeholder="15.000"
             label={`${wt.step7.kreditSumme} (€)`}
-            value={data.kreditSumme}
-            onChange={(e) => update({ kreditSumme: e.target.value })}
+            wert={data.kreditSumme}
+            onWert={(z) => update({ kreditSumme: z })}
           />
 
           <div className="flex flex-col gap-2">
@@ -333,16 +323,28 @@ export default function StepEinkommen() {
             </div>
           </div>
 
-          <FormField
+          <BetragFeld
             id="kreditRate"
-            type="number"
-            min={0}
-            step={10}
-            inputMode="decimal"
-            placeholder="z. B. 250"
+            placeholder="250"
             label={`${wt.step7.kreditRate} (€)`}
-            value={data.kreditRate}
-            onChange={(e) => update({ kreditRate: e.target.value })}
+            wert={data.kreditRate}
+            onWert={(z) => update({ kreditRate: z })}
+          />
+
+          {/* Die Gesamtlaufzeit ist mehr als eine Angabe fuers Protokoll:
+              Zusammen mit Summe und Rate legt sie den Zinssatz eindeutig fest.
+              Wer ihn nicht kennt, bekommt die Restschuld damit trotzdem genau. */}
+          <FormField
+            id="kreditLaufzeit"
+            type="number"
+            min={1}
+            max={480}
+            step={1}
+            inputMode="numeric"
+            placeholder="60"
+            label={`${wt.step7.kreditLaufzeit} (${wt.step7.kreditLaufzeitEinheit})`}
+            value={data.kreditLaufzeit}
+            onChange={(e) => update({ kreditLaufzeit: e.target.value })}
           />
 
           <FormField
@@ -358,40 +360,38 @@ export default function StepEinkommen() {
             onChange={(e) => update({ kreditZins: e.target.value })}
           />
 
-          {/* Ergebnisfeld. Bewusst nur zum Ablesen: Der Wert folgt aus den
-              Angaben darueber, eine eigene Eingabe wuerde ihm widersprechen. */}
+          {/* Ergebnisfeld — vorbelegt mit der Schaetzung, aber aenderbar. */}
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium text-muted">
-              {wt.step7.restschuld}
-            </span>
-            <output
-              htmlFor="kreditSumme kreditAuszahlungMonat kreditAuszahlungJahr kreditRate kreditZins"
-              // aria-live: Der Wert aendert sich, ohne dass der Kunde ihn
-              // anfaehrt. Ohne den Hinweis bekaeme er von der Aenderung mit
-              // einer Vorlesehilfe nichts mit.
-              aria-live="polite"
-              className="w-full rounded-[16px] border border-border bg-surface-2 px-4 py-2.5 text-sm tabular-nums"
-            >
-              {restschuld ? (
-                <span className="font-semibold text-accent">
-                  {geld.format(Math.round(restschuld.wert))}
-                </span>
-              ) : (
-                // Nur ein Strich: Der Grund steht in der Zeile darunter, und
-                // zweimal derselbe Satz untereinander liest sich als Fehler.
-                <span className="text-muted">—</span>
-              )}
-            </output>
-            <p className="text-xs text-muted">
-              {!restschuld
-                ? wt.step7.restschuldOffen
-                : restschuld.abbezahlt
-                  ? wt.step7.restschuldAbbezahlt
-                  : restschuld.ohneZins
-                    ? wt.step7.restschuldOhneZins
-                    : wt.step7.restschuldMitZins}
+            <BetragFeld
+              id="kreditRestschuld"
+              label={`${wt.step7.restschuld} (€)`}
+              wert={restschuldWert}
+              onWert={(z) => update({ kreditRestschuld: z })}
+            />
+            <p className="text-xs text-muted" aria-live="polite">
+              {eigeneRestschuld
+                ? wt.step7.restschuldSelbst
+                : !restschuld
+                  ? wt.step7.restschuldOffen
+                  : restschuld.abbezahlt
+                    ? wt.step7.restschuldAbbezahlt
+                    : restschuld.zinsHergeleitet
+                      ? wt.step7.restschuldHergeleitet
+                      : restschuld.ohneZins
+                        ? wt.step7.restschuldOhneZins
+                        : wt.step7.restschuldMitZins}
             </p>
+            {eigeneRestschuld && (
+              <button
+                type="button"
+                onClick={() => update({ kreditRestschuld: "" })}
+                className="w-fit text-xs font-medium text-accent underline underline-offset-2 transition-opacity duration-200 hover:opacity-80 focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+              >
+                {wt.step7.restschuldNeuBerechnen}
+              </button>
+            )}
           </div>
+
         </Ausklapp>
       </fieldset>
     </WizardStepLayout>

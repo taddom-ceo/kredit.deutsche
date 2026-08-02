@@ -62,6 +62,11 @@ export interface WizardData {
   kreditAuszahlung: string;
   kreditRate: string;
   kreditZins: string;
+  /** Gesamtlaufzeit des Kredits in Monaten. */
+  kreditLaufzeit: string;
+  // Vom Kunden selbst gesetzte Restschuld. Leer heisst: Es gilt die
+  // Schaetzung aus den Angaben darueber.
+  kreditRestschuld: string;
   iban: string;
   bankname: string;
   kontoinhaber: string;
@@ -113,6 +118,8 @@ const initialData: WizardData = {
   kreditAuszahlung: "",
   kreditRate: "",
   kreditZins: "",
+  kreditLaufzeit: "",
+  kreditRestschuld: "",
   iban: "",
   bankname: "",
   kontoinhaber: "",
