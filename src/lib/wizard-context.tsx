@@ -76,6 +76,8 @@ export type BestehenderKredit = {
       falschen Kredit zu. */
   id: string;
   art: string;
+  /** "Andere" wurde angetippt und hat die weiteren Kreditarten freigegeben. */
+  weitereArten: boolean;
   betrag: string;
   rate: string;
   auszahlungMonat: string;
@@ -98,6 +100,7 @@ export function leererKredit(): BestehenderKredit {
   return {
     id: `kredit-${laufendeNummer}`,
     art: "",
+    weitereArten: false,
     betrag: "",
     rate: "",
     auszahlungMonat: "",
