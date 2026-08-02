@@ -22,7 +22,10 @@ export default function StepProgress({ current }: { current: number }) {
     return {
       done: stepNum < current,
       active: stepNum === current,
-      reachable: stepNum <= data.maxStep && stepNum !== current,
+      // Im Entwicklermodus ist jeder Schritt anspringbar, sonst nur die
+      // bereits besuchten.
+      reachable:
+        (data.devModus || stepNum <= data.maxStep) && stepNum !== current,
     };
   }
 

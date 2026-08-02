@@ -58,9 +58,29 @@ export interface WizardData {
   bankname: string;
   kontoinhaber: string;
   submitted: boolean;
+  /**
+   * Entwicklermodus: haelt "Weiter" immer offen und gibt alle Schritte in der
+   * Fortschrittsleiste frei, damit sich die Strecke ohne Eingaben durchklicken
+   * laesst. Steht ausserhalb der Entwicklung nie auf true.
+   */
+  devModus: boolean;
 }
 
 export const TOTAL_STEPS = 8;
+
+/**
+ * Ob der Entwicklermodus ueberhaupt angeboten wird.
+ *
+ * Beim oertlichen `next dev` immer, sonst nur wenn NEXT_PUBLIC_DEV_MODUS auf
+ * "1" steht. Damit laesst er sich auf einer Vorschau-Umgebung gezielt
+ * einschalten, bleibt in der Produktion aber aus, ohne dass jemand daran
+ * denken muss. Der Vergleich steht bewusst als Konstante hier: Next ersetzt
+ * process.env beim Bauen durch feste Werte, dadurch faellt der ganze Zweig
+ * samt Schalter aus dem Produktionspaket heraus.
+ */
+export const DEV_MODUS_VERFUEGBAR =
+  process.env.NODE_ENV !== "production" ||
+  process.env.NEXT_PUBLIC_DEV_MODUS === "1";
 
 /** Antwort auf eine Pflichtfrage. null heisst "noch nicht beantwortet". */
 export type JaNein = "ja" | "nein" | null;
@@ -155,6 +175,7 @@ const initialData: WizardData = {
   bankname: "",
   kontoinhaber: "",
   submitted: false,
+  devModus: false,
 };
 
 type WizardContextValue = {
@@ -205,7 +226,15 @@ export function WizardProvider({
   function goToStep(step: number) {
     setData((prev) => ({
       ...prev,
-      step: Math.min(Math.max(step, 1), prev.maxStep),
+      // Im Entwicklermodus zaehlt nur die Zahl der Schritte, nicht wie weit
+      // der Antrag schon ausgefuellt ist.
+      step: Math.min(
+        Math.max(step, 1),
+        prev.devModus ? TOTAL_STEPS : prev.maxStep
+      ),
+      maxStep: prev.devModus
+        ? Math.max(prev.maxStep, Math.min(Math.max(step, 1), TOTAL_STEPS))
+        : prev.maxStep,
     }));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }

@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useLanguage } from "@/lib/language-context";
-import { useWizard } from "@/lib/wizard-context";
+import { useWizard, DEV_MODUS_VERFUEGBAR } from "@/lib/wizard-context";
 import { wizardTranslations } from "@/lib/wizard-i18n";
 
 export default function WizardStepLayout({
@@ -38,7 +38,7 @@ export default function WizardStepLayout({
 }) {
   const { lang } = useLanguage();
   const wt = wizardTranslations[lang];
-  const { data } = useWizard();
+  const { data, update } = useWizard();
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
@@ -82,6 +82,31 @@ export default function WizardStepLayout({
             {children}
           </div>
 
+          {/* Schalter fuer die Entwicklung. Er steht auf jedem Schritt, damit
+              er sich von ueberall aus umlegen laesst, und haengt an einem
+              gemeinsamen Zustand — einmal gesetzt, gilt er fuer die ganze
+              Strecke.
+              Ausserhalb der Entwicklung wird der Block gar nicht erst
+              erzeugt: DEV_MODUS_VERFUEGBAR ist eine Konstante aus
+              process.env, die Next beim Bauen einsetzt, sodass der Zweig aus
+              dem Produktionspaket herausfaellt. */}
+          {DEV_MODUS_VERFUEGBAR && (
+            <label className="flex w-fit cursor-pointer items-center gap-2.5 rounded-[12px] border border-dashed border-amber-400/50 bg-amber-400/[0.06] px-3 py-2 text-xs font-medium text-amber-200/90">
+              <input
+                type="checkbox"
+                checked={data.devModus}
+                onChange={(e) => update({ devModus: e.target.checked })}
+                className="size-3.5 accent-amber-400"
+              />
+              dev mode
+              <span className="font-normal text-amber-200/60">
+                {data.devModus
+                  ? "— Weiter immer frei, alle Schritte anklickbar"
+                  : "— Schritte ohne Eingaben durchklicken"}
+              </span>
+            </label>
+          )}
+
           {showNav && (
             <div className="flex items-center gap-3 pt-2">
               {onBack && (
@@ -96,7 +121,8 @@ export default function WizardStepLayout({
               <button
                 type="button"
                 onClick={onNext}
-                disabled={nextDisabled}
+                // Im Entwicklermodus bleibt "Weiter" offen, egal was fehlt.
+                disabled={nextDisabled && !data.devModus}
                 className="flex-1 text-center rounded-[16px] bg-accent text-accent-foreground font-semibold px-4 py-3.5 text-sm shadow-[0_8px_24px_-6px_rgba(52,211,153,0.45)] transition-all duration-200 hover:bg-accent-strong hover:shadow-[0_10px_30px_-6px_rgba(52,211,153,0.55)] hover:-translate-y-px active:translate-y-0 active:scale-[0.99] disabled:opacity-40 disabled:pointer-events-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
               >
                 {nextLabel ?? wt.nav.next} →
