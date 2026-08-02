@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Reveal from "@/components/Reveal";
+import VisibilityGate from "@/components/VisibilityGate";
 import PartnerLaufband from "@/components/PartnerLaufband";
 import {
   CompareIllustration,
@@ -149,7 +150,7 @@ export default function Home() {
               der Text die Zeilenhoehe und das Bild passt sich an — vorher war
               es umgekehrt: Das Bild erzwang ueber sein Seitenverhaeltnis 715px
               Hoehe, und kuerzere Abstaende im Text aenderten daran nichts. */}
-          <div className="relative w-full max-w-[560px] justify-self-center lg:max-w-none lg:h-full lg:justify-self-end">
+          <VisibilityGate className="relative w-full max-w-[560px] justify-self-center lg:max-w-none lg:h-full lg:justify-self-end">
             <HeroIllustration
               angebote={l.heroAngebote}
               proMonat={l.heroProMonat}
@@ -158,7 +159,7 @@ export default function Home() {
               szenen={l.heroSzenen}
               className="auftakt w-full h-full lg:absolute lg:inset-0 [animation-delay:340ms]"
             />
-          </div>
+          </VisibilityGate>
         </section>
 
         {/* Partnerbanken als durchlaufendes Band ueber die volle Breite.
