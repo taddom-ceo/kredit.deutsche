@@ -329,7 +329,7 @@ export const translations: Record<Language, Translations> = {
         { wert: "€0", label: "cost for you" },
       ],
       ablaufEyebrow: "How it works",
-      ablaufTitle: "Three steps, no hold music",
+      ablaufTitle: "Three steps, no call center",
       ablaufSubtitle:
         "No appointment and no documents up front.",
       schritte: [
