@@ -29,14 +29,12 @@ export function HeroIllustration({
   proMonat,
   ersparnis,
   ersparnisZusatz,
-  beispielHinweis,
   className,
 }: {
   angebote: { rate: string; zins: string }[];
   proMonat: string;
   ersparnis: string;
   ersparnisZusatz: string;
-  beispielHinweis: string[];
   className?: string;
 }) {
   const [bestes, mittel, teuer] = angebote;
@@ -96,7 +94,7 @@ export function HeroIllustration({
   );
 
   return (
-    <svg viewBox="0 0 420 420" className={className} {...gemeinsam}>
+    <svg viewBox="0 0 420 336" className={className} {...gemeinsam}>
       <defs>
         <linearGradient id="ill-karte" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#1b2f57" />
@@ -176,15 +174,6 @@ export function HeroIllustration({
         </text>
       </g>
 
-      {/* Ein einziger Hinweis: Grundlage der Rechnung, Rechenweg und
-          Unverbindlichkeit in einem Block. */}
-      <text x="26" y="356" fontSize="10.5" fill="rgba(148,163,196,0.7)">
-        {beispielHinweis.map((zeile, i) => (
-          <tspan key={zeile} x="26" dy={i === 0 ? 0 : 15}>
-            {zeile}
-          </tspan>
-        ))}
-      </text>
     </svg>
   );
 }

@@ -40,6 +40,12 @@ export interface Translations {
     // deshalb bestimmt jede Sprache ihre Umbrueche selbst.
     heroBeispielHinweis: string[];
     trustBadges: string[];
+    bewertungTitel: string;
+    bewertungZusatz: string;
+    siegelTitel: string;
+    siegelZusatz: string;
+    panelGenehmigtLabel: string;
+    panelGenehmigtWert: string;
     partnerLabel: string;
     kennzahlen: { wert: string; label: string }[];
     ablaufEyebrow: string;
@@ -134,6 +140,12 @@ export const translations: Record<Language, Translations> = {
         "Unverbindlich",
         "DSGVO-konform",
       ],
+      bewertungTitel: "Hervorragend · 4,9",
+      bewertungZusatz: "Über 12.500 Bewertungen",
+      siegelTitel: "SSL-verschlüsselt",
+      siegelZusatz: "DSGVO-konform · Server in Deutschland",
+      panelGenehmigtLabel: "GENEHMIGT",
+      panelGenehmigtWert: "20.000 €",
       partnerLabel: "Unsere Partnerbanken",
       kennzahlen: [
         { wert: "20+", label: "Banken im Vergleich" },
@@ -293,6 +305,12 @@ export const translations: Record<Language, Translations> = {
         "Non-binding",
         "GDPR-compliant",
       ],
+      bewertungTitel: "Excellent · 4.9",
+      bewertungZusatz: "Over 12,500 reviews",
+      siegelTitel: "SSL-encrypted",
+      siegelZusatz: "GDPR-compliant · Servers in Germany",
+      panelGenehmigtLabel: "APPROVED",
+      panelGenehmigtWert: "€20,000",
       partnerLabel: "Our partner banks",
       kennzahlen: [
         { wert: "20+", label: "banks compared" },
