@@ -37,7 +37,7 @@ export default function PartnerLaufband({ label }: { label: string }) {
               {PARTNERS.map((name) => (
                 <li
                   key={name}
-                  className="shrink-0 px-10 text-xl font-semibold tracking-wide text-muted/70 whitespace-nowrap"
+                  className="shrink-0 px-10 text-3xl font-semibold tracking-wide text-muted/70 whitespace-nowrap"
                 >
                   {name}
                 </li>
