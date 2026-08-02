@@ -31,7 +31,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var W=1440,M=1024,d=document.documentElement;d.classList.add("js");function fit(){var w=d.clientWidth;if(w<M){d.style.setProperty("--stage-width","100%");d.style.setProperty("--stage-zoom","1");d.style.setProperty("--stage-min-height","100vh");return;}var z=Math.min(1,w/W);d.style.setProperty("--stage-width",W+"px");d.style.setProperty("--stage-zoom",String(z));d.style.setProperty("--stage-min-height",Math.ceil(d.clientHeight/z)+"px");}fit();addEventListener("resize",fit);})();`,
+            __html: `(function(){var W=1440,M=1024,d=document.documentElement;d.classList.add("js");function fit(){var w=d.clientWidth;if(w<M){d.style.setProperty("--stage-width","100%");d.style.setProperty("--stage-zoom","1");d.style.setProperty("--stage-min-height","100vh");d.style.setProperty("--stage-vollbreite",w+"px");return;}var z=Math.min(1,w/W);d.style.setProperty("--stage-width",W+"px");d.style.setProperty("--stage-zoom",String(z));d.style.setProperty("--stage-min-height",Math.ceil(d.clientHeight/z)+"px");d.style.setProperty("--stage-vollbreite",Math.ceil(w/z)+"px");}fit();addEventListener("resize",fit);})();`,
           }}
         />
       </head>

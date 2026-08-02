@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Header from "@/components/Header";
 import Reveal from "@/components/Reveal";
-import { PARTNERS } from "@/components/BankMarquee";
+import PartnerLaufband from "@/components/PartnerLaufband";
 import {
   CompareIllustration,
   HeroIllustration,
@@ -46,8 +46,12 @@ export default function Home() {
             {/* Die zweite Zeile kursiv und in der Akzentfarbe: Sie trägt die
                 Aussage und hebt sich dadurch ab, ohne dass die Überschrift
                 zwei Größen bräuchte. */}
+            {/* Unter 390px faellt die Ueberschrift kleiner aus: "Bank-Marathon."
+                ist bei 2,9rem kursiv 354px breit und ragte auf einem 360px
+                schmalen Bildschirm 10px ueber den Rand. break-words ist der
+                Rueckhalt fuer noch schmalere Geraete und andere Sprachen. */}
             <h1
-              className="auftakt text-[2.9rem] lg:text-[4.1rem] font-bold leading-[1.02] tracking-[-0.035em]"
+              className="auftakt text-[2.9rem] max-[389px]:text-[2.35rem] lg:text-[4.1rem] font-bold leading-[1.02] tracking-[-0.035em] break-words"
               style={{ animationDelay: "140ms" }}
             >
               {l.titleLine1}
@@ -125,6 +129,14 @@ export default function Home() {
           />
         </section>
 
+        {/* Partnerbanken als durchlaufendes Band ueber die volle Breite.
+            Die laufende Schrift am rechten Bildrand passte zur alten Seite,
+            die auf einen Bildschirm ging — hier schwebte sie ueber der
+            gesamten Laenge und lenkte ab. */}
+        <section>
+          <PartnerLaufband label={l.partnerLabel} />
+        </section>
+
         {/* Kennzahlen als eigene Karten mit Symbol — als schlichte Zeile gingen
             sie zwischen den Abschnitten unter. */}
         <section className="border-y border-border bg-surface/40">
@@ -150,27 +162,6 @@ export default function Home() {
                 </Reveal>
               );
             })}
-          </div>
-        </section>
-
-        {/* Partnerbanken als feste Zeile. Die laufende Schrift am Bildrand
-            passte zur alten Seite, die auf einen Bildschirm ging — hier
-            schwebte sie über der gesamten Länge und lenkte ab. */}
-        <section className="border-b border-border">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 flex flex-wrap items-center gap-x-8 gap-y-3">
-            <Reveal as="span" className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-              {l.partnerLabel}
-            </Reveal>
-            {PARTNERS.map((name, i) => (
-              <Reveal
-                as="span"
-                key={name}
-                delay={90 + i * 65}
-                className="text-sm font-semibold tracking-wide text-muted/60"
-              >
-                {name}
-              </Reveal>
-            ))}
           </div>
         </section>
 
