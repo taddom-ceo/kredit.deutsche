@@ -35,7 +35,7 @@ export default function Home() {
         <section className="border-t border-border">
           <div className="mx-auto max-w-6xl px-6 py-16 grid grid-cols-1 lg:grid-cols-3 gap-6">
             {t.features.map((feature, i) => (
-              <Reveal key={feature.title} delay={i * 80} className="h-full">
+              <Reveal key={feature.title} delay={i * 120} className="h-full">
                 <div className="h-full rounded-[20px] border border-border bg-surface ring-1 ring-white/5 p-6 flex flex-col gap-2.5 shadow-[0_10px_30px_-18px_rgba(0,0,0,0.6)] transition-all duration-250 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-[0_14px_36px_-16px_rgba(0,0,0,0.65)]">
                   <h3 className="text-base font-semibold tracking-[-0.01em]">
                     {feature.title}

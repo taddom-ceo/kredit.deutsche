@@ -48,7 +48,7 @@ export default function Home() {
                 zwei Größen bräuchte. */}
             <h1
               className="auftakt text-[2.9rem] lg:text-[4.1rem] font-bold leading-[1.02] tracking-[-0.035em]"
-              style={{ animationDelay: "80ms" }}
+              style={{ animationDelay: "140ms" }}
             >
               {l.titleLine1}
               <br />
@@ -56,14 +56,14 @@ export default function Home() {
             </h1>
             <p
               className="auftakt text-lg lg:text-xl text-muted leading-relaxed max-w-xl"
-              style={{ animationDelay: "160ms" }}
+              style={{ animationDelay: "280ms" }}
             >
               {l.subtitle}
             </p>
 
             <div
               className="auftakt flex flex-wrap items-center gap-3 mt-2"
-              style={{ animationDelay: "240ms" }}
+              style={{ animationDelay: "420ms" }}
             >
               <Link
                 href="/rechner"
@@ -94,7 +94,7 @@ export default function Home() {
                 Vorbeisehen erfasst, ein Satz muss gelesen werden. */}
             <ul
               className="auftakt flex flex-wrap gap-x-5 gap-y-2"
-              style={{ animationDelay: "320ms" }}
+              style={{ animationDelay: "560ms" }}
             >
               {l.trustBadges.map((badge) => (
                 <li
@@ -121,7 +121,7 @@ export default function Home() {
             proMonat={l.heroProMonat}
             ersparnis={l.heroErsparnis}
             beispielHinweis={l.heroBeispielHinweis}
-            className="auftakt w-full h-full max-w-[560px] justify-self-center lg:max-w-none lg:justify-self-end [animation-delay:200ms]"
+            className="auftakt w-full h-full max-w-[560px] justify-self-center lg:max-w-none lg:justify-self-end [animation-delay:340ms]"
           />
         </section>
 
@@ -135,7 +135,7 @@ export default function Home() {
                 // Reveal traegt nur das Einblenden. Die Karte behaelt ihre
                 // eigene, schnellere Uebergangszeit fuers Ueberfahren — beides
                 // auf einem Element wuerde sich in die Quere kommen.
-                <Reveal key={k.label} delay={i * 70} className="h-full">
+                <Reveal key={k.label} delay={i * 110} className="h-full">
                   <div className="h-full rounded-[18px] border border-border bg-background ring-1 ring-white/5 p-5 lg:p-6 flex flex-col gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-border-strong">
                     <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/[0.12] text-accent">
                       <Symbol className="h-5 w-5" />
@@ -165,7 +165,7 @@ export default function Home() {
               <Reveal
                 as="span"
                 key={name}
-                delay={60 + i * 45}
+                delay={90 + i * 65}
                 className="text-sm font-semibold tracking-wide text-muted/60"
               >
                 {name}
@@ -191,7 +191,7 @@ export default function Home() {
               {l.schritte.map((schritt, i) => {
                 const Bild = SCHRITT_BILDER[i];
                 return (
-                  <Reveal key={schritt.titel} delay={i * 90} className="h-full">
+                  <Reveal key={schritt.titel} delay={i * 130} className="h-full">
                     <div className="relative h-full rounded-[20px] border border-border bg-surface ring-1 ring-white/5 p-6 flex flex-col gap-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-border-strong">
                     <span className="absolute top-5 right-6 text-4xl font-bold leading-none text-foreground/[0.07]">
                       {i + 1}
@@ -234,7 +234,7 @@ export default function Home() {
               </ul>
             </Reveal>
 
-            <Reveal delay={120} className="rounded-[24px] border border-border bg-surface ring-1 ring-white/5 p-6 lg:p-8 flex flex-col gap-4">
+            <Reveal delay={180} className="rounded-[24px] border border-border bg-surface ring-1 ring-white/5 p-6 lg:p-8 flex flex-col gap-4">
               <CompareIllustration className="w-full" />
               <div className="grid grid-cols-2 gap-4 text-center">
                 <span className="text-xs text-muted leading-relaxed">
@@ -261,7 +261,7 @@ export default function Home() {
             </Reveal>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               {l.stimmen.map((stimme, i) => (
-                <Reveal key={stimme.name} delay={i * 90} className="h-full">
+                <Reveal key={stimme.name} delay={i * 130} className="h-full">
                   <figure className="h-full rounded-[20px] border border-border bg-surface ring-1 ring-white/5 p-6 flex flex-col gap-4">
                   <span aria-hidden="true" className="text-accent text-sm">
                     ★★★★★
@@ -294,7 +294,7 @@ export default function Home() {
             </Reveal>
             <div className="flex flex-col gap-3">
               {l.faq.map((eintrag, i) => (
-                <Reveal key={eintrag.frage} delay={i * 60}>
+                <Reveal key={eintrag.frage} delay={i * 90}>
                   <details className="group rounded-[16px] border border-border bg-surface px-5 py-4 transition-colors duration-200 hover:border-border-strong">
                   <summary className="flex items-center justify-between gap-4 text-sm font-semibold marker:content-none [&::-webkit-details-marker]:hidden">
                     {eintrag.frage}

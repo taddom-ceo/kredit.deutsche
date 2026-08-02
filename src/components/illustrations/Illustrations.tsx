@@ -100,49 +100,55 @@ export function HeroIllustration({
         </linearGradient>
       </defs>
 
-      <ellipse cx="210" cy="205" rx="185" ry="180" fill="url(#ill-schein)" />
+      <ellipse className="hero-schein" cx="210" cy="205" rx="185" ry="180" fill="url(#ill-schein)" />
 
       {/* Gerät, waagerecht mittig — es steht allein, deshalb ist die Mitte
-          der Zeichenfläche auch seine Mitte. */}
-      <rect
-        x="110"
-        y="20"
-        width="200"
-        height="356"
-        rx="32"
-        fill="url(#ill-karte)"
-        stroke="rgba(148,163,196,0.3)"
-        strokeWidth="1.5"
-      />
-      <rect x="120" y="30" width="180" height="336" rx="24" fill="#0a1428" />
-      <rect x="176" y="40" width="68" height="7" rx="3.5" fill="rgba(148,163,196,0.35)" />
+          der Zeichenfläche auch seine Mitte. Die Gruppe traegt das ruhige
+          Schweben; ohne eigene Gruppe liesse sich die Bewegung nicht auf alle
+          Teile zugleich legen. */}
+      <g className="hero-geraet">
+        <rect
+          x="110"
+          y="20"
+          width="200"
+          height="356"
+          rx="32"
+          fill="url(#ill-karte)"
+          stroke="rgba(148,163,196,0.3)"
+          strokeWidth="1.5"
+        />
+        <rect x="120" y="30" width="180" height="336" rx="24" fill="#0a1428" />
+        <rect x="176" y="40" width="68" height="7" rx="3.5" fill="rgba(148,163,196,0.35)" />
 
-      <rect x="130" y="60" width="96" height="9" rx="4.5" fill="rgba(245,248,255,0.55)" />
-      <rect x="130" y="77" width="62" height="7" rx="3.5" fill="rgba(148,163,196,0.35)" />
+        <rect x="130" y="60" width="96" height="9" rx="4.5" fill="rgba(245,248,255,0.55)" />
+        <rect x="130" y="77" width="62" height="7" rx="3.5" fill="rgba(148,163,196,0.35)" />
 
-      <Zeile y={98} angebot={bestes} hervor />
-      <Zeile y={158} angebot={mittel} />
-      <Zeile y={218} angebot={teuer} />
+        <Zeile y={98} angebot={bestes} hervor />
+        <Zeile y={158} angebot={mittel} />
+        <Zeile y={218} angebot={teuer} />
 
-      <rect x="130" y="286" width="160" height="38" rx="19" fill="#34d399" />
-      <rect x="176" y="301" width="68" height="8" rx="4" fill="rgba(4,23,15,0.75)" />
+        <rect x="130" y="286" width="160" height="38" rx="19" fill="#34d399" />
+        <rect x="176" y="301" width="68" height="8" rx="4" fill="rgba(4,23,15,0.75)" />
+      </g>
 
       {/* Die Ersparnis überlappt den unteren Geräterand, nicht den Bildschirm:
           Der Bildschirm endet bei y=366, die Plakette beginnt bei y=352. */}
       <g transform="translate(96 352)">
-        <rect width="228" height="56" rx="18" fill="#0f1c37" stroke="rgba(52,211,153,0.45)" />
-        <circle cx="34" cy="28" r="15" fill="rgba(52,211,153,0.16)" />
-        <path
-          d="M34 20 L34 35 M28 29 L34 35.5 L40 29"
-          fill="none"
-          stroke="#34d399"
-          strokeWidth="2.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <text x="62" y="34" fontSize="17" fontWeight="700" fill="#f5f8ff">
-          {ersparnis}
-        </text>
+        <g className="hero-plakette">
+          <rect width="228" height="56" rx="18" fill="#0f1c37" stroke="rgba(52,211,153,0.45)" />
+          <circle cx="34" cy="28" r="15" fill="rgba(52,211,153,0.16)" />
+          <path
+            d="M34 20 L34 35 M28 29 L34 35.5 L40 29"
+            fill="none"
+            stroke="#34d399"
+            strokeWidth="2.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <text x="62" y="34" fontSize="17" fontWeight="700" fill="#f5f8ff">
+            {ersparnis}
+          </text>
+        </g>
       </g>
 
       {/* Grundlage der Rechnung, mittig unter dem Gerät ausgerichtet. */}
