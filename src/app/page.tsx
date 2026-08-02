@@ -36,7 +36,7 @@ export default function Home() {
         {/* Hero. Der Aufruf steht über der Falz und wird auf dem Handy zuerst
             gezeigt — die Illustration rutscht dort darunter, weil sie die
             Aussage begleitet und nicht trägt. */}
-        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-20 lg:py-32 grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-12 items-center">
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-20 lg:py-32 grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-12 items-stretch">
           <div className="flex flex-col gap-7">
             <span className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-[13px] font-semibold text-foreground">
               <span aria-hidden="true" className="h-2 w-2 rounded-full bg-accent" />
@@ -99,9 +99,8 @@ export default function Home() {
             angebote={l.heroAngebote}
             proMonat={l.heroProMonat}
             ersparnis={l.heroErsparnis}
-            ersparnisZusatz={l.heroErsparnisZusatz}
             beispielHinweis={l.heroBeispielHinweis}
-            className="w-full max-w-[500px] justify-self-center lg:justify-self-end"
+            className="w-full h-full max-w-[560px] justify-self-center lg:max-w-none lg:justify-self-end"
           />
         </section>
 
