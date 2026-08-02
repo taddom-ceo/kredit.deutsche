@@ -45,6 +45,23 @@ export interface WizardData {
   beschaeftigtSeit: string;
   nettoeinkommen: string;
   ausgaben: string;
+  // Pflichtangabe im Einkommensschritt. null heisst "noch nicht beantwortet"
+  // und haelt den Schritt offen — anders als ein leerer String, der sich von
+  // einem bewussten "nein" nicht unterscheiden liesse.
+  mieteinnahmen: "ja" | "nein" | null;
+  mieteinnahmenBetrag: string;
+  // Mehrfachauswahl der laufenden Kredite. Der Wert KEINE_KREDITE steht darin
+  // allein und schliesst die uebrigen aus.
+  kreditarten: string[];
+  // Angaben zum groessten laufenden Kredit. Wie beim Geburtsdatum sind Monat
+  // und Jahr die Eingabe, kreditAuszahlung bleibt der zusammengesetzte Wert
+  // im Format JJJJ-MM.
+  kreditSumme: string;
+  kreditAuszahlungMonat: string;
+  kreditAuszahlungJahr: string;
+  kreditAuszahlung: string;
+  kreditRate: string;
+  kreditZins: string;
   iban: string;
   bankname: string;
   kontoinhaber: string;
@@ -52,6 +69,9 @@ export interface WizardData {
 }
 
 export const TOTAL_STEPS = 8;
+
+/** Kennung der Antwort "keine laufenden Kredite" in kreditarten. */
+export const KEINE_KREDITE = "keine";
 
 const initialData: WizardData = {
   step: 1,
@@ -84,6 +104,15 @@ const initialData: WizardData = {
   beschaeftigtSeit: "",
   nettoeinkommen: "",
   ausgaben: "",
+  mieteinnahmen: null,
+  mieteinnahmenBetrag: "",
+  kreditarten: [],
+  kreditSumme: "",
+  kreditAuszahlungMonat: "",
+  kreditAuszahlungJahr: "",
+  kreditAuszahlung: "",
+  kreditRate: "",
+  kreditZins: "",
   iban: "",
   bankname: "",
   kontoinhaber: "",

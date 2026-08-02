@@ -314,7 +314,7 @@ export default function StepArt() {
             und das leichte Anheben beim Überfahren. */}
         <div
           id="weitere-zwecke"
-          className={`zwecke-ausklapp grid ${
+          className={`ausklapp grid ${
             mehrOffen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
           }`}
           onTransitionEnd={(e) => {

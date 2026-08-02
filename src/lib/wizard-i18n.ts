@@ -141,6 +141,28 @@ export interface WizardTranslations {
     nettoeinkommen: string;
     ausgaben: string;
     ausgabenHint: string;
+    mieteinnahmenFrage: string;
+    ja: string;
+    nein: string;
+    mieteinnahmenBetrag: string;
+    kreditFrage: string;
+    kreditHint: string;
+    keineKredite: string;
+    kreditarten: { wert: string; label: string }[];
+    kreditAngabenTitel: string;
+    kreditSumme: string;
+    kreditAuszahlung: string;
+    monat: string;
+    jahr: string;
+    auswahlPlatzhalter: string;
+    kreditRate: string;
+    kreditZins: string;
+    optional: string;
+    restschuld: string;
+    restschuldMitZins: string;
+    restschuldOhneZins: string;
+    restschuldOffen: string;
+    restschuldAbbezahlt: string;
   };
   step8: {
     eyebrow: string;
@@ -440,6 +462,37 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       nettoeinkommen: "Monatliches Nettoeinkommen",
       ausgaben: "Monatliche Ausgaben (Miete, Kredite, ...)",
       ausgabenHint: "Ohne Lebenshaltungskosten",
+      mieteinnahmenFrage: "Haben Sie Mieteinnahmen?",
+      ja: "Ja",
+      nein: "Nein",
+      mieteinnahmenBetrag: "Monatliche Mieteinnahmen",
+      kreditFrage: "Welche Kredite haben Sie aktuell?",
+      kreditHint: "Mehrfachauswahl möglich",
+      keineKredite: "Keine",
+      kreditarten: [
+        { wert: "ratenkredit", label: "Ratenkredit" },
+        { wert: "autokredit", label: "Autokredit" },
+        { wert: "immobilienkredit", label: "Immobilienkredit" },
+        { wert: "dispo", label: "Dispo- oder Rahmenkredit" },
+        { wert: "sonstiges", label: "Sonstiger Kredit" },
+      ],
+      kreditAngabenTitel: "Angaben zu Ihrem größten laufenden Kredit",
+      kreditSumme: "Ursprünglich finanzierte Summe",
+      kreditAuszahlung: "Auszahlungsdatum",
+      monat: "Monat",
+      jahr: "Jahr",
+      auswahlPlatzhalter: "Bitte wählen",
+      kreditRate: "Monatliche Rate",
+      kreditZins: "Effektiver Jahreszins",
+      optional: "optional",
+      restschuld: "Geschätzte Restschuld heute",
+      restschuldMitZins:
+        "Geschätzt aus Summe, Rate und Zinssatz über die seit der Auszahlung vergangenen Monate. Unverbindlich — maßgeblich ist die Abrechnung Ihrer Bank.",
+      restschuldOhneZins:
+        "Ohne Zinssatz nur grob geschätzt: Summe abzüglich der gezahlten Raten. Da ein Teil jeder Rate Zinsen sind, liegt die tatsächliche Restschuld höher. Mit Zinssatz wird die Schätzung genau.",
+      restschuldOffen:
+        "Wird berechnet, sobald Summe, Auszahlungsdatum und Rate ausgefüllt sind.",
+      restschuldAbbezahlt: "Rechnerisch bereits vollständig zurückgeführt.",
     },
     step8: {
       eyebrow: "8/8 · Bankverbindung",
@@ -741,6 +794,37 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       nettoeinkommen: "Monthly net income",
       ausgaben: "Monthly expenses (rent, loans, ...)",
       ausgabenHint: "Excluding cost of living",
+      mieteinnahmenFrage: "Do you have rental income?",
+      ja: "Yes",
+      nein: "No",
+      mieteinnahmenBetrag: "Monthly rental income",
+      kreditFrage: "Which loans do you currently have?",
+      kreditHint: "Select all that apply",
+      keineKredite: "None",
+      kreditarten: [
+        { wert: "ratenkredit", label: "Personal loan" },
+        { wert: "autokredit", label: "Car loan" },
+        { wert: "immobilienkredit", label: "Mortgage" },
+        { wert: "dispo", label: "Overdraft or credit line" },
+        { wert: "sonstiges", label: "Other loan" },
+      ],
+      kreditAngabenTitel: "Details of your largest ongoing loan",
+      kreditSumme: "Amount originally financed",
+      kreditAuszahlung: "Date of payout",
+      monat: "Month",
+      jahr: "Year",
+      auswahlPlatzhalter: "Please select",
+      kreditRate: "Monthly payment",
+      kreditZins: "Effective annual rate",
+      optional: "optional",
+      restschuld: "Estimated balance outstanding today",
+      restschuldMitZins:
+        "Estimated from the amount, the payment and the rate over the months since payout. Non-binding — your bank's statement is what counts.",
+      restschuldOhneZins:
+        "Without an interest rate this is only a rough estimate: amount less the payments made. Since part of every payment is interest, the real balance is higher. Adding the rate makes the estimate exact.",
+      restschuldOffen:
+        "Calculated as soon as amount, payout date and monthly payment are filled in.",
+      restschuldAbbezahlt: "Already fully repaid according to the calculation.",
     },
     step8: {
       eyebrow: "8/8 · Bank details",
