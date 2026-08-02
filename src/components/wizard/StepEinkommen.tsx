@@ -8,6 +8,7 @@ import { berechneRestschuld } from "@/lib/restschuld";
 import WizardStepLayout from "./WizardStepLayout";
 import { FormField, FormSelect } from "./FormField";
 import { BetragFeld } from "./BetragFeld";
+import { dezimalZuZahl, nurDezimal } from "@/lib/betrag";
 
 // Ein Kredit, der laenger als 40 Jahre laeuft, kommt praktisch nicht vor;
 // Immobilienfinanzierungen bilden die Obergrenze. Nach vorne ist der laufende
@@ -106,6 +107,17 @@ export default function StepEinkommen() {
   const monatsGrenze =
     Number(data.kreditAuszahlungJahr) === diesesJahr ? dieserMonat : 12;
 
+  /**
+   * Aenderung an einer Grundlage der Restschuld. Ein zuvor selbst
+   * eingetragener Wert wird dabei aufgehoben: Er bezog sich auf Angaben, die
+   * es so nicht mehr gibt. Ohne das blieb die Zahl stehen, waehrend sich
+   * alles darueber aenderte — genau der Eindruck, die Rechnung reagiere
+   * nicht.
+   */
+  function setzeKredit(patch: Partial<typeof data>) {
+    update({ ...patch, kreditRestschuld: "" });
+  }
+
   function setzeAuszahlung(patch: { monat?: string; jahr?: string }) {
     const monat = patch.monat ?? data.kreditAuszahlungMonat;
     const jahr = patch.jahr ?? data.kreditAuszahlungJahr;
@@ -113,7 +125,7 @@ export default function StepEinkommen() {
     // Monat in der Zukunft liegen. Er wird geleert statt still verschoben.
     const grenze = Number(jahr) === diesesJahr ? dieserMonat : 12;
     const gueltigerMonat = monat && Number(monat) > grenze ? "" : monat;
-    update({
+    setzeKredit({
       kreditAuszahlungMonat: gueltigerMonat,
       kreditAuszahlungJahr: jahr,
       kreditAuszahlung: baueMonat(jahr, gueltigerMonat),
@@ -153,7 +165,9 @@ export default function StepEinkommen() {
       summe: Number(data.kreditSumme),
       auszahlung: data.kreditAuszahlung,
       rate: Number(data.kreditRate),
-      zins: data.kreditZins.trim() === "" ? undefined : Number(data.kreditZins),
+      zins: Number.isNaN(dezimalZuZahl(data.kreditZins))
+        ? undefined
+        : dezimalZuZahl(data.kreditZins),
       laufzeit:
         data.kreditLaufzeit.trim() === ""
           ? undefined
@@ -283,7 +297,7 @@ export default function StepEinkommen() {
             placeholder="15.000"
             label={`${wt.step7.kreditSumme} (€)`}
             wert={data.kreditSumme}
-            onWert={(z) => update({ kreditSumme: z })}
+            onWert={(z) => setzeKredit({ kreditSumme: z })}
           />
 
           <div className="flex flex-col gap-2">
@@ -328,7 +342,7 @@ export default function StepEinkommen() {
             placeholder="250"
             label={`${wt.step7.kreditRate} (€)`}
             wert={data.kreditRate}
-            onWert={(z) => update({ kreditRate: z })}
+            onWert={(z) => setzeKredit({ kreditRate: z })}
           />
 
           {/* Die Gesamtlaufzeit ist mehr als eine Angabe fuers Protokoll:
@@ -344,20 +358,23 @@ export default function StepEinkommen() {
             placeholder="60"
             label={`${wt.step7.kreditLaufzeit} (${wt.step7.kreditLaufzeitEinheit})`}
             value={data.kreditLaufzeit}
-            onChange={(e) => update({ kreditLaufzeit: e.target.value })}
+            onChange={(e) => setzeKredit({ kreditLaufzeit: e.target.value })}
           />
 
+          {/* Textfeld statt Zahlenfeld: Ein Zahlenfeld verwirft ein
+              Trennzeichen, das seine Sprache nicht kennt, statt es abzulehnen
+              — aus "5,49" wurde in einem englischsprachigen Browser klaglos
+              "549" und die Restschuld hundertfach zu hoch. Hier zaehlen Komma
+              und Punkt gleichermassen. */}
           <FormField
             id="kreditZins"
-            type="number"
-            min={0}
-            max={30}
-            step={0.01}
+            type="text"
             inputMode="decimal"
-            placeholder="z. B. 5,49"
+            autoComplete="off"
+            placeholder="5,49"
             label={`${wt.step7.kreditZins} (%) — ${wt.step7.optional}`}
             value={data.kreditZins}
-            onChange={(e) => update({ kreditZins: e.target.value })}
+            onChange={(e) => setzeKredit({ kreditZins: nurDezimal(e.target.value) })}
           />
 
           {/* Ergebnisfeld — vorbelegt mit der Schaetzung, aber aenderbar. */}
@@ -377,9 +394,11 @@ export default function StepEinkommen() {
                     ? wt.step7.restschuldAbbezahlt
                     : restschuld.zinsHergeleitet
                       ? wt.step7.restschuldHergeleitet
-                      : restschuld.ohneZins
-                        ? wt.step7.restschuldOhneZins
-                        : wt.step7.restschuldMitZins}
+                      : restschuld.laufzeitPasstNicht
+                        ? wt.step7.restschuldPasstNicht
+                        : restschuld.ohneZins
+                          ? wt.step7.restschuldOhneZins
+                          : wt.step7.restschuldMitZins}
             </p>
             {eigeneRestschuld && (
               <button

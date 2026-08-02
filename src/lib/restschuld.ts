@@ -43,6 +43,11 @@ export type RestschuldErgebnis = {
   /** Der Zinssatz war nicht angegeben, liess sich aber aus der Laufzeit
       herleiten — die Schaetzung ist dann so genau wie mit Angabe. */
   zinsHergeleitet: boolean;
+  /** Eine Laufzeit war angegeben, passt aber nicht zu Summe und Rate: Die
+      Raten reichen zusammen nicht aus, den Kredit je zu tilgen. Meist ein
+      Vertipper — deshalb wird darauf hingewiesen, statt still auf die grobe
+      Schaetzung auszuweichen. */
+  laufzeitPasstNicht: boolean;
 };
 
 /**
@@ -121,6 +126,7 @@ export function berechneRestschuld({
       abbezahlt: false,
       ohneZins: true,
       zinsHergeleitet: false,
+      laufzeitPasstNicht: false,
     };
   }
 
@@ -128,11 +134,13 @@ export function berechneRestschuld({
   // mit: Summe, Rate und Laufzeit legen ihn eindeutig fest.
   let i: number | null = null;
   let zinsHergeleitet = false;
+  let laufzeitPasstNicht = false;
   if (zins != null && Number.isFinite(zins) && zins > 0) {
     i = Math.pow(1 + zins / 100, 1 / 12) - 1;
   } else if (laufzeit != null && Number.isFinite(laufzeit) && laufzeit > 0) {
     i = leiteMonatszinsAb(summe, rate, laufzeit);
     zinsHergeleitet = i !== null;
+    laufzeitPasstNicht = i === null;
   }
 
   let wert: number;
@@ -150,5 +158,6 @@ export function berechneRestschuld({
     abbezahlt,
     ohneZins: i === null,
     zinsHergeleitet,
+    laufzeitPasstNicht,
   };
 }
