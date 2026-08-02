@@ -37,7 +37,10 @@ export default function Home() {
         {/* Hero. Der Aufruf steht über der Falz und wird auf dem Handy zuerst
             gezeigt — die Illustration rutscht dort darunter, weil sie die
             Aussage begleitet und nicht trägt. */}
-        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-20 lg:py-32 grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-12 items-stretch">
+        {/* Deutlich knapper als zuvor, damit das Partnerband schon beim
+            Oeffnen der Seite im Bild steht — aber luftig genug, dass der
+            Aufmacher nicht gequetscht wirkt. */}
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 pt-12 pb-14 lg:pt-14 lg:pb-16 grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-12 items-stretch">
           <div className="flex flex-col gap-7">
             <span className="auftakt inline-flex w-fit items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-[13px] font-semibold text-foreground">
               <span aria-hidden="true" className="h-2 w-2 rounded-full bg-accent" />
@@ -120,13 +123,19 @@ export default function Home() {
             </p>
           </div>
 
-          <HeroIllustration
-            angebote={l.heroAngebote}
-            proMonat={l.heroProMonat}
-            ersparnis={l.heroErsparnis}
-            beispielHinweis={l.heroBeispielHinweis}
-            className="auftakt w-full h-full max-w-[560px] justify-self-center lg:max-w-none lg:justify-self-end [animation-delay:340ms]"
-          />
+          {/* Ab lg liegt das Bild absolut in seiner Spalte. Dadurch bestimmt
+              der Text die Zeilenhoehe und das Bild passt sich an — vorher war
+              es umgekehrt: Das Bild erzwang ueber sein Seitenverhaeltnis 715px
+              Hoehe, und kuerzere Abstaende im Text aenderten daran nichts. */}
+          <div className="relative w-full max-w-[560px] justify-self-center lg:max-w-none lg:h-full lg:justify-self-end">
+            <HeroIllustration
+              angebote={l.heroAngebote}
+              proMonat={l.heroProMonat}
+              ersparnis={l.heroErsparnis}
+              beispielHinweis={l.heroBeispielHinweis}
+              className="auftakt w-full h-full lg:absolute lg:inset-0 [animation-delay:340ms]"
+            />
+          </div>
         </section>
 
         {/* Partnerbanken als durchlaufendes Band ueber die volle Breite.

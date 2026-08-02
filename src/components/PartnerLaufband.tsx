@@ -19,7 +19,7 @@ export default function PartnerLaufband({ label }: { label: string }) {
     // Der ganze Streifen bricht aus der Buehne aus, nicht nur das Band:
     // Sonst endete die Trennlinie an der Buehnenkante, waehrend die Namen
     // darueber bis zum Bildrand liefen.
-    <div className="vollbreite border-y border-border flex flex-col gap-5 py-9">
+    <div className="vollbreite border-y border-border flex flex-col gap-6 py-11">
       <span className="mx-auto max-w-6xl px-4 sm:px-6 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
         {label}
       </span>
@@ -37,7 +37,7 @@ export default function PartnerLaufband({ label }: { label: string }) {
               {PARTNERS.map((name) => (
                 <li
                   key={name}
-                  className="shrink-0 px-8 text-sm font-semibold tracking-wide text-muted/60 whitespace-nowrap"
+                  className="shrink-0 px-10 text-xl font-semibold tracking-wide text-muted/70 whitespace-nowrap"
                 >
                   {name}
                 </li>
