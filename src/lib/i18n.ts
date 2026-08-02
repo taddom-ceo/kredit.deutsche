@@ -31,7 +31,6 @@ export interface Translations {
     ctaPrimary: string;
     ctaSecondary: string;
     ctaNote: string;
-    heroFussnote: string;
     // Beispielangebote im Aufmacher. Die Raten sind mit derselben Formel
     // gerechnet wie im Rechner: 20.000 € über 72 Monate.
     heroAngebote: { rate: string; zins: string }[];
@@ -116,8 +115,6 @@ export const translations: Record<Language, Translations> = {
       ctaPrimary: "Kostenlos vergleichen",
       ctaSecondary: "So funktioniert es",
       ctaNote: "Keine Kosten, keine Verpflichtung, kein Papierkram.",
-      heroFussnote:
-        "Die gezeigten Angebote sind unverbindliche Beispiele. Ihr effektiver Jahreszins hängt von Bonität und Anbieter ab.",
       heroAngebote: [
         { rate: "303 €", zins: "2,89 %" },
         { rate: "325 €", zins: "5,49 %" },
@@ -143,7 +140,8 @@ export const translations: Record<Language, Translations> = {
       heroBeispielHinweis: [
         "Beispielrechnung: 20.000 € Nettodarlehen, 72 Monate Laufzeit.",
         "Ersparnis = Differenz der Gesamtkosten gegenüber 8,50 % eff.",
-        "Jahreszins. Kein verbindliches Angebot.",
+        "Jahreszins. Kein verbindliches Angebot. Ihr effektiver Jahreszins",
+        "hängt von Bonität und Anbieter ab.",
       ],
       trustBadges: [
         "Schufa-neutral",
@@ -289,8 +287,6 @@ export const translations: Record<Language, Translations> = {
       ctaPrimary: "Compare for free",
       ctaSecondary: "How it works",
       ctaNote: "No cost, no obligation, no paperwork.",
-      heroFussnote:
-        "The offers shown are non-binding examples. Your effective annual rate depends on creditworthiness and provider.",
       heroAngebote: [
         { rate: "€303", zins: "2.89%" },
         { rate: "€325", zins: "5.49%" },
@@ -316,7 +312,8 @@ export const translations: Record<Language, Translations> = {
       heroBeispielHinweis: [
         "Example calculation: €20,000 net loan, 72-month term.",
         "Saving = difference in total cost vs. 8.50% effective annual",
-        "rate. Not a binding offer.",
+        "rate. Not a binding offer. Your effective annual rate depends on",
+        "creditworthiness and provider.",
       ],
       trustBadges: [
         "Credit-score-neutral",

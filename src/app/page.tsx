@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Reveal from "@/components/Reveal";
@@ -98,29 +99,50 @@ export default function Home() {
             </div>
 
             {/* Vertrauenszeichen statt Fließtext: vier Haken werden im
-                Vorbeisehen erfasst, ein Satz muss gelesen werden. */}
+                Vorbeisehen erfasst, ein Satz muss gelesen werden.
+                Als getragene Plaketten sind sie das zweite Ziel fuers Auge
+                nach dem Handlungsaufruf — deshalb Rand und Flaeche statt
+                Akzentgruen, das allein der Schaltflaeche gehoert. */}
             <ul
-              className="auftakt flex flex-wrap gap-x-5 gap-y-2"
+              // Die Breitenbegrenzung bricht die vier Plaketten am PC in einen
+              // Block von zwei mal zwei. Ohne sie passten drei in die erste
+              // Zeile und die vierte staende allein darunter — das liest sich
+              // als Umbruchunfall statt als gesetzter Block. Ein festes Raster
+              // waere hier falsch: Auf schmalen Handys waeren die Spalten
+              // enger als die laengste Plakette und sie liefen ueber.
+              className="auftakt flex flex-wrap gap-2.5 lg:max-w-[400px]"
               style={{ animationDelay: "560ms" }}
             >
-              {l.trustBadges.map((badge) => (
+              {l.trustBadges.map((badge, i) => (
                 <li
                   key={badge}
-                  className="flex items-center gap-1.5 text-[13px] font-medium text-muted"
+                  className="vertrauen-plakette flex items-center gap-2 rounded-full border border-border-strong bg-surface/70 px-4 py-2.5 text-[15px] font-semibold text-foreground/90"
+                  // Der Schimmer laeuft als Welle durch die Reihe. Der Versatz
+                  // muss ueber eine Variable kommen: Er gehoert zum ::after,
+                  // und das erbt keine Animationsangaben vom Element.
+                  style={{ "--schimmer-versatz": `${i * 220}ms` } as CSSProperties}
                 >
-                  <span aria-hidden="true" className="text-accent">
-                    ✓
+                  <span
+                    aria-hidden="true"
+                    className="grid size-5 shrink-0 place-items-center rounded-full bg-accent/15 text-accent"
+                  >
+                    <svg
+                      viewBox="0 0 12 12"
+                      className="size-3"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      focusable="false"
+                    >
+                      <path d="M2.6 6.2 L4.9 8.5 L9.4 3.7" />
+                    </svg>
                   </span>
                   {badge}
                 </li>
               ))}
             </ul>
-
-            {/* Grundlage der Zahl in der Überschrift. Ohne diese Angabe wäre
-                die Ersparnis eine Behauptung ohne Bezug. */}
-            <p className="text-[11px] leading-relaxed text-muted/70 max-w-md">
-              {l.heroFussnote}
-            </p>
           </div>
 
           {/* Ab lg liegt das Bild absolut in seiner Spalte. Dadurch bestimmt
