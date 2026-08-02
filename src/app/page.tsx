@@ -151,14 +151,23 @@ export default function Home() {
               es umgekehrt: Das Bild erzwang ueber sein Seitenverhaeltnis 715px
               Hoehe, und kuerzere Abstaende im Text aenderten daran nichts. */}
           <VisibilityGate className="relative w-full max-w-[560px] justify-self-center lg:max-w-none lg:h-full lg:justify-self-end">
-            <HeroIllustration
-              angebote={l.heroAngebote}
-              proMonat={l.heroProMonat}
-              ersparnis={l.heroErsparnis}
-              beispielHinweis={l.heroBeispielHinweis}
-              szenen={l.heroSzenen}
-              className="auftakt w-full h-full lg:absolute lg:inset-0 [animation-delay:340ms]"
-            />
+            {/* Das ganze Handybild ist anklickbar und fuehrt zum selben Ziel
+                wie der Hauptknopf — der Zeiger wird ueberall darauf zum
+                Pointer, nicht nur ueber einzelnen Formen darin. */}
+            <Link
+              href="/rechner"
+              aria-label={l.ctaPrimary}
+              className="auftakt block w-full h-full cursor-pointer lg:absolute lg:inset-0 [animation-delay:340ms]"
+            >
+              <HeroIllustration
+                angebote={l.heroAngebote}
+                proMonat={l.heroProMonat}
+                ersparnis={l.heroErsparnis}
+                beispielHinweis={l.heroBeispielHinweis}
+                szenen={l.heroSzenen}
+                className="w-full h-full"
+              />
+            </Link>
           </VisibilityGate>
         </section>
 
