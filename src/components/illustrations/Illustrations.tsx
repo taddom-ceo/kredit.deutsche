@@ -836,7 +836,7 @@ export function CompareIllustration({ className }: { className?: string }) {
           langsam entlang der Kurve und zeigt so die Richtung. */}
       <path
         className="vergleich-bogen"
-        d="M132 48 C155 8 226 14 226 78"
+        d="M132 48 C155 8 226 14 226 75"
         fill="none"
         stroke="#34d399"
         strokeWidth="2.5"
@@ -844,7 +844,7 @@ export function CompareIllustration({ className }: { className?: string }) {
         strokeDasharray="5 7"
       />
       <path
-        d="M219 79 L226 86 L233 79"
+        d="M219 76 L226 83 L233 76"
         fill="none"
         stroke="#34d399"
         strokeWidth="2.5"
