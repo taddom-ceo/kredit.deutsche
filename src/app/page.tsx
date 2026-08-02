@@ -156,6 +156,9 @@ export default function Home() {
               ersparnis={l.heroErsparnis}
               beispielHinweis={l.heroBeispielHinweis}
               szenen={l.heroSzenen}
+              // Handy und Plakette fuehren dorthin, wo auch der
+              // Handlungsaufruf hinfuehrt.
+              href="/rechner"
               className="auftakt w-full h-full lg:absolute lg:inset-0 [animation-delay:340ms]"
             />
           </div>

@@ -8,6 +8,9 @@
  * Aussage steht jeweils im Text daneben.
  */
 
+import type { ReactNode } from "react";
+import Link from "next/link";
+
 const gemeinsam = {
   "aria-hidden": true as const,
   focusable: "false" as const,
@@ -57,6 +60,7 @@ export function HeroIllustration({
   ersparnis,
   beispielHinweis,
   szenen,
+  href,
   className,
 }: {
   angebote: { rate: string; zins: string }[];
@@ -64,15 +68,50 @@ export function HeroIllustration({
   ersparnis: string;
   beispielHinweis: string[];
   szenen: HeroSzenen;
+  /** Ziel, auf das Handy und Plakette fuehren. Ohne Angabe bleibt die
+      Zeichnung reine Illustration. */
+  href?: string;
   className?: string;
 }) {
   const [bestes, mittel, teuer] = angebote;
+
+  /**
+   * Macht ein Stueck der Zeichnung anklickbar. Der Verweis steht bewusst
+   * innerhalb der Zeichnung und nicht als Flaeche darueber: Die Zeichnung
+   * wird in ihre Spalte eingepasst und dabei zentriert, ihr Inhalt fuellt
+   * den Kasten also nicht aus. Eine Flaeche in Prozent laege daneben, ein
+   * Verweis im Bild folgt der Skalierung von selbst.
+   *
+   * Getroffen wird nur, was auch gezeichnet ist — beim Handy die Flaeche des
+   * Geraets, bei der Plakette ihr Kasten. Neben dem Handy bleibt der Zeiger
+   * deshalb der gewoehnliche.
+   *
+   * Die ganze Zeichnung ist fuer Vorlesehilfen ausgeblendet. tabIndex nimmt
+   * den Verweis darum auch aus der Tabfolge: Sonst entstuende eine Station,
+   * die angesprungen, aber nicht vorgelesen werden kann. Verloren geht dabei
+   * nichts — er wiederholt nur das Ziel der Schaltflaeche daneben.
+   */
+  const Ziel = ({ children }: { children: ReactNode }) =>
+    href ? (
+      <Link href={href} tabIndex={-1} className="cursor-pointer">
+        {children}
+      </Link>
+    ) : (
+      <>{children}</>
+    );
 
   /** Kopfzeile einer Szene — jede bringt ihre eigene mit, damit sie mit der
       Szene zusammen kommt und geht statt fuer sich zu wechseln. */
   const Kopf = ({ titel, unter }: { titel: string; unter: string }) => (
     <g>
-      <text x="130" y="76" fontSize="15" fontWeight="700" letterSpacing="-0.3" fill="#f5f8ff">
+      <text
+        x="130"
+        y="76"
+        fontSize="15"
+        fontWeight="700"
+        letterSpacing="-0.3"
+        fill="#f5f8ff"
+      >
         {titel}
       </text>
       <text x="130" y="94" fontSize="10" fill="rgba(148,163,196,0.7)">
@@ -108,7 +147,14 @@ export function HeroIllustration({
       <text x="144" y={y + 22} fontSize="9.5" fill="rgba(148,163,196,0.7)">
         {label}
       </text>
-      <text x="144" y={y + 44} fontSize="17" fontWeight="700" letterSpacing="-0.4" fill="#f5f8ff">
+      <text
+        x="144"
+        y={y + 44}
+        fontSize="17"
+        fontWeight="700"
+        letterSpacing="-0.4"
+        fill="#f5f8ff"
+      >
         {wert}
       </text>
       <line
@@ -131,7 +177,13 @@ export function HeroIllustration({
         strokeLinecap="round"
         strokeDasharray="132"
       />
-      <circle className={`hero-feld-knopf-${takt}`} cx="144" cy={y + 56} r="6.5" fill="#34d399" />
+      <circle
+        className={`hero-feld-knopf-${takt}`}
+        cx="144"
+        cy={y + 56}
+        r="6.5"
+        fill="#34d399"
+      />
     </g>
   );
 
@@ -206,220 +258,264 @@ export function HeroIllustration({
         </clipPath>
       </defs>
 
-      <ellipse className="hero-schein" cx="210" cy="205" rx="185" ry="180" fill="url(#ill-schein)" />
+      <ellipse
+        className="hero-schein"
+        cx="210"
+        cy="205"
+        rx="185"
+        ry="180"
+        fill="url(#ill-schein)"
+      />
 
       {/* Gerät, waagerecht mittig — es steht allein, deshalb ist die Mitte
           der Zeichenfläche auch seine Mitte. Die Gruppe traegt das ruhige
           Schweben; ohne eigene Gruppe liesse sich die Bewegung nicht auf alle
           Teile zugleich legen. */}
-      <g className="hero-geraet">
-        <rect
-          x="110"
-          y="20"
-          width="200"
-          height="356"
-          rx="32"
-          fill="url(#ill-karte)"
-          stroke="rgba(148,163,196,0.3)"
-          strokeWidth="1.5"
-        />
-        <rect x="120" y="30" width="180" height="336" rx="24" fill="#0a1428" />
-        <rect x="176" y="40" width="68" height="7" rx="3.5" fill="rgba(148,163,196,0.35)" />
+      <Ziel>
+        <g className="hero-geraet">
+          <rect
+            x="110"
+            y="20"
+            width="200"
+            height="356"
+            rx="32"
+            fill="url(#ill-karte)"
+            stroke="rgba(148,163,196,0.3)"
+            strokeWidth="1.5"
+          />
+          <rect
+            x="120"
+            y="30"
+            width="180"
+            height="336"
+            rx="24"
+            fill="#0a1428"
+          />
+          <rect
+            x="176"
+            y="40"
+            width="68"
+            height="7"
+            rx="3.5"
+            fill="rgba(148,163,196,0.35)"
+          />
 
-        <g clipPath="url(#ill-schirm)">
-          {/* Szene 0 — die App startet. Bildmarke, Wortmarke und Beizeile
+          <g clipPath="url(#ill-schirm)">
+            {/* Szene 0 — die App startet. Bildmarke, Wortmarke und Beizeile
               sind dieselben wie im Kopf der Seite: Die Zeichnung der Kachel
               ist Zug um Zug aus LogoMark uebernommen und nur skaliert, damit
               beide nicht auseinanderlaufen koennen. */}
-          <g className="hero-szene-start">
-            <g transform="translate(178 142) scale(1.6)">
-              <rect
-                x="0.5"
-                y="0.5"
-                width="39"
-                height="39"
-                rx="11"
-                fill="#0b1120"
-                stroke="rgba(255,255,255,0.12)"
-              />
-              <g fill="#34d399" stroke="#34d399">
-                <circle cx="14.2" cy="14.2" r="3.4" stroke="none" />
-                <circle cx="25.8" cy="25.8" r="3.4" stroke="none" />
-                <line
-                  x1="13.6"
-                  y1="26.4"
-                  x2="26.4"
-                  y2="13.6"
-                  strokeWidth="3.6"
-                  strokeLinecap="round"
+            <g className="hero-szene-start">
+              <g transform="translate(178 142) scale(1.6)">
+                <rect
+                  x="0.5"
+                  y="0.5"
+                  width="39"
+                  height="39"
+                  rx="11"
+                  fill="#0b1120"
+                  stroke="rgba(255,255,255,0.12)"
                 />
+                <g fill="#34d399" stroke="#34d399">
+                  <circle cx="14.2" cy="14.2" r="3.4" stroke="none" />
+                  <circle cx="25.8" cy="25.8" r="3.4" stroke="none" />
+                  <line
+                    x1="13.6"
+                    y1="26.4"
+                    x2="26.4"
+                    y2="13.6"
+                    strokeWidth="3.6"
+                    strokeLinecap="round"
+                  />
+                </g>
               </g>
-            </g>
-            <text
-              x="210"
-              y="238"
-              fontSize="23"
-              fontWeight="600"
-              letterSpacing="-0.3"
-              textAnchor="middle"
-              fill="#f5f8ff"
-            >
-              cresolu
-              <tspan fill="#34d399">.de</tspan>
-            </text>
-            <text
-              x="210"
-              y="257"
-              fontSize="8.5"
-              fontWeight="500"
-              letterSpacing="2.2"
-              textAnchor="middle"
-              fill="rgba(148,163,196,0.85)"
-            >
-              CLEVER FINANZIEREN
-            </text>
-            {/* Ladebalken — das Zeichen, an dem ein startendes Programm
-                erkennbar ist. */}
-            <line
-              x1="170"
-              y1="306"
-              x2="250"
-              y2="306"
-              stroke="rgba(148,163,196,0.22)"
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-            <line
-              className="hero-start-balken"
-              x1="170"
-              y1="306"
-              x2="250"
-              y2="306"
-              stroke="#34d399"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeDasharray="80"
-            />
-          </g>
-
-          {/* Szene 1 — Daten eingeben */}
-          <g className="hero-szene-a">
-            <Kopf titel={szenen.eingabeTitel} unter={szenen.eingabeUnter} />
-            <Feld y={108} label={szenen.betragLabel} wert={szenen.betragWert} takt="a" />
-            <Feld y={186} label={szenen.laufzeitLabel} wert={szenen.laufzeitWert} takt="b" />
-            {/* Die Schaltflaeche ist bewusst nur angedeutet: Ausgefuellt in
-                Akzentgruen zog sie im Bild mehr Aufmerksamkeit als der echte
-                Handlungsaufruf daneben. */}
-            <g className="hero-knopf">
-              <rect
-                x="130"
-                y="272"
-                width="160"
-                height="40"
-                rx="20"
-                fill="rgba(52,211,153,0.14)"
-                stroke="rgba(52,211,153,0.45)"
-              />
               <text
                 x="210"
-                y="297"
-                fontSize="12.5"
+                y="238"
+                fontSize="23"
+                fontWeight="600"
+                letterSpacing="-0.3"
+                textAnchor="middle"
+                fill="#f5f8ff"
+              >
+                cresolu
+                <tspan fill="#34d399">.de</tspan>
+              </text>
+              <text
+                x="210"
+                y="257"
+                fontSize="8.5"
+                fontWeight="500"
+                letterSpacing="2.2"
+                textAnchor="middle"
+                fill="rgba(148,163,196,0.85)"
+              >
+                CLEVER FINANZIEREN
+              </text>
+              {/* Ladebalken — das Zeichen, an dem ein startendes Programm
+                erkennbar ist. */}
+              <line
+                x1="170"
+                y1="306"
+                x2="250"
+                y2="306"
+                stroke="rgba(148,163,196,0.22)"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+              <line
+                className="hero-start-balken"
+                x1="170"
+                y1="306"
+                x2="250"
+                y2="306"
+                stroke="#34d399"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeDasharray="80"
+              />
+            </g>
+
+            {/* Szene 1 — Daten eingeben */}
+            <g className="hero-szene-a">
+              <Kopf titel={szenen.eingabeTitel} unter={szenen.eingabeUnter} />
+              <Feld
+                y={108}
+                label={szenen.betragLabel}
+                wert={szenen.betragWert}
+                takt="a"
+              />
+              <Feld
+                y={186}
+                label={szenen.laufzeitLabel}
+                wert={szenen.laufzeitWert}
+                takt="b"
+              />
+              {/* Die Schaltflaeche ist bewusst nur angedeutet: Ausgefuellt in
+                Akzentgruen zog sie im Bild mehr Aufmerksamkeit als der echte
+                Handlungsaufruf daneben. */}
+              <g className="hero-knopf">
+                <rect
+                  x="130"
+                  y="272"
+                  width="160"
+                  height="40"
+                  rx="20"
+                  fill="rgba(52,211,153,0.14)"
+                  stroke="rgba(52,211,153,0.45)"
+                />
+                <text
+                  x="210"
+                  y="297"
+                  fontSize="12.5"
+                  fontWeight="700"
+                  textAnchor="middle"
+                  fill="#34d399"
+                >
+                  {szenen.eingabeKnopf}
+                </text>
+              </g>
+            </g>
+
+            {/* Szene 2 — Angebote erhalten */}
+            <g className="hero-szene-b">
+              <Kopf titel={szenen.angeboteTitel} unter={szenen.angeboteUnter} />
+              <Zeile y={108} angebot={bestes} hervor verzoegerung={0} />
+              <Zeile y={172} angebot={mittel} verzoegerung={320} />
+              <Zeile y={236} angebot={teuer} verzoegerung={640} />
+            </g>
+
+            {/* Szene 3 — Zinsen gespart */}
+            <g className="hero-szene-c">
+              <Kopf
+                titel={szenen.ersparnisTitel}
+                unter={szenen.ersparnisUnter}
+              />
+              <circle
+                cx="210"
+                cy="176"
+                r="44"
+                fill="rgba(52,211,153,0.12)"
+                stroke="rgba(52,211,153,0.4)"
+              />
+              <path
+                className="hero-haken"
+                d="M188 176 L203 191 L232 160"
+                fill="none"
+                stroke="#34d399"
+                strokeWidth="5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <text
+                className="hero-betrag"
+                x="210"
+                y="266"
+                fontSize="34"
                 fontWeight="700"
+                letterSpacing="-1"
                 textAnchor="middle"
                 fill="#34d399"
               >
-                {szenen.eingabeKnopf}
+                {szenen.ersparnisWert}
+              </text>
+              <text
+                x="210"
+                y="290"
+                fontSize="11"
+                textAnchor="middle"
+                fill="rgba(148,163,196,0.75)"
+              >
+                {szenen.ersparnisFuss}
               </text>
             </g>
           </g>
-
-          {/* Szene 2 — Angebote erhalten */}
-          <g className="hero-szene-b">
-            <Kopf titel={szenen.angeboteTitel} unter={szenen.angeboteUnter} />
-            <Zeile y={108} angebot={bestes} hervor verzoegerung={0} />
-            <Zeile y={172} angebot={mittel} verzoegerung={320} />
-            <Zeile y={236} angebot={teuer} verzoegerung={640} />
-          </g>
-
-          {/* Szene 3 — Zinsen gespart */}
-          <g className="hero-szene-c">
-            <Kopf titel={szenen.ersparnisTitel} unter={szenen.ersparnisUnter} />
-            <circle
-              cx="210"
-              cy="176"
-              r="44"
-              fill="rgba(52,211,153,0.12)"
-              stroke="rgba(52,211,153,0.4)"
-            />
-            <path
-              className="hero-haken"
-              d="M188 176 L203 191 L232 160"
-              fill="none"
-              stroke="#34d399"
-              strokeWidth="5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <text
-              className="hero-betrag"
-              x="210"
-              y="266"
-              fontSize="34"
-              fontWeight="700"
-              letterSpacing="-1"
-              textAnchor="middle"
-              fill="#34d399"
-            >
-              {szenen.ersparnisWert}
-            </text>
-            <text
-              x="210"
-              y="290"
-              fontSize="11"
-              textAnchor="middle"
-              fill="rgba(148,163,196,0.75)"
-            >
-              {szenen.ersparnisFuss}
-            </text>
-          </g>
         </g>
-      </g>
+      </Ziel>
 
       {/* Die Ersparnis überlappt den unteren Geräterand, nicht den Bildschirm:
           Der Bildschirm endet bei y=366, die Plakette beginnt bei y=352. */}
-      <g transform="translate(96 352)">
-        <g className="hero-plakette">
-          {/* Eigene Gruppe fuer die Betonung: Das Schweben sitzt schon auf der
+      <Ziel>
+        <g transform="translate(96 352)">
+          <g className="hero-plakette">
+            {/* Eigene Gruppe fuer die Betonung: Das Schweben sitzt schon auf der
               aeusseren, und zwei Bewegungen auf demselben Element wuerden
               einander ueberschreiben. */}
-          <g className="hero-plakette-puls">
-            <rect width="228" height="56" rx="18" fill="#0f1c37" stroke="rgba(52,211,153,0.45)" />
-            <circle cx="34" cy="28" r="15" fill="rgba(52,211,153,0.16)" />
-            <path
-              d="M34 20 L34 35 M28 29 L34 35.5 L40 29"
-              fill="none"
-              stroke="#34d399"
-              strokeWidth="2.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <text x="62" y="34" fontSize="17" fontWeight="700" fill="#f5f8ff">
-              {ersparnis}
-            </text>
+            <g className="hero-plakette-puls">
+              <rect
+                width="228"
+                height="56"
+                rx="18"
+                fill="#0f1c37"
+                stroke="rgba(52,211,153,0.45)"
+              />
+              <circle cx="34" cy="28" r="15" fill="rgba(52,211,153,0.16)" />
+              <path
+                d="M34 20 L34 35 M28 29 L34 35.5 L40 29"
+                fill="none"
+                stroke="#34d399"
+                strokeWidth="2.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <text x="62" y="34" fontSize="17" fontWeight="700" fill="#f5f8ff">
+                {ersparnis}
+              </text>
+            </g>
           </g>
         </g>
-      </g>
+      </Ziel>
 
       {/* Grundlage der Rechnung, mittig unter dem Gerät ausgerichtet. */}
       <text
         x="210"
         y="452"
-        fontSize="10.5"
+        fontSize="8.8"
         textAnchor="middle"
         fill="rgba(148,163,196,0.7)"
       >
         {beispielHinweis.map((zeile, i) => (
-          <tspan key={zeile} x="210" dy={i === 0 ? 0 : 15}>
+          <tspan key={zeile} x="210" dy={i === 0 ? 0 : 12.5}>
             {zeile}
           </tspan>
         ))}
@@ -433,7 +529,16 @@ export function HeroIllustration({
 /** Bankgebäude — steht für die Zahl der verglichenen Banken. */
 export function IconBanks({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...gemeinsam}>
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...gemeinsam}
+    >
       <path d="M3 9.5 12 4l9 5.5" />
       <path d="M5 10v8M10 10v8M14 10v8M19 10v8" />
       <path d="M3 20h18" />
@@ -444,7 +549,15 @@ export function IconBanks({ className }: { className?: string }) {
 /** Prozentzeichen — steht für den Zinssatz. */
 export function IconPercent({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...gemeinsam}>
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      {...gemeinsam}
+    >
       <line x1="6" y1="18" x2="18" y2="6" />
       <circle cx="8" cy="8" r="2.4" />
       <circle cx="16" cy="16" r="2.4" />
@@ -455,7 +568,16 @@ export function IconPercent({ className }: { className?: string }) {
 /** Uhr — steht für die Dauer bis zum Angebot. */
 export function IconClock({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...gemeinsam}>
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...gemeinsam}
+    >
       <circle cx="12" cy="12" r="8.5" />
       <path d="M12 7.5V12l3 2" />
     </svg>
@@ -465,7 +587,16 @@ export function IconClock({ className }: { className?: string }) {
 /** Geldbeutel — steht für die Kosten. */
 export function IconWallet({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...gemeinsam}>
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...gemeinsam}
+    >
       <path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H18a2 2 0 0 1 2 2v1" />
       <rect x="4" y="8.5" width="16" height="10.5" rx="3" />
       <circle cx="16" cy="14" r="1.4" />
@@ -489,7 +620,15 @@ export function StepSliderIllustration({ className }: { className?: string }) {
       {/* Die Regler wandern minimal hin und her. Die gefuellte Strecke folgt
           ueber stroke-dashoffset im selben Takt — bewegte sich nur der Knopf,
           loeste er sich vom Ende der Linie. */}
-      <line x1="16" y1="26" x2="48" y2="26" stroke="rgba(148,163,196,0.4)" strokeWidth="3" strokeLinecap="round" />
+      <line
+        x1="16"
+        y1="26"
+        x2="48"
+        y2="26"
+        stroke="rgba(148,163,196,0.4)"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
       <line
         className="regler-strecke-a"
         x1="16"
@@ -503,7 +642,15 @@ export function StepSliderIllustration({ className }: { className?: string }) {
         strokeDashoffset="10"
       />
       <circle className="regler-knopf-a" cx="38" cy="26" r="6" fill="#34d399" />
-      <line x1="16" y1="40" x2="48" y2="40" stroke="rgba(148,163,196,0.4)" strokeWidth="3" strokeLinecap="round" />
+      <line
+        x1="16"
+        y1="40"
+        x2="48"
+        y2="40"
+        stroke="rgba(148,163,196,0.4)"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
       <line
         className="regler-strecke-b"
         x1="16"
@@ -558,7 +705,14 @@ export function StepPayoutIllustration({ className }: { className?: string }) {
         fill="rgba(52,211,153,0.07)"
         stroke="rgba(52,211,153,0.28)"
       />
-      <circle cx="32" cy="32" r="8" fill="none" stroke="rgba(148,163,196,0.5)" strokeWidth="2.4" />
+      <circle
+        cx="32"
+        cy="32"
+        r="8"
+        fill="none"
+        stroke="rgba(148,163,196,0.5)"
+        strokeWidth="2.4"
+      />
       <path
         className="blitz"
         d="M33 25.5 L27.5 33.5 H32 L30.5 39.5 L36.5 31 H32 Z"
@@ -577,11 +731,33 @@ export function StepPayoutIllustration({ className }: { className?: string }) {
 export function CompareIllustration({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 320 200" className={className} {...gemeinsam}>
-      <line x1="20" y1="170" x2="300" y2="170" stroke="rgba(148,163,196,0.25)" strokeWidth="2" />
+      <line
+        x1="20"
+        y1="170"
+        x2="300"
+        y2="170"
+        stroke="rgba(148,163,196,0.25)"
+        strokeWidth="2"
+      />
 
       {/* Ohne Vergleich */}
-      <rect x="58" y="40" width="72" height="130" rx="12" fill="rgba(148,163,196,0.16)" />
-      <rect x="58" y="40" width="72" height="130" rx="12" fill="none" stroke="rgba(148,163,196,0.28)" />
+      <rect
+        x="58"
+        y="40"
+        width="72"
+        height="130"
+        rx="12"
+        fill="rgba(148,163,196,0.16)"
+      />
+      <rect
+        x="58"
+        y="40"
+        width="72"
+        height="130"
+        rx="12"
+        fill="none"
+        stroke="rgba(148,163,196,0.28)"
+      />
       {/* Prozentzeichen als Zeichnung, im Ton des jeweiligen Balkens. Als
           Buchstabe gesetzt richtete es sich an der Grundlinie aus und säße
           je nach Schrift anders — gezeichnet sitzt es genau im Balken. */}
@@ -597,8 +773,23 @@ export function CompareIllustration({ className }: { className?: string }) {
 
       {/* Mit Vergleich */}
       <g className="vergleich-gruen">
-        <rect x="190" y="92" width="72" height="78" rx="12" fill="rgba(52,211,153,0.16)" />
-        <rect x="190" y="92" width="72" height="78" rx="12" fill="none" stroke="rgba(52,211,153,0.45)" />
+        <rect
+          x="190"
+          y="92"
+          width="72"
+          height="78"
+          rx="12"
+          fill="rgba(52,211,153,0.16)"
+        />
+        <rect
+          x="190"
+          y="92"
+          width="72"
+          height="78"
+          rx="12"
+          fill="none"
+          stroke="rgba(52,211,153,0.45)"
+        />
         <g
           stroke="rgba(52,211,153,0.85)"
           fill="rgba(52,211,153,0.85)"
