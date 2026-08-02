@@ -35,7 +35,6 @@ export interface Translations {
     heroAngebote: { rate: string; zins: string }[];
     heroProMonat: string;
     heroErsparnis: string;
-    heroErsparnisZusatz: string;
     // Ein einziger Hinweis, zeilenweise. SVG bricht Text nicht selbst um,
     // deshalb bestimmt jede Sprache ihre Umbrueche selbst.
     heroBeispielHinweis: string[];
@@ -122,7 +121,6 @@ export const translations: Record<Language, Translations> = {
       ],
       heroProMonat: "pro Monat",
       heroErsparnis: "3.595 € gespart",
-      heroErsparnisZusatz: "2,89 % statt 8,50 % eff. Jahreszins",
       heroBeispielHinweis: [
         "Beispielrechnung: 20.000 € Nettodarlehen, 72 Monate Laufzeit.",
         "Ersparnis = Differenz der Gesamtkosten gegenüber 8,50 % eff.",
@@ -281,7 +279,6 @@ export const translations: Record<Language, Translations> = {
       ],
       heroProMonat: "per month",
       heroErsparnis: "€3,595 saved",
-      heroErsparnisZusatz: "2.89% instead of 8.50% effective",
       heroBeispielHinweis: [
         "Example calculation: €20,000 net loan, 72-month term.",
         "Saving = difference in total cost vs. 8.50% effective annual",

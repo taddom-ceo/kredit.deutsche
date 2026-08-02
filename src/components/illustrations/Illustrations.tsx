@@ -14,89 +14,81 @@ const gemeinsam = {
 };
 
 /**
- * Der Aufmacher zeigt das Ergebnis eines Vergleichs: drei Beispielangebote,
- * das günstigste groß und vorn, die beiden teureren leicht gedreht dahinter.
- * Die versetzte Anordnung statt eines geraden Stapels macht sofort deutlich,
- * dass eines davon herausragt — untereinander gereiht wirkten alle gleich
- * gewichtet.
+ * Der Aufmacher zeigt das Ergebnis eines Vergleichs auf einem Handy: die
+ * Trefferliste mit drei Beispielangeboten, das günstigste hervorgehoben, und
+ * darunter die Ersparnis.
  *
  * Bewusst ohne Banknamen: Die Angebote stehen für den Vergleich, nicht für
  * einen bestimmten Anbieter. Die Raten sind mit derselben Formel gerechnet
  * wie im Rechner der Seite.
+ *
+ * Format 420 × 520 — das Seitenverhältnis der Textspalte daneben, damit das
+ * Bild sie in der Höhe ausfüllt statt darin zu schwimmen.
  */
 export function HeroIllustration({
   angebote,
   proMonat,
   ersparnis,
-  ersparnisZusatz,
   beispielHinweis,
   className,
 }: {
   angebote: { rate: string; zins: string }[];
   proMonat: string;
   ersparnis: string;
-  ersparnisZusatz: string;
   beispielHinweis: string[];
   className?: string;
 }) {
   const [bestes, mittel, teuer] = angebote;
 
-  /** Eines der beiden zurückgesetzten Angebote. */
-  const Neben = ({
-    x,
+  /** Eine Zeile in der Trefferliste auf dem Bildschirm. */
+  const Zeile = ({
     y,
-    drehung,
-    deckkraft,
     angebot,
+    hervor,
   }: {
-    x: number;
     y: number;
-    drehung: number;
-    deckkraft: number;
     angebot: { rate: string; zins: string };
+    hervor?: boolean;
   }) => (
-    <g
-      transform={`rotate(${drehung} ${x + 145} ${y + 38})`}
-      opacity={deckkraft}
-    >
+    <g>
       <rect
-        x={x}
+        x="130"
         y={y}
-        width="290"
-        height="76"
-        rx="18"
-        fill="url(#ill-karte)"
-        stroke="rgba(148,163,196,0.22)"
+        width="160"
+        height="52"
+        rx="14"
+        fill={hervor ? "rgba(52,211,153,0.14)" : "rgba(148,163,196,0.07)"}
+        stroke={hervor ? "rgba(52,211,153,0.55)" : "rgba(148,163,196,0.16)"}
+        strokeWidth={hervor ? 1.6 : 1}
       />
-      <rect x={x + 20} y={y + 21} width="34" height="34" rx="10" fill="rgba(148,163,196,0.12)" />
-      <g stroke="rgba(148,163,196,0.5)" fill="rgba(148,163,196,0.5)" strokeLinecap="round">
-        <circle cx={x + 30} cy={y + 31} r="2.6" stroke="none" />
-        <circle cx={x + 44} cy={y + 45} r="2.6" stroke="none" />
-        <line x1={x + 29} y1={y + 46} x2={x + 45} y2={y + 30} strokeWidth="2.8" />
-      </g>
-      <text x={x + 66} y={y + 40} fontSize="21" fontWeight="700" letterSpacing="-0.5" fill="rgba(245,248,255,0.6)">
+      <text
+        x="146"
+        y={y + 25}
+        fontSize="16.5"
+        fontWeight="700"
+        letterSpacing="-0.4"
+        fill={hervor ? "#f5f8ff" : "rgba(245,248,255,0.55)"}
+      >
         {angebot.rate}
       </text>
-      <text x={x + 66} y={y + 57} fontSize="11" fill="rgba(148,163,196,0.7)">
+      <text x="146" y={y + 41} fontSize="9.5" fill="rgba(148,163,196,0.7)">
         {proMonat}
       </text>
-      <rect
-        x={x + 200}
-        y={y + 22}
-        width="76"
-        height="32"
-        rx="16"
-        fill="rgba(148,163,196,0.1)"
-        stroke="rgba(148,163,196,0.2)"
-      />
-      <text x={x + 238} y={y + 43} fontSize="13" fontWeight="600" textAnchor="middle" fill="rgba(148,163,196,0.8)">
+      <text
+        x="276"
+        y={y + 31}
+        fontSize="12.5"
+        fontWeight="700"
+        textAnchor="end"
+        fill={hervor ? "#34d399" : "rgba(148,163,196,0.75)"}
+      >
         {angebot.zins}
       </text>
     </g>
   );
 
   return (
-    <svg viewBox="0 0 420 420" className={className} {...gemeinsam}>
+    <svg viewBox="0 0 420 520" className={className} {...gemeinsam}>
       <defs>
         <linearGradient id="ill-karte" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#1b2f57" />
@@ -108,57 +100,37 @@ export function HeroIllustration({
         </linearGradient>
       </defs>
 
-      <ellipse cx="205" cy="170" rx="195" ry="150" fill="url(#ill-schein)" />
+      <ellipse cx="210" cy="205" rx="185" ry="180" fill="url(#ill-schein)" />
 
-      {/* Die teureren Angebote liegen hinten und sind gedreht. */}
-      <Neben x={104} y={34} drehung={5.5} deckkraft={0.5} angebot={teuer} />
-      <Neben x={22} y={98} drehung={-5} deckkraft={0.72} angebot={mittel} />
+      {/* Gerät, waagerecht mittig — es steht allein, deshalb ist die Mitte
+          der Zeichenfläche auch seine Mitte. */}
+      <rect
+        x="110"
+        y="20"
+        width="200"
+        height="356"
+        rx="32"
+        fill="url(#ill-karte)"
+        stroke="rgba(148,163,196,0.3)"
+        strokeWidth="1.5"
+      />
+      <rect x="120" y="30" width="180" height="336" rx="24" fill="#0a1428" />
+      <rect x="176" y="40" width="68" height="7" rx="3.5" fill="rgba(148,163,196,0.35)" />
 
-      {/* Das günstigste Angebot: größer, gerade, vorn. */}
-      <g>
-        <rect
-          x="26"
-          y="184"
-          width="340"
-          height="96"
-          rx="24"
-          fill="url(#ill-karte)"
-          stroke="rgba(52,211,153,0.6)"
-          strokeWidth="2"
-        />
-        <rect x="48" y="214" width="40" height="40" rx="12" fill="rgba(52,211,153,0.16)" />
-        <path
-          d="M58 234 L65 241 L78 227"
-          fill="none"
-          stroke="#34d399"
-          strokeWidth="3.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <text x="104" y="240" fontSize="27" fontWeight="700" letterSpacing="-0.6" fill="#f5f8ff">
-          {bestes.rate}
-        </text>
-        <text x="104" y="259" fontSize="12" fill="rgba(148,163,196,0.8)">
-          {proMonat}
-        </text>
-        <rect
-          x="258"
-          y="216"
-          width="88"
-          height="36"
-          rx="18"
-          fill="rgba(52,211,153,0.18)"
-          stroke="rgba(52,211,153,0.5)"
-        />
-        <text x="302" y="240" fontSize="15" fontWeight="700" textAnchor="middle" fill="#34d399">
-          {bestes.zins}
-        </text>
-      </g>
+      <rect x="130" y="60" width="96" height="9" rx="4.5" fill="rgba(245,248,255,0.55)" />
+      <rect x="130" y="77" width="62" height="7" rx="3.5" fill="rgba(148,163,196,0.35)" />
 
-      {/* Die Ersparnis überlappt die Karte nach unten rechts — dadurch bekommt
-          die Gruppe Tiefe, statt in einer Spalte auszulaufen. */}
-      <g transform="translate(150 262)">
-        <rect width="244" height="56" rx="18" fill="#0f1c37" stroke="rgba(52,211,153,0.45)" />
+      <Zeile y={98} angebot={bestes} hervor />
+      <Zeile y={158} angebot={mittel} />
+      <Zeile y={218} angebot={teuer} />
+
+      <rect x="130" y="286" width="160" height="38" rx="19" fill="#34d399" />
+      <rect x="176" y="301" width="68" height="8" rx="4" fill="rgba(4,23,15,0.75)" />
+
+      {/* Die Ersparnis überlappt den unteren Geräterand, nicht den Bildschirm:
+          Der Bildschirm endet bei y=366, die Plakette beginnt bei y=352. */}
+      <g transform="translate(96 352)">
+        <rect width="228" height="56" rx="18" fill="#0f1c37" stroke="rgba(52,211,153,0.45)" />
         <circle cx="34" cy="28" r="15" fill="rgba(52,211,153,0.16)" />
         <path
           d="M34 20 L34 35 M28 29 L34 35.5 L40 29"
@@ -168,19 +140,21 @@ export function HeroIllustration({
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        <text x="62" y="27" fontSize="17" fontWeight="700" fill="#f5f8ff">
+        <text x="62" y="34" fontSize="17" fontWeight="700" fill="#f5f8ff">
           {ersparnis}
-        </text>
-        <text x="62" y="44" fontSize="11.5" fill="rgba(148,163,196,0.8)">
-          {ersparnisZusatz}
         </text>
       </g>
 
-      {/* Ein einziger Hinweis: Grundlage der Rechnung, Rechenweg und
-          Unverbindlichkeit in einem Block. */}
-      <text x="26" y="356" fontSize="10.5" fill="rgba(148,163,196,0.7)">
+      {/* Grundlage der Rechnung, mittig unter dem Gerät ausgerichtet. */}
+      <text
+        x="210"
+        y="452"
+        fontSize="10.5"
+        textAnchor="middle"
+        fill="rgba(148,163,196,0.7)"
+      >
         {beispielHinweis.map((zeile, i) => (
-          <tspan key={zeile} x="26" dy={i === 0 ? 0 : 15}>
+          <tspan key={zeile} x="210" dy={i === 0 ? 0 : 15}>
             {zeile}
           </tspan>
         ))}
