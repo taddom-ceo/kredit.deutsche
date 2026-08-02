@@ -40,7 +40,7 @@ export default function Home() {
         {/* Deutlich knapper als zuvor, damit das Partnerband schon beim
             Oeffnen der Seite im Bild steht — aber luftig genug, dass der
             Aufmacher nicht gequetscht wirkt. */}
-        <section className="mx-auto max-w-6xl px-4 sm:px-6 pt-12 pb-14 lg:pt-14 lg:pb-16 grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-12 items-stretch">
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 pt-12 pb-8 lg:pt-14 lg:pb-10 grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-12 items-stretch">
           <div className="flex flex-col gap-7">
             <span className="auftakt inline-flex w-fit items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-[13px] font-semibold text-foreground">
               <span aria-hidden="true" className="h-2 w-2 rounded-full bg-accent" />
