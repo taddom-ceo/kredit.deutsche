@@ -190,6 +190,7 @@ type WizardContextValue = {
   goNext: () => void;
   goBack: () => void;
   goToStep: (step: number) => void;
+  setDevModus: (an: boolean) => void;
 };
 
 const WizardContext = createContext<WizardContextValue | null>(null);
@@ -216,7 +217,15 @@ export function WizardProvider({
   function goNext() {
     setData((prev) => {
       const step = Math.min(prev.step + 1, TOTAL_STEPS + 1);
-      return { ...prev, step, maxStep: Math.max(prev.maxStep, step) };
+      return {
+        ...prev,
+        step,
+        // Im Entwicklermodus zaehlt der Weg nicht mit: maxStep haelt fest,
+        // wie weit der Antrag wirklich ausgefuellt wurde. Sonst bliebe der
+        // erschlichene Fortschritt nach dem Ausschalten stehen und die
+        // Strecke waere weiter frei begehbar.
+        maxStep: prev.devModus ? prev.maxStep : Math.max(prev.maxStep, step),
+      };
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -238,15 +247,32 @@ export function WizardProvider({
         Math.max(step, 1),
         prev.devModus ? TOTAL_STEPS : prev.maxStep
       ),
-      maxStep: prev.devModus
-        ? Math.max(prev.maxStep, Math.min(Math.max(step, 1), TOTAL_STEPS))
-        : prev.maxStep,
+      // maxStep bleibt unberuehrt — auch ein Sprung im Entwicklermodus ist
+      // kein wirklich erreichter Schritt.
     }));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  /**
+   * Entwicklermodus umlegen. Beim Ausschalten geht es zurueck an die Stelle,
+   * die ohne ihn erreicht wurde: Wer sich bis zur Bankverbindung
+   * durchgeklickt hat, ohne etwas auszufuellen, war dort nie wirklich.
+   * Bliebe der Schritt stehen, sperrte zwar der Weiter-Knopf wieder, der
+   * Kunde saesse aber mitten in einem Formular, das er nie erreicht hat.
+   */
+  function setDevModus(an: boolean) {
+    setData((prev) => ({
+      ...prev,
+      devModus: an,
+      step: an ? prev.step : Math.min(prev.step, prev.maxStep),
+    }));
+    if (!an) window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   return (
-    <WizardContext.Provider value={{ data, update, goNext, goBack, goToStep }}>
+    <WizardContext.Provider
+      value={{ data, update, goNext, goBack, goToStep, setDevModus }}
+    >
       {children}
     </WizardContext.Provider>
   );

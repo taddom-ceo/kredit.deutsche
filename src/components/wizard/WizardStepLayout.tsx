@@ -38,7 +38,7 @@ export default function WizardStepLayout({
 }) {
   const { lang } = useLanguage();
   const wt = wizardTranslations[lang];
-  const { data, update } = useWizard();
+  const { data, setDevModus } = useWizard();
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
@@ -120,7 +120,7 @@ export default function WizardStepLayout({
             <input
               type="checkbox"
               checked={data.devModus}
-              onChange={(e) => update({ devModus: e.target.checked })}
+              onChange={(e) => setDevModus(e.target.checked)}
               className="size-3.5 accent-amber-400"
             />
             dev mode
