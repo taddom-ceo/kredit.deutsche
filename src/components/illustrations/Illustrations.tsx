@@ -696,53 +696,54 @@ export function StepShieldIllustration({ className }: { className?: string }) {
 export function StepPayoutIllustration({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" className={className} {...gemeinsam}>
-      {/* Zweiter Schein dahinter, nur angedeutet. Er gibt dem Symbol Tiefe
-          und macht aus einem einzelnen Rechteck erkennbar Geld. */}
-      <rect
-        x="14"
-        y="11"
-        width="44"
-        height="24"
-        rx="6"
-        fill="rgba(52,211,153,0.05)"
-        stroke="rgba(52,211,153,0.18)"
-      />
+      {/* Ein einzelner Geldschein. Ein zweiter dahinter sollte Tiefe geben,
+          las sich bei dieser Anzeigegroesse aber als versehentlich verrutschte
+          Kopie — zwei Rahmen, die einander kreuzen, ergeben kein Buendel.
 
-      {/* Vorderer Schein. Er hebt sich langsam an — die Bewegung des
-          Ueberreichens, passend zum Schritt "Auszahlung erhalten". */}
+          Der Schein liegt leicht schraeg. Das ist nicht nur Zierde: Aufrecht
+          misst er bei den Seitenverhaeltnissen eines Scheins nur rund 30 von
+          64 Einheiten Hoehe und stuende sichtbar kleiner da als Regler (44)
+          und Schild (50). Um 13 Grad gedreht baut er rund 41 Einheiten hoch,
+          ohne dabei in die Breite zu gehen.
+
+          Die Drehung braucht eine eigene Gruppe: Das Anheben kommt als
+          CSS-Transformation von aussen, und die wuerde ein transform-Attribut
+          am selben Element ersetzen statt sich damit zu verrechnen. */}
       <g className="geldschein">
-        <rect
-          x="5"
-          y="20"
-          width="50"
-          height="32"
-          rx="8"
-          fill="rgba(52,211,153,0.09)"
-          stroke="rgba(52,211,153,0.32)"
-        />
-        {/* Innerer Rahmen — das Merkmal, an dem ein Rechteck als Schein
-            gelesen wird. */}
-        <rect
-          x="9.5"
-          y="24.5"
-          width="41"
-          height="23"
-          rx="5"
-          fill="none"
-          stroke="rgba(52,211,153,0.18)"
-        />
-        {/* Eurozeichen als Zeichnung statt als Buchstabe: Als Schrift saesse
-            es je nach geladener Schriftart anders im Schein, gezeichnet sitzt
-            es genau in seiner Mitte. */}
-        <g
-          fill="none"
-          stroke="#34d399"
-          strokeWidth="3.2"
-          strokeLinecap="round"
-        >
-          <path d="M34.8 32 A6.3 6.3 0 1 0 34.8 40" />
-          <path d="M23.5 34.4 H33.8" />
-          <path d="M23.5 37.6 H32.5" />
+        <g transform="rotate(-13 32 32)">
+          <rect
+            x="6"
+            y="17"
+            width="52"
+            height="30"
+            rx="7"
+            fill="rgba(52,211,153,0.09)"
+            stroke="rgba(52,211,153,0.32)"
+          />
+          {/* Innerer Rahmen — das Merkmal, an dem ein Rechteck als Schein
+              gelesen wird. */}
+          <rect
+            x="10.5"
+            y="21.5"
+            width="43"
+            height="21"
+            rx="4.5"
+            fill="none"
+            stroke="rgba(52,211,153,0.2)"
+          />
+          {/* Eurozeichen als Zeichnung statt als Buchstabe: Als Schrift saesse
+              es je nach geladener Schriftart anders im Schein, gezeichnet
+              sitzt es genau in seiner Mitte. */}
+          <g
+            fill="none"
+            stroke="#34d399"
+            strokeWidth="3.2"
+            strokeLinecap="round"
+          >
+            <path d="M37.2 27.6 A6.8 6.8 0 1 0 37.2 36.4" />
+            <path d="M24.6 30.2 H35.8" />
+            <path d="M24.6 33.8 H34.4" />
+          </g>
         </g>
       </g>
     </svg>
