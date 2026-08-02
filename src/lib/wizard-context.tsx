@@ -44,29 +44,16 @@ export interface WizardData {
   beschaeftigtSeitJahr: string;
   beschaeftigtSeit: string;
   nettoeinkommen: string;
-  ausgaben: string;
   // Pflichtangabe im Einkommensschritt. null heisst "noch nicht beantwortet"
   // und haelt den Schritt offen — anders als ein leerer String, der sich von
   // einem bewussten "nein" nicht unterscheiden liesse.
-  mieteinnahmen: "ja" | "nein" | null;
+  mieteinnahmen: JaNein;
   mieteinnahmenBetrag: string;
-  // Mehrfachauswahl der laufenden Kredite. Der Wert KEINE_KREDITE steht darin
-  // allein und schliesst die uebrigen aus.
-  kreditarten: string[];
-  // Angaben zum groessten laufenden Kredit. Wie beim Geburtsdatum sind Monat
-  // und Jahr die Eingabe, kreditAuszahlung bleibt der zusammengesetzte Wert
-  // im Format JJJJ-MM.
-  kreditSumme: string;
-  kreditAuszahlungMonat: string;
-  kreditAuszahlungJahr: string;
-  kreditAuszahlung: string;
-  kreditRate: string;
-  kreditZins: string;
-  /** Gesamtlaufzeit des Kredits in Monaten. */
-  kreditLaufzeit: string;
-  // Vom Kunden selbst gesetzte Restschuld. Leer heisst: Es gilt die
-  // Schaetzung aus den Angaben darueber.
-  kreditRestschuld: string;
+  wohnnebenkosten: string;
+  krankenversicherung: string;
+  unterhalt: string;
+  hatKredite: JaNein;
+  kredite: BestehenderKredit[];
   iban: string;
   bankname: string;
   kontoinhaber: string;
@@ -75,8 +62,54 @@ export interface WizardData {
 
 export const TOTAL_STEPS = 8;
 
-/** Kennung der Antwort "keine laufenden Kredite" in kreditarten. */
-export const KEINE_KREDITE = "keine";
+/** Antwort auf eine Pflichtfrage. null heisst "noch nicht beantwortet". */
+export type JaNein = "ja" | "nein" | null;
+
+/**
+ * Ein bereits laufender Kredit. Der Kunde kann mehrere angeben, deshalb steht
+ * jeder Satz Angaben fuer sich statt als einzelnes Feld am Antrag.
+ */
+export type BestehenderKredit = {
+  /** Bleibt ueber das Leben des Eintrags stabil und dient React als Schluessel.
+      Der Listenindex taugte dafuer nicht: Beim Entfernen eines Eintrags in der
+      Mitte ruecken alle folgenden auf und React ordnete die Eingaben dem
+      falschen Kredit zu. */
+  id: string;
+  art: string;
+  betrag: string;
+  rate: string;
+  auszahlungMonat: string;
+  auszahlungJahr: string;
+  /** Aus Monat und Jahr zusammengesetzt, Format JJJJ-MM. */
+  auszahlung: string;
+  /** Gesamtlaufzeit in Monaten. */
+  laufzeit: string;
+  /** Effektiver Jahreszins in Prozent — bei uns zusaetzlich moeglich. */
+  zins: string;
+  restschuld: string;
+  bank: string;
+  iban: string;
+};
+
+let laufendeNummer = 0;
+
+export function leererKredit(): BestehenderKredit {
+  laufendeNummer += 1;
+  return {
+    id: `kredit-${laufendeNummer}`,
+    art: "",
+    betrag: "",
+    rate: "",
+    auszahlungMonat: "",
+    auszahlungJahr: "",
+    auszahlung: "",
+    laufzeit: "",
+    zins: "",
+    restschuld: "",
+    bank: "",
+    iban: "DE",
+  };
+}
 
 const initialData: WizardData = {
   step: 1,
@@ -108,18 +141,13 @@ const initialData: WizardData = {
   beschaeftigtSeitJahr: "",
   beschaeftigtSeit: "",
   nettoeinkommen: "",
-  ausgaben: "",
   mieteinnahmen: null,
   mieteinnahmenBetrag: "",
-  kreditarten: [],
-  kreditSumme: "",
-  kreditAuszahlungMonat: "",
-  kreditAuszahlungJahr: "",
-  kreditAuszahlung: "",
-  kreditRate: "",
-  kreditZins: "",
-  kreditLaufzeit: "",
-  kreditRestschuld: "",
+  wohnnebenkosten: "",
+  krankenversicherung: "",
+  unterhalt: "",
+  hatKredite: null,
+  kredite: [],
   iban: "",
   bankname: "",
   kontoinhaber: "",

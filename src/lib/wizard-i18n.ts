@@ -138,37 +138,48 @@ export interface WizardTranslations {
     highlight: string;
     subtitle: string;
     trust: string[];
+    einnahmenTitel: string;
+    einnahmenText: string;
     nettoeinkommen: string;
-    ausgaben: string;
-    ausgabenHint: string;
     mieteinnahmenFrage: string;
-    ja: string;
-    nein: string;
     mieteinnahmenBetrag: string;
+    ausgabenTitel: string;
+    ausgabenText: string;
+    wohnnebenkosten: string;
+    wohnnebenkostenHinweis: string;
+    weitereAusgabenFrage: string;
+    krankenversicherung: string;
+    unterhalt: string;
+    krediteTitel: string;
     kreditFrage: string;
-    kreditHint: string;
-    keineKredite: string;
-    kreditarten: { wert: string; label: string }[];
-    kreditAngabenTitel: string;
-    kreditSumme: string;
+    kreditartTitel: string;
+    kreditarten: string[];
+    kreditNummer: string;
+    kreditBetrag: string;
+    kreditRate: string;
     kreditAuszahlung: string;
     monat: string;
     jahr: string;
     auswahlPlatzhalter: string;
-    kreditRate: string;
     kreditLaufzeit: string;
-    kreditLaufzeitEinheit: string;
+    laufzeitHinweis: string;
+    jahre: string;
+    monate: string;
     kreditZins: string;
+    kreditZinsHinweis: string;
+    kreditRestschuld: string;
+    schaetzung: string;
+    uebernehmen: string;
+    schaetzungFehlt: string;
+    zinsWarnung: string;
+    abbezahlt: string;
+    bank: string;
+    iban: string;
     optional: string;
-    restschuld: string;
-    restschuldMitZins: string;
-    restschuldOhneZins: string;
-    restschuldOffen: string;
-    restschuldAbbezahlt: string;
-    restschuldHergeleitet: string;
-    restschuldPasstNicht: string;
-    restschuldSelbst: string;
-    restschuldNeuBerechnen: string;
+    ja: string;
+    nein: string;
+    kreditEntfernen: string;
+    kreditHinzufuegen: string;
   };
   step8: {
     eyebrow: string;
@@ -459,54 +470,69 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       eyebrow: "7/8 · Einkommen",
       title: "Ihr monatliches",
       highlight: "Einkommen.",
-      subtitle: "Angaben zu Einnahmen und laufenden Ausgaben.",
+      subtitle: "Angaben zu Einnahmen, Ausgaben und laufenden Krediten.",
       trust: [
         "SCHUFA-neutrale Anfrage",
         "SSL-verschlüsselte Übertragung",
         "Kostenlos und unverbindlich",
       ],
-      nettoeinkommen: "Monatliches Nettoeinkommen",
-      ausgaben: "Monatliche Ausgaben (Miete, Kredite, ...)",
-      ausgabenHint: "Ohne Lebenshaltungskosten",
+      einnahmenTitel: "Monatliche Einnahmen",
+      einnahmenText:
+        "Die monatlichen Einnahmen werden für Ihre Haushaltsrechnung benötigt. Diese wird von den Banken durchgeführt, um Ihr Kreditangebot zu ermitteln.",
+      nettoeinkommen: "Ihr Nettoeinkommen",
       mieteinnahmenFrage: "Haben Sie Mieteinnahmen?",
-      ja: "Ja",
-      nein: "Nein",
       mieteinnahmenBetrag: "Monatliche warme Mieteinnahmen",
-      kreditFrage: "Welche Kredite haben Sie aktuell?",
-      kreditHint: "Mehrfachauswahl möglich",
-      keineKredite: "Keine",
+      ausgabenTitel: "Monatliche Ausgaben",
+      ausgabenText:
+        "Die monatlichen Ausgaben werden ebenfalls für Ihre Haushaltsrechnung benötigt.",
+      wohnnebenkosten: "Wohnnebenkosten",
+      wohnnebenkostenHinweis:
+        "Nebenkosten wie Wasser, Heizung, Müll und Stellplatz. Stromkosten gehören nicht dazu.",
+      weitereAusgabenFrage: "Haben Sie sonstige Ausgaben?",
+      krankenversicherung: "Priv. Krankenversicherung",
+      unterhalt: "Unterhaltsverpflichtungen",
+      krediteTitel: "Bestehende Kredite",
+      kreditFrage: "Haben Sie bestehende Kredite?",
+      kreditartTitel: "Kreditart",
       kreditarten: [
-        { wert: "ratenkredit", label: "Ratenkredit" },
-        { wert: "autokredit", label: "Autokredit" },
-        { wert: "immobilienkredit", label: "Immobilienkredit" },
-        { wert: "dispo", label: "Dispo- oder Rahmenkredit" },
-        { wert: "sonstiges", label: "Sonstiger Kredit" },
+        "Konsumentenkredit",
+        "Autokredit",
+        "Leasing",
+        "Dispokredit",
+        "Kreditkarte",
+        "Rahmenkredit",
+        "Ratenkauf (z. B. Klarna, PayPal)",
+        "Andere",
       ],
-      kreditAngabenTitel: "Angaben zu Ihrem größten laufenden Kredit",
-      kreditSumme: "Ursprünglich finanzierte Summe",
+      kreditNummer: "Bestehender Kredit",
+      kreditBetrag: "Kreditbetrag",
+      kreditRate: "Monatliche Rate",
       kreditAuszahlung: "Auszahlungsdatum",
       monat: "Monat",
       jahr: "Jahr",
       auswahlPlatzhalter: "Bitte wählen",
-      kreditRate: "Monatliche Rate",
-      kreditLaufzeit: "Gesamtlaufzeit",
-      kreditLaufzeitEinheit: "Monate",
+      kreditLaufzeit: "Laufzeit (gesamt)",
+      laufzeitHinweis: "In Monaten eingeben",
+      jahre: "Jahre",
+      monate: "Monate",
       kreditZins: "Effektiver Jahreszins",
+      kreditZinsHinweis:
+        "Wenn Sie ihn kennen, wird die Restschuld genauer. Sonst ergibt er sich aus Betrag, Rate und Laufzeit.",
+      kreditRestschuld: "Restschuld",
+      schaetzung: "geschätzte Restschuld bei {zins} % p. a.:",
+      uebernehmen: "übernehmen",
+      schaetzungFehlt:
+        "Für eine Schätzung fehlen noch Betrag, Rate, Auszahlungsdatum und Laufzeit oder Zinssatz.",
+      zinsWarnung:
+        "Aus Ihren Angaben ergibt sich rechnerisch ein Zinssatz von mehr als {grenze} % p. a. — bitte prüfen. Gerechnet wird mit {grenze} %.",
+      abbezahlt: "Nach diesen Angaben ist der Kredit bereits zurückgeführt.",
+      bank: "Bank, bei der Sie Ihren Kredit haben",
+      iban: "IBAN Ihres bestehenden Kredits",
       optional: "optional",
-      restschuld: "Geschätzte Restschuld heute",
-      restschuldMitZins:
-        "Geschätzt aus Summe, Rate und Zinssatz über die seit der Auszahlung vergangenen Monate. Unverbindlich — maßgeblich ist die Abrechnung Ihrer Bank.",
-      restschuldOhneZins:
-        "Nur grob geschätzt: Summe abzüglich der gezahlten Raten. Da ein Teil jeder Rate Zinsen sind, liegt die tatsächliche Restschuld höher. Mit Laufzeit oder Zinssatz wird die Schätzung genau.",
-      restschuldOffen:
-        "Wird berechnet, sobald Summe, Auszahlungsdatum und Rate ausgefüllt sind.",
-      restschuldAbbezahlt: "Rechnerisch bereits vollständig zurückgeführt.",
-      restschuldHergeleitet:
-        "Aus Summe, Rate und Laufzeit ergibt sich der Zinssatz von selbst — die Schätzung ist damit so genau wie mit eigener Zinsangabe. Unverbindlich.",
-      restschuldPasstNicht:
-        "Summe, Rate und Laufzeit passen nicht zusammen: Die Raten ergeben zusammen weniger als die Summe, der Kredit wäre so nie getilgt. Bitte prüfen — bis dahin nur grob geschätzt.",
-      restschuldSelbst: "Von Ihnen angepasst.",
-      restschuldNeuBerechnen: "Neu berechnen",
+      ja: "ja",
+      nein: "nein",
+      kreditEntfernen: "diesen Kredit entfernen",
+      kreditHinzufuegen: "bestehenden Kredit hinzufügen",
     },
     step8: {
       eyebrow: "8/8 · Bankverbindung",
@@ -799,54 +825,68 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       eyebrow: "7/8 · Income",
       title: "Your monthly",
       highlight: "income.",
-      subtitle: "Details about your income and ongoing expenses.",
+      subtitle: "Income, expenses and any loans you already have.",
       trust: [
         "Credit-score-neutral request",
         "SSL-encrypted transmission",
         "Free and non-binding",
       ],
-      nettoeinkommen: "Monthly net income",
-      ausgaben: "Monthly expenses (rent, loans, ...)",
-      ausgabenHint: "Excluding cost of living",
+      einnahmenTitel: "Monthly income",
+      einnahmenText:
+        "Banks need your monthly income for the affordability check they run to work out your offer.",
+      nettoeinkommen: "Your net income",
       mieteinnahmenFrage: "Do you have rental income?",
-      ja: "Yes",
-      nein: "No",
       mieteinnahmenBetrag: "Monthly gross rental income",
-      kreditFrage: "Which loans do you currently have?",
-      kreditHint: "Select all that apply",
-      keineKredite: "None",
+      ausgabenTitel: "Monthly expenses",
+      ausgabenText: "Your expenses are part of the same affordability check.",
+      wohnnebenkosten: "Housing running costs",
+      wohnnebenkostenHinweis:
+        "Costs such as water, heating, waste collection and parking. Electricity does not belong here.",
+      weitereAusgabenFrage: "Do you have any other expenses?",
+      krankenversicherung: "Private health insurance",
+      unterhalt: "Maintenance payments",
+      krediteTitel: "Existing loans",
+      kreditFrage: "Do you have any existing loans?",
+      kreditartTitel: "Type of loan",
       kreditarten: [
-        { wert: "ratenkredit", label: "Personal loan" },
-        { wert: "autokredit", label: "Car loan" },
-        { wert: "immobilienkredit", label: "Mortgage" },
-        { wert: "dispo", label: "Overdraft or credit line" },
-        { wert: "sonstiges", label: "Other loan" },
+        "Personal loan",
+        "Car loan",
+        "Leasing",
+        "Overdraft",
+        "Credit card",
+        "Credit line",
+        "Instalments (e.g. Klarna, PayPal)",
+        "Other",
       ],
-      kreditAngabenTitel: "Details of your largest ongoing loan",
-      kreditSumme: "Amount originally financed",
+      kreditNummer: "Existing loan",
+      kreditBetrag: "Loan amount",
+      kreditRate: "Monthly payment",
       kreditAuszahlung: "Date of payout",
       monat: "Month",
       jahr: "Year",
       auswahlPlatzhalter: "Please select",
-      kreditRate: "Monthly payment",
       kreditLaufzeit: "Total term",
-      kreditLaufzeitEinheit: "months",
+      laufzeitHinweis: "Enter in months",
+      jahre: "years",
+      monate: "months",
       kreditZins: "Effective annual rate",
+      kreditZinsHinweis:
+        "If you know it, the balance gets more precise. Otherwise it follows from amount, payment and term.",
+      kreditRestschuld: "Balance outstanding",
+      schaetzung: "estimated balance at {zins} % p.a.:",
+      uebernehmen: "use this",
+      schaetzungFehlt:
+        "An estimate still needs the amount, payment, payout date and either the term or the rate.",
+      zinsWarnung:
+        "Your figures imply an interest rate above {grenze} % p.a. — please check. The estimate uses {grenze} %.",
+      abbezahlt: "According to these figures the loan is already repaid.",
+      bank: "Bank holding the loan",
+      iban: "IBAN of the existing loan",
       optional: "optional",
-      restschuld: "Estimated balance outstanding today",
-      restschuldMitZins:
-        "Estimated from the amount, the payment and the rate over the months since payout. Non-binding — your bank's statement is what counts.",
-      restschuldOhneZins:
-        "Only a rough estimate: amount less the payments made. Since part of every payment is interest, the real balance is higher. Adding the term or the rate makes the estimate exact.",
-      restschuldOffen:
-        "Calculated as soon as amount, payout date and monthly payment are filled in.",
-      restschuldAbbezahlt: "Already fully repaid according to the calculation.",
-      restschuldHergeleitet:
-        "The amount, payment and term imply the interest rate, so this estimate is as precise as with a rate you enter yourself. Non-binding.",
-      restschuldPasstNicht:
-        "Amount, payment and term do not fit together: the payments add up to less than the amount, so the loan would never be repaid. Please check — until then this is only a rough estimate.",
-      restschuldSelbst: "Adjusted by you.",
-      restschuldNeuBerechnen: "Recalculate",
+      ja: "yes",
+      nein: "no",
+      kreditEntfernen: "remove this loan",
+      kreditHinzufuegen: "add an existing loan",
     },
     step8: {
       eyebrow: "8/8 · Bank details",
