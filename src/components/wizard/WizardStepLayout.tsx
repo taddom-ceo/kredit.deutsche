@@ -82,31 +82,6 @@ export default function WizardStepLayout({
             {children}
           </div>
 
-          {/* Schalter fuer die Entwicklung. Er steht auf jedem Schritt, damit
-              er sich von ueberall aus umlegen laesst, und haengt an einem
-              gemeinsamen Zustand — einmal gesetzt, gilt er fuer die ganze
-              Strecke.
-              Ausserhalb der Entwicklung wird der Block gar nicht erst
-              erzeugt: DEV_MODUS_VERFUEGBAR ist eine Konstante aus
-              process.env, die Next beim Bauen einsetzt, sodass der Zweig aus
-              dem Produktionspaket herausfaellt. */}
-          {DEV_MODUS_VERFUEGBAR && (
-            <label className="flex w-fit cursor-pointer items-center gap-2.5 rounded-[12px] border border-dashed border-amber-400/50 bg-amber-400/[0.06] px-3 py-2 text-xs font-medium text-amber-200/90">
-              <input
-                type="checkbox"
-                checked={data.devModus}
-                onChange={(e) => update({ devModus: e.target.checked })}
-                className="size-3.5 accent-amber-400"
-              />
-              dev mode
-              <span className="font-normal text-amber-200/60">
-                {data.devModus
-                  ? "— Weiter immer frei, alle Schritte anklickbar"
-                  : "— Schritte ohne Eingaben durchklicken"}
-              </span>
-            </label>
-          )}
-
           {showNav && (
             <div className="flex items-center gap-3 pt-2">
               {onBack && (
@@ -130,6 +105,32 @@ export default function WizardStepLayout({
             </div>
           )}
         </div>
+
+        {/* Schalter fuer die Entwicklung — unterhalb der Karte statt darin.
+            Im Fenster stand er zwischen den Eingaben und wurde auf langen
+            Schritten mitgescrollt; hier steht er fuer sich und ist auf jedem
+            Schritt an derselben Stelle zu finden.
+            Er haengt an einem gemeinsamen Zustand: einmal umgelegt, gilt er
+            fuer die ganze Strecke.
+            Ausserhalb der Entwicklung wird der Block gar nicht erst erzeugt —
+            DEV_MODUS_VERFUEGBAR ist eine Konstante aus process.env, die Next
+            beim Bauen einsetzt. */}
+        {DEV_MODUS_VERFUEGBAR && (
+          <label className="mt-4 flex w-fit cursor-pointer items-center gap-2.5 rounded-[12px] border border-dashed border-amber-400/50 bg-amber-400/[0.06] px-3 py-2 text-xs font-medium text-amber-200/90">
+            <input
+              type="checkbox"
+              checked={data.devModus}
+              onChange={(e) => update({ devModus: e.target.checked })}
+              className="size-3.5 accent-amber-400"
+            />
+            dev mode
+            <span className="font-normal text-amber-200/60">
+              {data.devModus
+                ? "— Weiter immer frei, alle Schritte anklickbar"
+                : "— Schritte ohne Eingaben durchklicken"}
+            </span>
+          </label>
+        )}
       </div>
     </div>
   );
