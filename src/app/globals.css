@@ -623,6 +623,54 @@ input[type="range"]:active::-moz-range-thumb {
   animation: hero-plakette-puls 15s ease-in-out infinite;
 }
 
+/* Vertrauensplaketten unter dem Handlungsaufruf. Ein Lichtstreifen wandert
+   in langen Abstaenden durch die Reihe und laesst sie kurz aufleuchten.
+   Bewusst nur ein Weiss von 12 Prozent und nichts Gruenes: Der Akzent gehoert
+   der Schaltflaeche darueber, die Plaketten sind das zweite Ziel fuers Auge.
+   Der Schimmer nimmt 18 Prozent des Takts ein, die restlichen 82 Prozent
+   liegt die Reihe still — dauerlaufend zoege sie den Blick vom Handy ab. */
+.vertrauen-plakette {
+  position: relative;
+  overflow: hidden;
+}
+
+.vertrauen-plakette::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 38%,
+    rgba(245, 248, 255, 0.12) 50%,
+    transparent 62%
+  );
+  /* backwards ist hier keine Feinheit: Ohne den Rueckgriff gilt waehrend der
+     Wartezeit der Grundzustand ohne Versatz, und der Lichtstreifen stuende
+     beim Laden mitten auf den drei spaeteren Plaketten still. */
+  animation: schimmern 9s ease-in-out infinite backwards;
+  /* Der Versatz staffelt die Plaketten zu einer Welle. Er steht als Variable
+     am Element, weil das ::after keine Animationsangaben von ihm erbt. */
+  animation-delay: var(--schimmer-versatz, 0ms);
+}
+
+@keyframes schimmern {
+  0% {
+    transform: translateX(-130%);
+  }
+  18%,
+  100% {
+    transform: translateX(130%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vertrauen-plakette::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 /* Ein Streifen, der aus der festen Buehne ausbricht und den Bildschirm von
    Rand zu Rand fuellt. Die Buehne ist 1440px breit und wird skaliert — 100vw
    waere darin also um den Zoom verfaelscht. --stage-vollbreite liefert die
