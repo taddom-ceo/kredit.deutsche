@@ -13,14 +13,39 @@ const gemeinsam = {
   focusable: "false" as const,
 };
 
+/** Beschriftungen der drei Szenen, die im Handy nacheinander laufen. */
+export type HeroSzenen = {
+  eingabeTitel: string;
+  eingabeUnter: string;
+  betragLabel: string;
+  betragWert: string;
+  laufzeitLabel: string;
+  laufzeitWert: string;
+  eingabeKnopf: string;
+  angeboteTitel: string;
+  angeboteUnter: string;
+  ersparnisTitel: string;
+  ersparnisUnter: string;
+  ersparnisWert: string;
+  ersparnisFuss: string;
+};
+
 /**
- * Der Aufmacher zeigt das Ergebnis eines Vergleichs auf einem Handy: die
- * Trefferliste mit drei Beispielangeboten, das günstigste hervorgehoben, und
- * darunter die Ersparnis.
+ * Der Aufmacher spielt die Antragsstrecke auf einem Handy durch — dieselben
+ * drei Schritte, die der Besucher danach selbst geht:
+ *
+ *   1. Daten eingeben    — Betrag und Laufzeit wandern in die Felder
+ *   2. Angebote erhalten — die Trefferliste mit drei Beispielangeboten
+ *   3. Zinsen gespart    — Haken und Ersparnis als Ergebnis
  *
  * Bewusst ohne Banknamen: Die Angebote stehen für den Vergleich, nicht für
  * einen bestimmten Anbieter. Die Raten sind mit derselben Formel gerechnet
  * wie im Rechner der Seite.
+ *
+ * Die Szenen liegen uebereinander und werden allein per CSS ein- und
+ * ausgeblendet — kein Zustand, kein Timer, nichts, was beim Laden nachzieht.
+ * Ohne Bewegungswunsch bleibt Szene 2 stehen: Sie traegt die Aussage, die
+ * anderen beiden erzaehlen nur den Weg dorthin.
  *
  * Format 420 × 520 — das Seitenverhältnis der Textspalte daneben, damit das
  * Bild sie in der Höhe ausfüllt statt darin zu schwimmen.
@@ -30,27 +55,101 @@ export function HeroIllustration({
   proMonat,
   ersparnis,
   beispielHinweis,
+  szenen,
   className,
 }: {
   angebote: { rate: string; zins: string }[];
   proMonat: string;
   ersparnis: string;
   beispielHinweis: string[];
+  szenen: HeroSzenen;
   className?: string;
 }) {
   const [bestes, mittel, teuer] = angebote;
+
+  /** Kopfzeile einer Szene — jede bringt ihre eigene mit, damit sie mit der
+      Szene zusammen kommt und geht statt fuer sich zu wechseln. */
+  const Kopf = ({ titel, unter }: { titel: string; unter: string }) => (
+    <g>
+      <text x="130" y="76" fontSize="15" fontWeight="700" letterSpacing="-0.3" fill="#f5f8ff">
+        {titel}
+      </text>
+      <text x="130" y="94" fontSize="10" fill="rgba(148,163,196,0.7)">
+        {unter}
+      </text>
+    </g>
+  );
+
+  /** Ein Eingabefeld mit Schieberegler. Der Knopf und die gefuellte Strecke
+      teilen sich denselben Takt — liefe nur der Knopf, loeste er sich vom
+      Ende der Linie. */
+  const Feld = ({
+    y,
+    label,
+    wert,
+    takt,
+  }: {
+    y: number;
+    label: string;
+    wert: string;
+    takt: "a" | "b";
+  }) => (
+    <g>
+      <rect
+        x="130"
+        y={y}
+        width="160"
+        height="68"
+        rx="14"
+        fill="rgba(148,163,196,0.07)"
+        stroke="rgba(148,163,196,0.16)"
+      />
+      <text x="144" y={y + 22} fontSize="9.5" fill="rgba(148,163,196,0.7)">
+        {label}
+      </text>
+      <text x="144" y={y + 44} fontSize="17" fontWeight="700" letterSpacing="-0.4" fill="#f5f8ff">
+        {wert}
+      </text>
+      <line
+        x1="144"
+        y1={y + 56}
+        x2="276"
+        y2={y + 56}
+        stroke="rgba(148,163,196,0.3)"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <line
+        className={`hero-feld-strecke-${takt}`}
+        x1="144"
+        y1={y + 56}
+        x2="276"
+        y2={y + 56}
+        stroke="#34d399"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeDasharray="132"
+      />
+      <circle className={`hero-feld-knopf-${takt}`} cx="144" cy={y + 56} r="6.5" fill="#34d399" />
+    </g>
+  );
 
   /** Eine Zeile in der Trefferliste auf dem Bildschirm. */
   const Zeile = ({
     y,
     angebot,
     hervor,
+    verzoegerung,
   }: {
     y: number;
     angebot: { rate: string; zins: string };
     hervor?: boolean;
+    verzoegerung: number;
   }) => (
-    <g>
+    // Der Versatz staffelt die Zeilen: Weil alle denselben Takt haben,
+    // verschiebt eine Verzoegerung sie dauerhaft gegeneinander, statt nur
+    // den ersten Durchgang zu versetzen.
+    <g className="hero-zeile" style={{ animationDelay: `${verzoegerung}ms` }}>
       <rect
         x="130"
         y={y}
@@ -98,6 +197,12 @@ export function HeroIllustration({
           <stop offset="0%" stopColor="#34d399" stopOpacity="0.22" />
           <stop offset="100%" stopColor="#6384ff" stopOpacity="0.06" />
         </linearGradient>
+        {/* Die Szenen schieben sich seitlich herein und heraus. Ohne diese
+            Maske traeten sie dabei ueber den Bildschirm und sogar ueber den
+            Rand des Geraets hinaus. */}
+        <clipPath id="ill-schirm">
+          <rect x="120" y="30" width="180" height="336" rx="24" />
+        </clipPath>
       </defs>
 
       <ellipse className="hero-schein" cx="210" cy="205" rx="185" ry="180" fill="url(#ill-schein)" />
@@ -120,34 +225,112 @@ export function HeroIllustration({
         <rect x="120" y="30" width="180" height="336" rx="24" fill="#0a1428" />
         <rect x="176" y="40" width="68" height="7" rx="3.5" fill="rgba(148,163,196,0.35)" />
 
-        <rect x="130" y="60" width="96" height="9" rx="4.5" fill="rgba(245,248,255,0.55)" />
-        <rect x="130" y="77" width="62" height="7" rx="3.5" fill="rgba(148,163,196,0.35)" />
+        <g clipPath="url(#ill-schirm)">
+          {/* Szene 1 — Daten eingeben */}
+          <g className="hero-szene-a">
+            <Kopf titel={szenen.eingabeTitel} unter={szenen.eingabeUnter} />
+            <Feld y={108} label={szenen.betragLabel} wert={szenen.betragWert} takt="a" />
+            <Feld y={186} label={szenen.laufzeitLabel} wert={szenen.laufzeitWert} takt="b" />
+            {/* Die Schaltflaeche ist bewusst nur angedeutet: Ausgefuellt in
+                Akzentgruen zog sie im Bild mehr Aufmerksamkeit als der echte
+                Handlungsaufruf daneben. */}
+            <g className="hero-knopf">
+              <rect
+                x="130"
+                y="272"
+                width="160"
+                height="40"
+                rx="20"
+                fill="rgba(52,211,153,0.14)"
+                stroke="rgba(52,211,153,0.45)"
+              />
+              <text
+                x="210"
+                y="297"
+                fontSize="12.5"
+                fontWeight="700"
+                textAnchor="middle"
+                fill="#34d399"
+              >
+                {szenen.eingabeKnopf}
+              </text>
+            </g>
+          </g>
 
-        <Zeile y={98} angebot={bestes} hervor />
-        <Zeile y={158} angebot={mittel} />
-        <Zeile y={218} angebot={teuer} />
+          {/* Szene 2 — Angebote erhalten */}
+          <g className="hero-szene-b">
+            <Kopf titel={szenen.angeboteTitel} unter={szenen.angeboteUnter} />
+            <Zeile y={108} angebot={bestes} hervor verzoegerung={0} />
+            <Zeile y={172} angebot={mittel} verzoegerung={260} />
+            <Zeile y={236} angebot={teuer} verzoegerung={520} />
+          </g>
 
-        <rect x="130" y="286" width="160" height="38" rx="19" fill="#34d399" />
-        <rect x="176" y="301" width="68" height="8" rx="4" fill="rgba(4,23,15,0.75)" />
+          {/* Szene 3 — Zinsen gespart */}
+          <g className="hero-szene-c">
+            <Kopf titel={szenen.ersparnisTitel} unter={szenen.ersparnisUnter} />
+            <circle
+              cx="210"
+              cy="176"
+              r="44"
+              fill="rgba(52,211,153,0.12)"
+              stroke="rgba(52,211,153,0.4)"
+            />
+            <path
+              className="hero-haken"
+              d="M188 176 L203 191 L232 160"
+              fill="none"
+              stroke="#34d399"
+              strokeWidth="5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <text
+              className="hero-betrag"
+              x="210"
+              y="266"
+              fontSize="34"
+              fontWeight="700"
+              letterSpacing="-1"
+              textAnchor="middle"
+              fill="#34d399"
+            >
+              {szenen.ersparnisWert}
+            </text>
+            <text
+              x="210"
+              y="290"
+              fontSize="11"
+              textAnchor="middle"
+              fill="rgba(148,163,196,0.75)"
+            >
+              {szenen.ersparnisFuss}
+            </text>
+          </g>
+        </g>
       </g>
 
       {/* Die Ersparnis überlappt den unteren Geräterand, nicht den Bildschirm:
           Der Bildschirm endet bei y=366, die Plakette beginnt bei y=352. */}
       <g transform="translate(96 352)">
         <g className="hero-plakette">
-          <rect width="228" height="56" rx="18" fill="#0f1c37" stroke="rgba(52,211,153,0.45)" />
-          <circle cx="34" cy="28" r="15" fill="rgba(52,211,153,0.16)" />
-          <path
-            d="M34 20 L34 35 M28 29 L34 35.5 L40 29"
-            fill="none"
-            stroke="#34d399"
-            strokeWidth="2.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <text x="62" y="34" fontSize="17" fontWeight="700" fill="#f5f8ff">
-            {ersparnis}
-          </text>
+          {/* Eigene Gruppe fuer die Betonung: Das Schweben sitzt schon auf der
+              aeusseren, und zwei Bewegungen auf demselben Element wuerden
+              einander ueberschreiben. */}
+          <g className="hero-plakette-puls">
+            <rect width="228" height="56" rx="18" fill="#0f1c37" stroke="rgba(52,211,153,0.45)" />
+            <circle cx="34" cy="28" r="15" fill="rgba(52,211,153,0.16)" />
+            <path
+              d="M34 20 L34 35 M28 29 L34 35.5 L40 29"
+              fill="none"
+              stroke="#34d399"
+              strokeWidth="2.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <text x="62" y="34" fontSize="17" fontWeight="700" fill="#f5f8ff">
+              {ersparnis}
+            </text>
+          </g>
         </g>
       </g>
 

@@ -251,7 +251,7 @@ input[type="range"]:active::-moz-range-thumb {
 
 .js .einblenden {
   opacity: 0;
-  transform: translateY(18px);
+  transform: translateY(26px);
   /* cubic-bezier(0.16, 1, 0.3, 1) laeuft sehr weit aus: schneller Antritt,
      langes ruhiges Ausklingen. Das liest sich als teuer statt als flott. */
   transition:
@@ -270,7 +270,7 @@ input[type="range"]:active::-moz-range-thumb {
 @keyframes auftakt {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(28px);
   }
   to {
     opacity: 1;
@@ -309,7 +309,7 @@ input[type="range"]:active::-moz-range-thumb {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-6px);
+    transform: translateY(-11px);
   }
 }
 
@@ -319,19 +319,19 @@ input[type="range"]:active::-moz-range-thumb {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(5px);
+    transform: translateY(9px);
   }
 }
 
 @keyframes schein-atmen {
   0%,
   100% {
-    opacity: 0.75;
+    opacity: 0.66;
     transform: scale(1);
   }
   50% {
     opacity: 1;
-    transform: scale(1.035);
+    transform: scale(1.07);
   }
 }
 
@@ -346,6 +346,281 @@ input[type="range"]:active::-moz-range-thumb {
 .hero-schein {
   transform-origin: center;
   animation: schein-atmen 11s ease-in-out infinite;
+}
+
+/* ── Antragsstrecke im Aufmacher ────────────────────────────────────────
+   Das Handy spielt die drei Schritte durch, die der Besucher danach selbst
+   geht: Daten eingeben → Angebote erhalten → Zinsen gespart.
+
+   Alle Teile laufen auf demselben Takt von 15s, jede Szene bekommt ein
+   Drittel davon. Nur so bleiben Szene, Regler, Zeilen und Haken dauerhaft
+   im Gleichschritt — mit eigenen Laufzeiten liefen sie langsam auseinander
+   und die Erzaehlung zerfiele nach wenigen Durchgaengen.
+
+   Prozentwerte des Takts:
+     Szene 1  4 %–29 %   |  Szene 2  37 %–62 %  |  Szene 3  70 %–95 %
+   Dazwischen liegen jeweils rund vier Prozent Uebergang. Was danach noch
+   zurueckgesetzt wird, geschieht bei Deckkraft 0 und ist unsichtbar. */
+
+@keyframes hero-szene-a {
+  0% {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  4%,
+  29% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  33% {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  38%,
+  100% {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+@keyframes hero-szene-b {
+  0%,
+  33% {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  37%,
+  62% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  66% {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  71%,
+  100% {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+@keyframes hero-szene-c {
+  0%,
+  66% {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  70%,
+  95% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  /* Der Ausgang laeuft bis ans Ende des Takts durch, damit er sich mit dem
+     Eingang von Szene 1 ueberschneidet. Endete er frueher, staende der
+     Bildschirm bei jedem Durchgang kurz leer. Der Sprung des Versatzes an
+     der Nahtstelle faellt bei Deckkraft 0 nicht auf. */
+  100% {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+}
+
+/* Szene 2 steht ohne Bewegung still im Bild: Sie traegt die Aussage, die
+   beiden anderen erzaehlen nur den Weg dorthin. */
+.hero-szene-a,
+.hero-szene-c {
+  opacity: 0;
+}
+
+.hero-szene-a {
+  animation: hero-szene-a 15s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.hero-szene-b {
+  animation: hero-szene-b 15s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.hero-szene-c {
+  animation: hero-szene-c 15s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+/* Die Regler fahren auf ihren Wert, sobald Szene 1 steht. Der zweite laeuft
+   weiter und spaeter — zwei gleiche Wege nebeneinander saehen gestellt aus. */
+@keyframes hero-feld-knopf-a {
+  0%,
+  5% {
+    transform: translateX(0);
+  }
+  19%,
+  33% {
+    transform: translateX(78px);
+  }
+  40%,
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes hero-feld-strecke-a {
+  0%,
+  5% {
+    stroke-dashoffset: 132;
+  }
+  19%,
+  33% {
+    stroke-dashoffset: 54;
+  }
+  40%,
+  100% {
+    stroke-dashoffset: 132;
+  }
+}
+
+@keyframes hero-feld-knopf-b {
+  0%,
+  9% {
+    transform: translateX(0);
+  }
+  23%,
+  33% {
+    transform: translateX(106px);
+  }
+  40%,
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes hero-feld-strecke-b {
+  0%,
+  9% {
+    stroke-dashoffset: 132;
+  }
+  23%,
+  33% {
+    stroke-dashoffset: 26;
+  }
+  40%,
+  100% {
+    stroke-dashoffset: 132;
+  }
+}
+
+.hero-feld-knopf-a {
+  animation: hero-feld-knopf-a 15s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.hero-feld-strecke-a {
+  animation: hero-feld-strecke-a 15s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.hero-feld-knopf-b {
+  animation: hero-feld-knopf-b 15s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.hero-feld-strecke-b {
+  animation: hero-feld-strecke-b 15s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+/* Kurzer Druck auf die Schaltflaeche, unmittelbar bevor die Trefferliste
+   kommt — das verbindet die beiden Szenen zu einer Handlung. */
+@keyframes hero-knopf {
+  0%,
+  26% {
+    transform: scale(1);
+  }
+  29% {
+    transform: scale(0.955);
+  }
+  32%,
+  100% {
+    transform: scale(1);
+  }
+}
+
+.hero-knopf {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hero-knopf 15s ease-in-out infinite;
+}
+
+/* Die Angebote treffen gestaffelt ein. Sie bleiben danach stehen — das
+   Ausblenden uebernimmt die Szene, sonst verblassten sie doppelt. */
+@keyframes hero-zeile {
+  0%,
+  34% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  42%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-zeile {
+  animation: hero-zeile 15s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+/* Der Haken zieht sich, danach springt der Betrag heran. */
+@keyframes hero-haken {
+  0%,
+  70% {
+    stroke-dashoffset: 64;
+  }
+  80%,
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.hero-haken {
+  stroke-dasharray: 64;
+  animation: hero-haken 15s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@keyframes hero-betrag {
+  0%,
+  75% {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  83%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.hero-betrag {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hero-betrag 15s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+/* Die Plakette unter dem Geraet zieht genau dann an, wenn im Handy die
+   Ersparnis steht: Die Zahl landet dadurch an einer Stelle statt an zweien
+   zu unterschiedlichen Zeiten. */
+@keyframes hero-plakette-puls {
+  0%,
+  76% {
+    transform: scale(1);
+  }
+  84% {
+    transform: scale(1.055);
+  }
+  94%,
+  100% {
+    transform: scale(1);
+  }
+}
+
+.hero-plakette-puls {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hero-plakette-puls 15s ease-in-out infinite;
 }
 
 /* Ein Streifen, der aus der festen Buehne ausbricht und den Bildschirm von
@@ -423,7 +698,7 @@ input[type="range"]:active::-moz-range-thumb {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-4px);
+    transform: translateY(-7px);
   }
 }
 
@@ -439,7 +714,7 @@ input[type="range"]:active::-moz-range-thumb {
     transform: translateX(0);
   }
   50% {
-    transform: translateX(5px);
+    transform: translateX(8px);
   }
 }
 
@@ -449,7 +724,7 @@ input[type="range"]:active::-moz-range-thumb {
     stroke-dashoffset: 10;
   }
   50% {
-    stroke-dashoffset: 5;
+    stroke-dashoffset: 2;
   }
 }
 
@@ -459,7 +734,7 @@ input[type="range"]:active::-moz-range-thumb {
     transform: translateX(0);
   }
   50% {
-    transform: translateX(-4px);
+    transform: translateX(-7px);
   }
 }
 
@@ -469,7 +744,7 @@ input[type="range"]:active::-moz-range-thumb {
     stroke-dashoffset: 21;
   }
   50% {
-    stroke-dashoffset: 25;
+    stroke-dashoffset: 28;
   }
 }
 
@@ -510,12 +785,12 @@ input[type="range"]:active::-moz-range-thumb {
 @keyframes blitz-pulsen {
   0%,
   100% {
-    opacity: 0.72;
+    opacity: 0.62;
     transform: scale(1);
   }
   50% {
     opacity: 1;
-    transform: scale(1.09);
+    transform: scale(1.15);
   }
 }
 
@@ -528,7 +803,19 @@ input[type="range"]:active::-moz-range-thumb {
 @media (prefers-reduced-motion: reduce) {
   .hero-geraet,
   .hero-plakette,
+  .hero-plakette-puls,
   .hero-schein,
+  .hero-szene-a,
+  .hero-szene-b,
+  .hero-szene-c,
+  .hero-feld-knopf-a,
+  .hero-feld-strecke-a,
+  .hero-feld-knopf-b,
+  .hero-feld-strecke-b,
+  .hero-knopf,
+  .hero-zeile,
+  .hero-haken,
+  .hero-betrag,
   .vergleich-bogen,
   .vergleich-gruen,
   .regler-knopf-a,
@@ -540,8 +827,16 @@ input[type="range"]:active::-moz-range-thumb {
     animation: none;
   }
 
-  .schild-haken {
+  .schild-haken,
+  .hero-haken {
     stroke-dasharray: none;
+  }
+
+  /* Ohne Bewegung bleibt allein die Trefferliste stehen — sie traegt die
+     Aussage. Die beiden anderen Szenen laegen sonst uebereinander. */
+  .hero-szene-a,
+  .hero-szene-c {
+    display: none;
   }
 }
 

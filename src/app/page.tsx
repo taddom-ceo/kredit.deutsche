@@ -133,6 +133,7 @@ export default function Home() {
               proMonat={l.heroProMonat}
               ersparnis={l.heroErsparnis}
               beispielHinweis={l.heroBeispielHinweis}
+              szenen={l.heroSzenen}
               className="auftakt w-full h-full lg:absolute lg:inset-0 [animation-delay:340ms]"
             />
           </div>
