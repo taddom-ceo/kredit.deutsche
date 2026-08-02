@@ -696,30 +696,55 @@ export function StepShieldIllustration({ className }: { className?: string }) {
 export function StepPayoutIllustration({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" className={className} {...gemeinsam}>
+      {/* Zweiter Schein dahinter, nur angedeutet. Er gibt dem Symbol Tiefe
+          und macht aus einem einzelnen Rechteck erkennbar Geld. */}
       <rect
-        x="6"
-        y="16"
-        width="52"
-        height="32"
-        rx="9"
-        fill="rgba(52,211,153,0.07)"
-        stroke="rgba(52,211,153,0.28)"
+        x="14"
+        y="11"
+        width="44"
+        height="24"
+        rx="6"
+        fill="rgba(52,211,153,0.05)"
+        stroke="rgba(52,211,153,0.18)"
       />
-      <circle
-        cx="32"
-        cy="32"
-        r="8"
-        fill="none"
-        stroke="rgba(148,163,196,0.5)"
-        strokeWidth="2.4"
-      />
-      <path
-        className="blitz"
-        d="M33 25.5 L27.5 33.5 H32 L30.5 39.5 L36.5 31 H32 Z"
-        fill="#34d399"
-      />
-      <circle cx="15" cy="32" r="2.6" fill="rgba(148,163,196,0.5)" />
-      <circle cx="49" cy="32" r="2.6" fill="rgba(148,163,196,0.5)" />
+
+      {/* Vorderer Schein. Er hebt sich langsam an — die Bewegung des
+          Ueberreichens, passend zum Schritt "Auszahlung erhalten". */}
+      <g className="geldschein">
+        <rect
+          x="5"
+          y="20"
+          width="50"
+          height="32"
+          rx="8"
+          fill="rgba(52,211,153,0.09)"
+          stroke="rgba(52,211,153,0.32)"
+        />
+        {/* Innerer Rahmen — das Merkmal, an dem ein Rechteck als Schein
+            gelesen wird. */}
+        <rect
+          x="9.5"
+          y="24.5"
+          width="41"
+          height="23"
+          rx="5"
+          fill="none"
+          stroke="rgba(52,211,153,0.18)"
+        />
+        {/* Eurozeichen als Zeichnung statt als Buchstabe: Als Schrift saesse
+            es je nach geladener Schriftart anders im Schein, gezeichnet sitzt
+            es genau in seiner Mitte. */}
+        <g
+          fill="none"
+          stroke="#34d399"
+          strokeWidth="3.2"
+          strokeLinecap="round"
+        >
+          <path d="M34.8 32 A6.3 6.3 0 1 0 34.8 40" />
+          <path d="M23.5 34.4 H33.8" />
+          <path d="M23.5 37.6 H32.5" />
+        </g>
+      </g>
     </svg>
   );
 }

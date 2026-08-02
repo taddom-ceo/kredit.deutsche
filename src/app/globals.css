@@ -961,24 +961,20 @@ input[type="range"]:active::-moz-range-thumb {
   animation: haken-ziehen 6.5s ease-in-out infinite;
 }
 
-/* Schritt 3: Der Blitz pulst leicht — das Zeichen fuer Tempo darf sich
-   bewegen, aber nur eben so viel, dass man es bemerkt. */
-@keyframes blitz-pulsen {
+/* Schritt 3: Der vordere Geldschein hebt sich langsam an — die Bewegung des
+   Ueberreichens. Nur so weit, dass man sie bemerkt. */
+@keyframes schein-heben {
   0%,
   100% {
-    opacity: 0.62;
-    transform: scale(1);
+    transform: translateY(0);
   }
   50% {
-    opacity: 1;
-    transform: scale(1.15);
+    transform: translateY(-3.5px);
   }
 }
 
-.blitz {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: blitz-pulsen 4.8s ease-in-out infinite;
+.geldschein {
+  animation: schein-heben 5.2s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1006,7 +1002,7 @@ input[type="range"]:active::-moz-range-thumb {
   .regler-knopf-b,
   .regler-strecke-b,
   .schild-haken,
-  .blitz {
+  .geldschein {
     animation: none;
   }
 
