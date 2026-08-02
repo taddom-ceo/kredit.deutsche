@@ -69,18 +69,24 @@ export interface WizardData {
 export const TOTAL_STEPS = 8;
 
 /**
- * Ob der Entwicklermodus ueberhaupt angeboten wird.
+ * Ob der Entwicklermodus angeboten wird.
  *
- * Beim oertlichen `next dev` immer, sonst nur wenn NEXT_PUBLIC_DEV_MODUS auf
- * "1" steht. Damit laesst er sich auf einer Vorschau-Umgebung gezielt
- * einschalten, bleibt in der Produktion aber aus, ohne dass jemand daran
- * denken muss. Der Vergleich steht bewusst als Konstante hier: Next ersetzt
- * process.env beim Bauen durch feste Werte, dadurch faellt der ganze Zweig
- * samt Schalter aus dem Produktionspaket heraus.
+ * Waehrend der Entwicklungsphase bewusst ueberall, auch auf der
+ * veroeffentlichten Seite — der Schalter soll ohne eigenes Deployment und
+ * ohne gesetzte Umgebungsvariable erreichbar sein.
+ *
+ * Das ist vertretbar, weil der Antrag nirgendwohin verschickt wird: Der
+ * letzte Schritt setzt nur ein Kennzeichen im Zustand der Seite und zeigt die
+ * Bestaetigung. Wer die Strecke ohne Angaben durchklickt, erzeugt also keinen
+ * unvollstaendigen Datensatz, sondern sieht nur eine leere Bestaetigung.
+ *
+ * Sobald der Antrag tatsaechlich abgeschickt wird, gehoert hier wieder eine
+ * Bedingung hin — etwa
+ *   process.env.NODE_ENV !== "production" ||
+ *   process.env.NEXT_PUBLIC_DEV_MODUS === "1"
+ * damit auf der Produktivseite keine leeren Antraege eingehen koennen.
  */
-export const DEV_MODUS_VERFUEGBAR =
-  process.env.NODE_ENV !== "production" ||
-  process.env.NEXT_PUBLIC_DEV_MODUS === "1";
+export const DEV_MODUS_VERFUEGBAR = true;
 
 /** Antwort auf eine Pflichtfrage. null heisst "noch nicht beantwortet". */
 export type JaNein = "ja" | "nein" | null;
