@@ -326,7 +326,7 @@ export const translations: Record<Language, Translations> = {
         { wert: "20+", label: "banks compared" },
         { wert: "2.89%", label: "effective annual rate from" },
         { wert: "2 min", label: "for your offer" },
-        { wert: "€0", label: "cost to you" },
+        { wert: "€0", label: "cost for you" },
       ],
       ablaufEyebrow: "How it works",
       ablaufTitle: "Three steps, no hold music",
