@@ -96,9 +96,7 @@ export default function Home() {
             proMonat={l.heroProMonat}
             ersparnis={l.heroErsparnis}
             ersparnisZusatz={l.heroErsparnisZusatz}
-            beispielKopf={l.heroBeispielKopf}
-            beispielFuss1={l.heroBeispielFuss1}
-            beispielFuss2={l.heroBeispielFuss2}
+            beispielHinweis={l.heroBeispielHinweis}
             className="w-full max-w-[500px] justify-self-center lg:justify-self-end"
           />
         </section>
