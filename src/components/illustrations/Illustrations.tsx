@@ -696,53 +696,72 @@ export function StepShieldIllustration({ className }: { className?: string }) {
 export function StepPayoutIllustration({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" className={className} {...gemeinsam}>
-      {/* Ein einzelner Geldschein. Ein zweiter dahinter sollte Tiefe geben,
-          las sich bei dieser Anzeigegroesse aber als versehentlich verrutschte
-          Kopie — zwei Rahmen, die einander kreuzen, ergeben kein Buendel.
+      <defs>
+        {/* Der Lichtstreifen darf nur ueber dem Schein zu sehen sein, nicht
+            daneben. */}
+        <clipPath id="schein-flaeche">
+          <rect x="5" y="13" width="54" height="38" rx="8" />
+        </clipPath>
+        <linearGradient id="schein-licht" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#eaf6ff" stopOpacity="0" />
+          <stop offset="50%" stopColor="#eaf6ff" stopOpacity="0.38" />
+          <stop offset="100%" stopColor="#eaf6ff" stopOpacity="0" />
+        </linearGradient>
+      </defs>
 
-          Der Schein liegt leicht schraeg. Das ist nicht nur Zierde: Aufrecht
-          misst er bei den Seitenverhaeltnissen eines Scheins nur rund 30 von
-          64 Einheiten Hoehe und stuende sichtbar kleiner da als Regler (44)
-          und Schild (50). Um 13 Grad gedreht baut er rund 41 Einheiten hoch,
-          ohne dabei in die Breite zu gehen.
-
-          Die Drehung braucht eine eigene Gruppe: Das Anheben kommt als
-          CSS-Transformation von aussen, und die wuerde ein transform-Attribut
-          am selben Element ersetzen statt sich damit zu verrechnen. */}
+      {/* Der Schein hebt sich langsam an — die Bewegung des Ueberreichens. */}
       <g className="geldschein">
-        <g transform="rotate(-13 32 32)">
-          <rect
-            x="6"
-            y="17"
-            width="52"
-            height="30"
-            rx="7"
-            fill="rgba(52,211,153,0.09)"
-            stroke="rgba(52,211,153,0.32)"
-          />
-          {/* Innerer Rahmen — das Merkmal, an dem ein Rechteck als Schein
-              gelesen wird. */}
-          <rect
-            x="10.5"
-            y="21.5"
-            width="43"
-            height="21"
-            rx="4.5"
-            fill="none"
-            stroke="rgba(52,211,153,0.2)"
-          />
-          {/* Eurozeichen als Zeichnung statt als Buchstabe: Als Schrift saesse
-              es je nach geladener Schriftart anders im Schein, gezeichnet
-              sitzt es genau in seiner Mitte. */}
-          <g
-            fill="none"
-            stroke="#34d399"
-            strokeWidth="3.2"
-            strokeLinecap="round"
-          >
-            <path d="M37.2 27.6 A6.8 6.8 0 1 0 37.2 36.4" />
-            <path d="M24.6 30.2 H35.8" />
-            <path d="M24.6 33.8 H34.4" />
+        <rect
+          x="5"
+          y="13"
+          width="54"
+          height="38"
+          rx="8"
+          fill="rgba(52,211,153,0.09)"
+          stroke="rgba(52,211,153,0.32)"
+        />
+        {/* Innerer Rahmen — das Merkmal, an dem ein Rechteck als Schein
+            gelesen wird. */}
+        <rect
+          x="9.5"
+          y="17.5"
+          width="45"
+          height="29"
+          rx="5"
+          fill="none"
+          stroke="rgba(52,211,153,0.2)"
+        />
+        {/* Eurozeichen als Zeichnung statt als Buchstabe: Als Schrift saesse
+            es je nach geladener Schriftart anders im Schein, gezeichnet sitzt
+            es genau in seiner Mitte. */}
+        <g
+          fill="none"
+          stroke="#34d399"
+          strokeWidth="3.4"
+          strokeLinecap="round"
+        >
+          <path d="M38.5 26.5 A8.5 8.5 0 1 0 38.5 37.5" />
+          <path d="M22.5 29.7 H36.9" />
+          <path d="M22.5 34.3 H35.3" />
+        </g>
+
+        {/* Ein Lichtstreifen wandert in Abstaenden ueber den Schein. Er traegt
+            die Bewegung, die man wirklich sieht: Das Anheben allein legt am
+            Bildschirm nur wenige Pixel zurueck und geht bei dieser Groesse
+            unter.
+            Die Schraege steckt im Attribut des Rechtecks, das Wandern in der
+            Gruppe darum — eine CSS-Transformation wuerde ein transform am
+            selben Element ersetzen statt sich damit zu verrechnen. */}
+        <g clipPath="url(#schein-flaeche)">
+          <g className="schein-glanz">
+            <rect
+              x="-26"
+              y="6"
+              width="18"
+              height="52"
+              fill="url(#schein-licht)"
+              transform="skewX(-14)"
+            />
           </g>
         </g>
       </g>
