@@ -166,6 +166,7 @@ export interface WizardTranslations {
     restschuldOffen: string;
     restschuldAbbezahlt: string;
     restschuldHergeleitet: string;
+    restschuldPasstNicht: string;
     restschuldSelbst: string;
     restschuldNeuBerechnen: string;
   };
@@ -502,6 +503,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       restschuldAbbezahlt: "Rechnerisch bereits vollständig zurückgeführt.",
       restschuldHergeleitet:
         "Aus Summe, Rate und Laufzeit ergibt sich der Zinssatz von selbst — die Schätzung ist damit so genau wie mit eigener Zinsangabe. Unverbindlich.",
+      restschuldPasstNicht:
+        "Summe, Rate und Laufzeit passen nicht zusammen: Die Raten ergeben zusammen weniger als die Summe, der Kredit wäre so nie getilgt. Bitte prüfen — bis dahin nur grob geschätzt.",
       restschuldSelbst: "Von Ihnen angepasst.",
       restschuldNeuBerechnen: "Neu berechnen",
     },
@@ -840,6 +843,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       restschuldAbbezahlt: "Already fully repaid according to the calculation.",
       restschuldHergeleitet:
         "The amount, payment and term imply the interest rate, so this estimate is as precise as with a rate you enter yourself. Non-binding.",
+      restschuldPasstNicht:
+        "Amount, payment and term do not fit together: the payments add up to less than the amount, so the loan would never be repaid. Please check — until then this is only a rough estimate.",
       restschuldSelbst: "Adjusted by you.",
       restschuldNeuBerechnen: "Recalculate",
     },

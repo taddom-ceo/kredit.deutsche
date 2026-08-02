@@ -51,3 +51,30 @@ export function zeigerNachZiffern(text: string, ziffernDavor: number): number {
   }
   return i;
 }
+
+/**
+ * Eingabe einer Dezimalzahl säubern: Ziffern und höchstens ein Trennzeichen.
+ *
+ * Auch das muss ein Textfeld sein. `<input type="number">` verwirft ein
+ * Zeichen, das seine Sprache nicht als Dezimaltrenner kennt, statt es
+ * abzulehnen — aus "5,49" wird in einem englischsprachigen Browser klaglos
+ * "549". Der Zinssatz war dadurch hundertfach zu hoch, ohne dass im Feld
+ * etwas Falsches zu sehen gewesen wäre.
+ */
+export function nurDezimal(text: string): string {
+  let sauber = text.replace(/[^\d.,]/g, "");
+  const trenner = sauber.search(/[.,]/);
+  if (trenner >= 0) {
+    // Nur das erste Trennzeichen zählt, alles danach ist ein Vertipper.
+    sauber =
+      sauber.slice(0, trenner + 1) + sauber.slice(trenner + 1).replace(/[.,]/g, "");
+  }
+  return sauber.slice(0, 8);
+}
+
+/** Komma wie Punkt lesen — im Deutschen ist das Komma das Dezimalzeichen. */
+export function dezimalZuZahl(text: string): number {
+  const sauber = nurDezimal(text).replace(",", ".");
+  if (sauber === "" || sauber === ".") return NaN;
+  return Number(sauber);
+}
