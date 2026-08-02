@@ -329,13 +329,13 @@ export const translations: Record<Language, Translations> = {
         { wert: "€0", label: "cost for you" },
       ],
       ablaufEyebrow: "How it works",
-      ablaufTitle: "Three steps, no call center",
+      ablaufTitle: "Three easy steps, no call center",
       ablaufSubtitle:
         "No appointment and no documents up front.",
       schritte: [
         {
           titel: "Enter what you need",
-          text: "Set the amount and term — the instalment updates as you go.",
+          text: "Set the amount and the terms — the instalment updates as you go.",
         },
         {
           titel: "Compare offers",
@@ -343,7 +343,7 @@ export const translations: Record<Language, Translations> = {
         },
         {
           titel: "Get your payout",
-          text: "Sign digitally instead of queuing at the post office. With many banks, same day.",
+          text: "Sign digitally instead of queuing at the post office. More banks, same day.",
         },
       ],
       vergleichEyebrow: "Why compare",
