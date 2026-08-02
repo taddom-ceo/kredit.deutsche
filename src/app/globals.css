@@ -349,34 +349,79 @@ input[type="range"]:active::-moz-range-thumb {
 }
 
 /* ── Antragsstrecke im Aufmacher ────────────────────────────────────────
-   Das Handy spielt die drei Schritte durch, die der Besucher danach selbst
-   geht: Daten eingeben → Angebote erhalten → Zinsen gespart.
+   Das Handy spielt durch, was der Besucher danach selbst tut — beginnend
+   damit, dass die App aufgeht:
 
-   Alle Teile laufen auf demselben Takt von 15s, jede Szene bekommt ein
-   Drittel davon. Nur so bleiben Szene, Regler, Zeilen und Haken dauerhaft
-   im Gleichschritt — mit eigenen Laufzeiten liefen sie langsam auseinander
-   und die Erzaehlung zerfiele nach wenigen Durchgaengen.
+     Start → Daten eingeben → Angebote erhalten → Zinsen gespart
 
-   Prozentwerte des Takts:
-     Szene 1  4 %–29 %   |  Szene 2  37 %–62 %  |  Szene 3  70 %–95 %
-   Dazwischen liegen jeweils rund vier Prozent Uebergang. Was danach noch
-   zurueckgesetzt wird, geschieht bei Deckkraft 0 und ist unsichtbar. */
+   Alle Teile laufen auf demselben Takt von 15s. Nur so bleiben Szene,
+   Regler, Zeilen und Haken dauerhaft im Gleichschritt — mit eigenen
+   Laufzeiten liefen sie langsam auseinander und die Erzaehlung zerfiele
+   nach wenigen Durchgaengen.
+
+   Der Start bekommt bewusst weniger Zeit als die uebrigen Szenen: Eine App
+   geht in einem Wimpernschlag auf, und laenger gezeigt wuerde er zum
+   Selbstzweck statt zum Auftakt.
+
+   Sichtbare Fenster in Prozent des Takts:
+     Start   2 %–12 %  |  Eingabe 17,5 %–38 %
+     Angebot 44 %–66 % |  Ersparnis 72 %–97 %
+   Dazwischen liegen jeweils rund drei Prozent Uebergang, die sich
+   ueberschneiden. Was danach noch zurueckgesetzt wird, geschieht bei
+   Deckkraft 0 und ist unsichtbar. */
+
+@keyframes hero-szene-start {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  2%,
+  12% {
+    /* Eigene Kurve fuer den Ausgang: Die Kurve der Szene faellt gleich zu
+       Beginn steil ab, dadurch war die weichende Szene schon verschwunden,
+       bevor die naechste ueberhaupt ansetzte — der Bildschirm lag bei jedem
+       Wechsel rund 150ms dunkel. Mit dieser Kurve haelt sie ihre Deckkraft
+       und faellt erst am Ende, sodass die naechste sie ohne Loch abloest. */
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.25);
+    opacity: 1;
+    transform: scale(1);
+  }
+  /* Der Startbildschirm weicht nach vorn aus dem Bild, statt zur Seite zu
+     schieben wie die uebrigen Szenen. Das ist die Bewegung, die man vom
+     Oeffnen einer App kennt. */
+  14.5% {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+  20%,
+  100% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
 
 @keyframes hero-szene-a {
-  0% {
+  0%,
+  14.5% {
     opacity: 0;
     transform: translateX(16px);
   }
-  4%,
-  29% {
+  17.5%,
+  38% {
+    /* Eigene Kurve fuer den Ausgang: Die Kurve der Szene faellt gleich zu
+       Beginn steil ab, dadurch war die weichende Szene schon verschwunden,
+       bevor die naechste ueberhaupt ansetzte — der Bildschirm lag bei jedem
+       Wechsel rund 150ms dunkel. Mit dieser Kurve haelt sie ihre Deckkraft
+       und faellt erst am Ende, sodass die naechste sie ohne Loch abloest. */
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.25);
     opacity: 1;
     transform: translateX(0);
   }
-  33% {
+  41% {
     opacity: 0;
     transform: translateX(-16px);
   }
-  38%,
+  46%,
   100% {
     opacity: 0;
     transform: translateX(16px);
@@ -385,20 +430,26 @@ input[type="range"]:active::-moz-range-thumb {
 
 @keyframes hero-szene-b {
   0%,
-  33% {
+  41% {
     opacity: 0;
     transform: translateX(16px);
   }
-  37%,
-  62% {
+  44%,
+  66% {
+    /* Eigene Kurve fuer den Ausgang: Die Kurve der Szene faellt gleich zu
+       Beginn steil ab, dadurch war die weichende Szene schon verschwunden,
+       bevor die naechste ueberhaupt ansetzte — der Bildschirm lag bei jedem
+       Wechsel rund 150ms dunkel. Mit dieser Kurve haelt sie ihre Deckkraft
+       und faellt erst am Ende, sodass die naechste sie ohne Loch abloest. */
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.25);
     opacity: 1;
     transform: translateX(0);
   }
-  66% {
+  69% {
     opacity: 0;
     transform: translateX(-16px);
   }
-  71%,
+  74%,
   100% {
     opacity: 0;
     transform: translateX(16px);
@@ -407,19 +458,24 @@ input[type="range"]:active::-moz-range-thumb {
 
 @keyframes hero-szene-c {
   0%,
-  66% {
+  69% {
     opacity: 0;
     transform: translateX(16px);
   }
-  70%,
-  95% {
+  72%,
+  97% {
+    /* Eigene Kurve fuer den Ausgang: Die Kurve der Szene faellt gleich zu
+       Beginn steil ab, dadurch war die weichende Szene schon verschwunden,
+       bevor die naechste ueberhaupt ansetzte — der Bildschirm lag bei jedem
+       Wechsel rund 150ms dunkel. Mit dieser Kurve haelt sie ihre Deckkraft
+       und faellt erst am Ende, sodass die naechste sie ohne Loch abloest. */
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.25);
     opacity: 1;
     transform: translateX(0);
   }
   /* Der Ausgang laeuft bis ans Ende des Takts durch, damit er sich mit dem
-     Eingang von Szene 1 ueberschneidet. Endete er frueher, staende der
-     Bildschirm bei jedem Durchgang kurz leer. Der Sprung des Versatzes an
-     der Nahtstelle faellt bei Deckkraft 0 nicht auf. */
+     Aufgehen des Startbildschirms ueberschneidet. Endete er frueher, staende
+     der Bildschirm bei jedem Durchgang kurz leer. */
   100% {
     opacity: 0;
     transform: translateX(-16px);
@@ -427,10 +483,17 @@ input[type="range"]:active::-moz-range-thumb {
 }
 
 /* Szene 2 steht ohne Bewegung still im Bild: Sie traegt die Aussage, die
-   beiden anderen erzaehlen nur den Weg dorthin. */
+   anderen erzaehlen nur den Weg dorthin. */
+.hero-szene-start,
 .hero-szene-a,
 .hero-szene-c {
   opacity: 0;
+}
+
+.hero-szene-start {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hero-szene-start 15s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
 .hero-szene-a {
@@ -445,18 +508,38 @@ input[type="range"]:active::-moz-range-thumb {
   animation: hero-szene-c 15s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
+/* Der Ladebalken des Startbildschirms fuellt sich einmal auf. */
+@keyframes hero-start-balken {
+  0%,
+  2% {
+    stroke-dashoffset: 80;
+  }
+  12%,
+  16% {
+    stroke-dashoffset: 0;
+  }
+  20%,
+  100% {
+    stroke-dashoffset: 80;
+  }
+}
+
+.hero-start-balken {
+  animation: hero-start-balken 15s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
 /* Die Regler fahren auf ihren Wert, sobald Szene 1 steht. Der zweite laeuft
    weiter und spaeter — zwei gleiche Wege nebeneinander saehen gestellt aus. */
 @keyframes hero-feld-knopf-a {
   0%,
-  5% {
+  18% {
     transform: translateX(0);
   }
-  19%,
-  33% {
+  28%,
+  41% {
     transform: translateX(78px);
   }
-  40%,
+  46%,
   100% {
     transform: translateX(0);
   }
@@ -464,14 +547,14 @@ input[type="range"]:active::-moz-range-thumb {
 
 @keyframes hero-feld-strecke-a {
   0%,
-  5% {
+  18% {
     stroke-dashoffset: 132;
   }
-  19%,
-  33% {
+  28%,
+  41% {
     stroke-dashoffset: 54;
   }
-  40%,
+  46%,
   100% {
     stroke-dashoffset: 132;
   }
@@ -479,14 +562,14 @@ input[type="range"]:active::-moz-range-thumb {
 
 @keyframes hero-feld-knopf-b {
   0%,
-  9% {
+  22% {
     transform: translateX(0);
   }
-  23%,
-  33% {
+  32%,
+  41% {
     transform: translateX(106px);
   }
-  40%,
+  46%,
   100% {
     transform: translateX(0);
   }
@@ -494,14 +577,14 @@ input[type="range"]:active::-moz-range-thumb {
 
 @keyframes hero-feld-strecke-b {
   0%,
-  9% {
+  22% {
     stroke-dashoffset: 132;
   }
-  23%,
-  33% {
+  32%,
+  41% {
     stroke-dashoffset: 26;
   }
-  40%,
+  46%,
   100% {
     stroke-dashoffset: 132;
   }
@@ -527,13 +610,13 @@ input[type="range"]:active::-moz-range-thumb {
    kommt — das verbindet die beiden Szenen zu einer Handlung. */
 @keyframes hero-knopf {
   0%,
-  26% {
+  35% {
     transform: scale(1);
   }
-  29% {
+  37.5% {
     transform: scale(0.955);
   }
-  32%,
+  40%,
   100% {
     transform: scale(1);
   }
@@ -545,32 +628,38 @@ input[type="range"]:active::-moz-range-thumb {
   animation: hero-knopf 15s ease-in-out infinite;
 }
 
-/* Die Angebote treffen gestaffelt ein. Sie bleiben danach stehen — das
-   Ausblenden uebernimmt die Szene, sonst verblassten sie doppelt. */
+/* Die Angebote treffen nacheinander ein und ploppen dabei auf. Zuvor stiegen
+   sie beim Aufblenden nach oben — eine Bewegung weg vom Platz, die sich eher
+   nach Verschwinden las als nach Ankommen. Der Sprung ueber die Endgroesse
+   hinaus steckt in der Kurve, nicht in einem eigenen Schritt. Sie bleiben
+   danach stehen; das Ausblenden uebernimmt die Szene, sonst verblassten sie
+   doppelt. */
 @keyframes hero-zeile {
   0%,
-  34% {
+  42% {
     opacity: 0;
-    transform: translateY(16px);
+    transform: scale(0.86);
   }
-  42%,
+  47.5%,
   100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: scale(1);
   }
 }
 
 .hero-zeile {
-  animation: hero-zeile 15s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hero-zeile 15s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
 }
 
 /* Der Haken zieht sich, danach springt der Betrag heran. */
 @keyframes hero-haken {
   0%,
-  70% {
+  72% {
     stroke-dashoffset: 64;
   }
-  80%,
+  81%,
   100% {
     stroke-dashoffset: 0;
   }
@@ -583,11 +672,11 @@ input[type="range"]:active::-moz-range-thumb {
 
 @keyframes hero-betrag {
   0%,
-  75% {
+  77% {
     opacity: 0;
     transform: scale(0.86);
   }
-  83%,
+  85%,
   100% {
     opacity: 1;
     transform: scale(1);
@@ -597,7 +686,7 @@ input[type="range"]:active::-moz-range-thumb {
 .hero-betrag {
   transform-box: fill-box;
   transform-origin: center;
-  animation: hero-betrag 15s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  animation: hero-betrag 15s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
 }
 
 /* Die Plakette unter dem Geraet zieht genau dann an, wenn im Handy die
@@ -605,13 +694,13 @@ input[type="range"]:active::-moz-range-thumb {
    zu unterschiedlichen Zeiten. */
 @keyframes hero-plakette-puls {
   0%,
-  76% {
+  78% {
     transform: scale(1);
   }
-  84% {
+  86% {
     transform: scale(1.055);
   }
-  94%,
+  95%,
   100% {
     transform: scale(1);
   }
@@ -853,6 +942,8 @@ input[type="range"]:active::-moz-range-thumb {
   .hero-plakette,
   .hero-plakette-puls,
   .hero-schein,
+  .hero-szene-start,
+  .hero-start-balken,
   .hero-szene-a,
   .hero-szene-b,
   .hero-szene-c,
@@ -882,6 +973,7 @@ input[type="range"]:active::-moz-range-thumb {
 
   /* Ohne Bewegung bleibt allein die Trefferliste stehen — sie traegt die
      Aussage. Die beiden anderen Szenen laegen sonst uebereinander. */
+  .hero-szene-start,
   .hero-szene-a,
   .hero-szene-c {
     display: none;

@@ -31,9 +31,10 @@ export type HeroSzenen = {
 };
 
 /**
- * Der Aufmacher spielt die Antragsstrecke auf einem Handy durch — dieselben
- * drei Schritte, die der Besucher danach selbst geht:
+ * Der Aufmacher spielt die Antragsstrecke auf einem Handy durch — als waere
+ * die App gerade geoeffnet worden:
  *
+ *   0. Start             — Bildmarke, Wortmarke und ein kurzer Ladebalken
  *   1. Daten eingeben    — Betrag und Laufzeit wandern in die Felder
  *   2. Angebote erhalten — die Trefferliste mit drei Beispielangeboten
  *   3. Zinsen gespart    — Haken und Ersparnis als Ergebnis
@@ -226,6 +227,81 @@ export function HeroIllustration({
         <rect x="176" y="40" width="68" height="7" rx="3.5" fill="rgba(148,163,196,0.35)" />
 
         <g clipPath="url(#ill-schirm)">
+          {/* Szene 0 — die App startet. Bildmarke, Wortmarke und Beizeile
+              sind dieselben wie im Kopf der Seite: Die Zeichnung der Kachel
+              ist Zug um Zug aus LogoMark uebernommen und nur skaliert, damit
+              beide nicht auseinanderlaufen koennen. */}
+          <g className="hero-szene-start">
+            <g transform="translate(178 142) scale(1.6)">
+              <rect
+                x="0.5"
+                y="0.5"
+                width="39"
+                height="39"
+                rx="11"
+                fill="#0b1120"
+                stroke="rgba(255,255,255,0.12)"
+              />
+              <g fill="#34d399" stroke="#34d399">
+                <circle cx="14.2" cy="14.2" r="3.4" stroke="none" />
+                <circle cx="25.8" cy="25.8" r="3.4" stroke="none" />
+                <line
+                  x1="13.6"
+                  y1="26.4"
+                  x2="26.4"
+                  y2="13.6"
+                  strokeWidth="3.6"
+                  strokeLinecap="round"
+                />
+              </g>
+            </g>
+            <text
+              x="210"
+              y="238"
+              fontSize="23"
+              fontWeight="600"
+              letterSpacing="-0.3"
+              textAnchor="middle"
+              fill="#f5f8ff"
+            >
+              cresolu
+              <tspan fill="#34d399">.de</tspan>
+            </text>
+            <text
+              x="210"
+              y="257"
+              fontSize="8.5"
+              fontWeight="500"
+              letterSpacing="2.2"
+              textAnchor="middle"
+              fill="rgba(148,163,196,0.85)"
+            >
+              CLEVER FINANZIEREN
+            </text>
+            {/* Ladebalken — das Zeichen, an dem ein startendes Programm
+                erkennbar ist. */}
+            <line
+              x1="170"
+              y1="306"
+              x2="250"
+              y2="306"
+              stroke="rgba(148,163,196,0.22)"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+            <line
+              className="hero-start-balken"
+              x1="170"
+              y1="306"
+              x2="250"
+              y2="306"
+              stroke="#34d399"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray="80"
+            />
+          </g>
+
           {/* Szene 1 — Daten eingeben */}
           <g className="hero-szene-a">
             <Kopf titel={szenen.eingabeTitel} unter={szenen.eingabeUnter} />
@@ -261,8 +337,8 @@ export function HeroIllustration({
           <g className="hero-szene-b">
             <Kopf titel={szenen.angeboteTitel} unter={szenen.angeboteUnter} />
             <Zeile y={108} angebot={bestes} hervor verzoegerung={0} />
-            <Zeile y={172} angebot={mittel} verzoegerung={260} />
-            <Zeile y={236} angebot={teuer} verzoegerung={520} />
+            <Zeile y={172} angebot={mittel} verzoegerung={320} />
+            <Zeile y={236} angebot={teuer} verzoegerung={640} />
           </g>
 
           {/* Szene 3 — Zinsen gespart */}
