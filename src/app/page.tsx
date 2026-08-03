@@ -182,7 +182,7 @@ export default function Home() {
 
         {/* Kennzahlen als eigene Karten mit Symbol — als schlichte Zeile gingen
             sie zwischen den Abschnitten unter. */}
-        <section className="border-y border-border bg-surface/40">
+        <section className="border-t border-border bg-surface/40">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12 lg:py-14 grid grid-cols-2 lg:grid-cols-4 gap-4">
             {l.kennzahlen.map((k, i) => {
               const Symbol = KENNZAHL_SYMBOLE[i];
@@ -209,7 +209,16 @@ export default function Home() {
         </section>
 
         {/* Ablauf */}
-        <section id="ablauf" className="hell scroll-mt-8 border-t border-border">
+        <section
+          id="ablauf"
+          className="hell verlauf scroll-mt-8"
+          style={
+            {
+              "--verlauf-start": "transparent",
+              "--verlauf-oben": "130px",
+            } as CSSProperties
+          }
+        >
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-24 flex flex-col gap-12">
             <Reveal className="flex flex-col gap-3 max-w-xl">
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
@@ -248,7 +257,15 @@ export default function Home() {
         </section>
 
         {/* Warum vergleichen */}
-        <section className="hell-grau">
+        <section
+          className="hell-grau verlauf"
+          style={
+            {
+              "--verlauf-start": "var(--hell-weiss)",
+              "--verlauf-oben": "140px",
+            } as CSSProperties
+          }
+        >
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <Reveal className="flex flex-col gap-5">
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
@@ -283,7 +300,15 @@ export default function Home() {
         </section>
 
         {/* Kundenstimmen */}
-        <section className="hell border-t border-border">
+        <section
+          className="hell verlauf"
+          style={
+            {
+              "--verlauf-start": "var(--hell-grau-ton)",
+              "--verlauf-oben": "140px",
+            } as CSSProperties
+          }
+        >
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-24 flex flex-col gap-10">
             <Reveal className="flex flex-col gap-3 max-w-xl">
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
@@ -316,7 +341,17 @@ export default function Home() {
         {/* Häufige Fragen. Als natives details/summary: Das klappt ohne
             JavaScript auf, ist über die Tastatur bedienbar und wird von der
             Seitensuche des Browsers gefunden. */}
-        <section className="hell-grau border-t border-border">
+        <section
+          className="hell-grau verlauf"
+          style={
+            {
+              "--verlauf-start": "var(--hell-weiss)",
+              "--verlauf-oben": "140px",
+              "--verlauf-unten": "150px",
+              "--verlauf-ende": "transparent",
+            } as CSSProperties
+          }
+        >
           <div className="mx-auto max-w-3xl px-4 sm:px-6 py-16 lg:py-24 flex flex-col gap-8">
             <Reveal className="flex flex-col gap-3">
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
@@ -356,7 +391,7 @@ export default function Home() {
         </section>
 
         {/* Abschließender Aufruf */}
-        <section className="border-t border-border">
+        <section>
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-20">
             <Reveal className="rounded-[24px] border border-accent/25 bg-accent/[0.06] ring-1 ring-white/5 px-6 py-10 lg:px-12 lg:py-12 flex flex-col items-center gap-4 text-center">
               <h2 className="text-2xl lg:text-3xl font-bold tracking-[-0.02em] max-w-xl leading-[1.15]">

@@ -33,6 +33,11 @@
   --ill-neutral-linie: rgba(148, 163, 196, 0.3);
   --ill-neutral-satt: rgba(148, 163, 196, 0.55);
   --ill-glanz: #eaf6ff;
+
+  /* Die beiden hellen Grundtoene stehen hier, weil auch die Verlaeufe
+     zwischen den Abschnitten sie brauchen. */
+  --hell-weiss: #ffffff;
+  --hell-grau-ton: #f4f7fb;
 }
 
 /* ── Helle Abschnitte ──────────────────────────────────────────────────
@@ -47,7 +52,7 @@
    5,2:1 und traegt zugleich weisse Schrift auf der Schaltflaeche. */
 .hell,
 .hell-grau {
-  --background: #ffffff;
+  --background: var(--hell-weiss);
   --surface: #f8fafc;
   --surface-2: #eef2f7;
   --foreground: #0b1a2e;
@@ -72,6 +77,31 @@
   color-scheme: light;
   background-color: var(--background);
   color: var(--foreground);
+}
+
+/* ── Uebergaenge zwischen den Abschnitten ──────────────────────────────
+   Die Farbwechsel liefen als harte Kante quer durch die Seite. Ein Verlauf
+   nimmt ihnen das Abgehackte.
+
+   Der Kniff steckt in `transparent`: Wo ein heller Abschnitt an den dunklen
+   Seitenhintergrund grenzt, laeuft der Verlauf nicht auf ein nachgebautes
+   Dunkelblau zu, sondern ins Durchsichtige. Dadurch trifft er die Farbe
+   dahinter immer genau — auch dort, wo der Hintergrund der Seite selbst ein
+   Verlauf ist und sich beim Scrollen aendert. Ein fest eingetragener Farbwert
+   waere an jeder anderen Scrollhoehe daneben.
+
+   Die vier Kanten unterscheiden sich nur in den Werten, die der Abschnitt
+   mitgibt: womit oben angesetzt wird, ueber welche Hoehe, und ob unten wieder
+   ausgeblendet wird. */
+.verlauf {
+  background-color: transparent;
+  background-image: linear-gradient(
+    to bottom,
+    var(--verlauf-start, var(--background)) 0,
+    var(--background) var(--verlauf-oben, 0px),
+    var(--background) calc(100% - var(--verlauf-unten, 0px)),
+    var(--verlauf-ende, var(--background)) 100%
+  );
 }
 
 /* Markenfenster. Innerhalb eines hellen Abschnitts stellt diese Klasse das
@@ -111,7 +141,7 @@
 /* Sehr helles Grau fuer den Wechsel zwischen zwei weissen Bereichen. Karten
    darin sind weiss und heben sich dadurch ab. */
 .hell-grau {
-  --background: #f4f7fb;
+  --background: var(--hell-grau-ton);
   --surface: #ffffff;
   --surface-2: #eef2f7;
 }
