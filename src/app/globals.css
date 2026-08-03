@@ -74,6 +74,40 @@
   color: var(--foreground);
 }
 
+/* Markenfenster. Innerhalb eines hellen Abschnitts stellt diese Klasse das
+   dunkle Blau der Marke wieder her — der helle Bereich traegt dann den Raum,
+   die Karten darin die Marke. Ohne sie waeren die hellen Abschnitte zwar
+   sauber, aber austauschbar.
+
+   Es genuegt nicht, nur die Flaeche dunkel zu faerben: Schrift, Raender und
+   die Farben der Zeichnungen sind im hellen Abschnitt auf dunklen Text
+   gestellt und muessen hier wieder zurueckgedreht werden. */
+.marke {
+  --background: #0f1c37;
+  --surface: #15264a;
+  --surface-2: #1b2f57;
+  --foreground: #f5f8ff;
+  --muted: #94a6cc;
+  --border: rgba(148, 163, 196, 0.16);
+  --border-strong: rgba(148, 163, 196, 0.3);
+  --accent: #34d399;
+  --accent-strong: #22c08a;
+  --accent-foreground: #04170f;
+
+  --ill-akzent: #34d399;
+  --ill-akzent-flaeche: rgba(52, 211, 153, 0.1);
+  --ill-akzent-linie: rgba(52, 211, 153, 0.34);
+  --ill-akzent-satt: rgba(52, 211, 153, 0.85);
+  --ill-neutral-flaeche: rgba(148, 163, 196, 0.16);
+  --ill-neutral-linie: rgba(148, 163, 196, 0.3);
+  --ill-neutral-satt: rgba(148, 163, 196, 0.55);
+  --ill-glanz: #eaf6ff;
+
+  color-scheme: dark;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
 /* Sehr helles Grau fuer den Wechsel zwischen zwei weissen Bereichen. Karten
    darin sind weiss und heben sich dadurch ab. */
 .hell-grau {
