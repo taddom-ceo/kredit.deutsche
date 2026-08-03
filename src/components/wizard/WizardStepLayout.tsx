@@ -42,7 +42,11 @@ export default function WizardStepLayout({
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-      <div className="flex flex-col gap-6">
+      {/* Die linke Spalte ist das Markenfenster: dunkles Blau, wie es die
+          Seite sonst durchgehend traegt. Das Formular daneben bleibt hell —
+          so steht die Marke im Bild, ohne dass beim Eintragen von Einkommen
+          und Bankverbindung wieder eine dunkle Maske vor einem liegt. */}
+      <div className="marke flex flex-col gap-6 rounded-[24px] border border-border p-6 lg:p-8">
         <span className="inline-flex w-fit items-center rounded-full border border-border bg-surface px-3 py-1 text-[11px] font-semibold text-muted tracking-wide">
           {eyebrow}
         </span>
@@ -116,15 +120,15 @@ export default function WizardStepLayout({
             DEV_MODUS_VERFUEGBAR ist eine Konstante aus process.env, die Next
             beim Bauen einsetzt. */}
         {DEV_MODUS_VERFUEGBAR && (
-          <label className="mt-4 flex w-fit cursor-pointer items-center gap-2.5 rounded-[12px] border border-dashed border-amber-400/50 bg-amber-400/[0.06] px-3 py-2 text-xs font-medium text-amber-200/90">
+          <label className="dev-schalter mt-4 flex w-fit cursor-pointer items-center gap-2.5 rounded-[12px] border border-dashed px-3 py-2 text-xs font-medium">
             <input
               type="checkbox"
               checked={data.devModus}
               onChange={(e) => setDevModus(e.target.checked)}
-              className="size-3.5 accent-amber-400"
+              className="size-3.5"
             />
             dev mode
-            <span className="font-normal text-amber-200/60">
+            <span className="dev-schalter-zusatz font-normal">
               {data.devModus
                 ? "— Weiter immer frei, alle Schritte anklickbar"
                 : "— Schritte ohne Eingaben durchklicken"}
