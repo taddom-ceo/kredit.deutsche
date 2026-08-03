@@ -1088,3 +1088,120 @@ input[type="range"]:active::-moz-range-thumb {
 .animate-marquee-vertical {
   animation: marquee-vertical 32s linear infinite;
 }
+
+/* ── Ergebnisliste ─────────────────────────────────────────────────────
+   Solange keine Bank angebunden ist, laedt die Liste nichts — die Zeit
+   dafuer ist gesetzt. Das Verhalten ist trotzdem schon das spaetere: Wer
+   Betrag oder Laufzeit aendert, sieht dieselbe Abfrage wie bei einer echten
+   Anfrage, und die Platzhalter haben die Hoehe der spaeteren Zeilen. Dadurch
+   springt beim Umschalten nichts. */
+
+.skelett {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(148, 163, 196, 0.09);
+}
+
+/* Der Lichtstreifen laeuft hier ohne Pause, anders als der Schimmer der
+   Vertrauensplaketten: Dort schmueckt er, hier zeigt er Arbeit an. Stuende er
+   zwischendurch still, laese sich das als haengengeblieben. */
+.skelett::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 25%,
+    rgba(245, 248, 255, 0.11) 48%,
+    transparent 72%
+  );
+  animation: skelett-lauf 1.4s linear infinite backwards;
+  animation-delay: var(--skelett-versatz, 0ms);
+}
+
+@keyframes skelett-lauf {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Die drei Stationen der Abfrage hellen nacheinander auf und laufen im Kreis.
+   Sie behaupten keinen Fortschritt in Prozent — den kennt niemand —, sondern
+   nur, dass etwas geschieht. */
+.lade-schritt {
+  animation: lade-schritt 2.7s ease-in-out infinite backwards;
+  animation-delay: var(--schritt-versatz, 0ms);
+}
+
+@keyframes lade-schritt {
+  0%,
+  100% {
+    opacity: 0.32;
+  }
+  18%,
+  42% {
+    opacity: 1;
+  }
+}
+
+/* Balken ohne bekanntes Ziel. Er ist 28 % breit, die Verschiebung ist auf die
+   eigene Breite bezogen — 360 % bringt ihn also gerade aus dem rechten Rand. */
+.lade-balken {
+  animation: lade-balken 1.5s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes lade-balken {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(360%);
+  }
+}
+
+/* Die fertigen Zeilen laufen von unten ein, gestaffelt von oben nach unten.
+   Kurz gehalten: Bei fuenf Zeilen summiert sich jede Verzoegerung, und die
+   Liste soll lesbar sein, sobald sie da ist. */
+@keyframes angebot-einlauf {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.js .angebot-einlauf {
+  animation: angebot-einlauf 460ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: var(--zeilen-versatz, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skelett::after,
+  .lade-schritt,
+  .lade-balken,
+  .js .angebot-einlauf {
+    animation: none;
+  }
+
+  /* Ohne Bewegung bliebe der Balken am linken Rand stehen und der Streifen
+     mitten im Platzhalter liegen — beides sieht nach Fehler aus. */
+  .skelett::after {
+    opacity: 0;
+  }
+
+  .lade-schritt {
+    opacity: 1;
+  }
+
+  .lade-balken {
+    transform: none;
+    width: 100%;
+  }
+}
