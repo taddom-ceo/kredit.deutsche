@@ -20,6 +20,68 @@
   --accent-foreground: #04170f;
 }
 
+/* Farben der Zeichnungen. Sie stehen als eigene Variablen da, weil die
+   Illustrationen sowohl auf dunklem als auch auf hellem Grund stehen: Ein fest
+   eingetragenes Grau von 25 % Deckkraft verschwindet auf Weiss, und das helle
+   Gruen des dunklen Bereichs hat auf Weiss zu wenig Kontrast. */
+:root {
+  --ill-akzent: #34d399;
+  --ill-akzent-flaeche: rgba(52, 211, 153, 0.1);
+  --ill-akzent-linie: rgba(52, 211, 153, 0.34);
+  --ill-akzent-satt: rgba(52, 211, 153, 0.85);
+  --ill-neutral-flaeche: rgba(148, 163, 196, 0.16);
+  --ill-neutral-linie: rgba(148, 163, 196, 0.3);
+  --ill-neutral-satt: rgba(148, 163, 196, 0.55);
+  --ill-glanz: #eaf6ff;
+}
+
+/* ── Helle Abschnitte ──────────────────────────────────────────────────
+   Der Aufmacher bleibt dunkel, danach wechseln sich helle Bereiche ab. Der
+   Wechsel entsteht allein dadurch, dass hier dieselben Variablen neu gesetzt
+   werden — moeglich, weil @theme inline die Farbklassen direkt auf var(--…)
+   abbildet und der Wert damit vererbt statt einmalig an :root festgeschrieben
+   zu werden.
+
+   Das Akzentgruen wird dabei deutlich dunkler. Das helle #34d399 kommt auf
+   Weiss nur auf rund 1,7:1 und waere als Schrift unlesbar; #047857 liegt bei
+   5,2:1 und traegt zugleich weisse Schrift auf der Schaltflaeche. */
+.hell,
+.hell-grau {
+  --background: #ffffff;
+  --surface: #f8fafc;
+  --surface-2: #eef2f7;
+  --foreground: #0b1a2e;
+  --muted: #55677f;
+  --border: rgba(11, 26, 46, 0.1);
+  --border-strong: rgba(11, 26, 46, 0.22);
+  --accent: #047857;
+  --accent-strong: #035f45;
+  --accent-foreground: #ffffff;
+
+  --ill-akzent: #047857;
+  --ill-akzent-flaeche: rgba(4, 120, 87, 0.1);
+  --ill-akzent-linie: rgba(4, 120, 87, 0.38);
+  --ill-akzent-satt: rgba(4, 120, 87, 0.85);
+  --ill-neutral-flaeche: rgba(30, 58, 95, 0.09);
+  --ill-neutral-linie: rgba(30, 58, 95, 0.26);
+  --ill-neutral-satt: rgba(30, 58, 95, 0.5);
+  --ill-glanz: #1e3a5f;
+
+  /* Ohne diese Angabe zeichnet der Browser Auswahllisten und Kalender weiter
+     dunkel — sie richten sich nach color-scheme, nicht nach der Textfarbe. */
+  color-scheme: light;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+/* Sehr helles Grau fuer den Wechsel zwischen zwei weissen Bereichen. Karten
+   darin sind weiss und heben sich dadurch ab. */
+.hell-grau {
+  --background: #f4f7fb;
+  --surface: #ffffff;
+  --surface-2: #eef2f7;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
@@ -33,6 +95,44 @@
   --color-accent-foreground: var(--accent-foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+/* Der Entwicklerschalter. Er muss auf dunklem wie auf hellem Grund lesbar
+   sein — Bernstein in 200er Helligkeit verschwindet auf Weiss fast. */
+.dev-schalter {
+  border-color: rgba(251, 191, 36, 0.5);
+  background-color: rgba(251, 191, 36, 0.07);
+  color: rgba(253, 230, 138, 0.9);
+  accent-color: #fbbf24;
+}
+
+.dev-schalter-zusatz {
+  color: rgba(253, 230, 138, 0.6);
+}
+
+.hell .dev-schalter,
+.hell-grau .dev-schalter {
+  border-color: rgba(180, 83, 9, 0.45);
+  background-color: rgba(251, 191, 36, 0.12);
+  color: #92400e;
+  accent-color: #b45309;
+}
+
+.hell .dev-schalter-zusatz,
+.hell-grau .dev-schalter-zusatz {
+  color: rgba(146, 64, 14, 0.75);
+}
+
+/* Auf hellem Grund traegt die Karte des Antrags einen weichen, hellen
+   Schatten. Der dunkle Schlagschatten des Nachtdesigns legte sich dort wie
+   ein grauer Schleier um sie. Der helle Innenrand entfaellt aus demselben
+   Grund — auf Weiss ist er nicht zu sehen und nimmt dem Rand nur Klarheit. */
+.hell [data-wizard-panel],
+.hell-grau [data-wizard-panel] {
+  box-shadow:
+    0 1px 2px rgba(11, 26, 46, 0.04),
+    0 12px 32px -12px rgba(11, 26, 46, 0.16);
+  --tw-ring-shadow: 0 0 #0000;
 }
 
 /* Feste Design-Bühne: Ab 1024px ist das Layout auf exakt 1440px ausgelegt und

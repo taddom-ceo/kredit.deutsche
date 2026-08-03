@@ -44,12 +44,22 @@ function AntragShell() {
   return (
     <>
       <Header />
-      {data.step >= 1 && data.step <= TOTAL_STEPS && (
-        <StepProgress current={data.step} />
-      )}
-      <main className="flex-1">
-        <ActiveStep />
-      </main>
+      {/* Die ganze Antragsstrecke steht auf hellem Grund — Fortschrittsleiste
+          eingeschlossen. Wer Einkommen, Arbeitgeber und Bankverbindung
+          eintraegt, soll den Eindruck eines Schalters haben und nicht den
+          einer dunklen Maske; Helligkeit ist an dieser Stelle Vertrauen.
+          Die Leiste gehoert bewusst dazu: Bliebe sie dunkel, zerfiele der
+          Antrag optisch in zwei Haelften. Nur der Kopf der Seite behaelt sein
+          dunkles Markenbild, und der Aufmacher der Startseite bleibt
+          unberuehrt. */}
+      <div className="hell-grau flex flex-1 flex-col">
+        {data.step >= 1 && data.step <= TOTAL_STEPS && (
+          <StepProgress current={data.step} />
+        )}
+        <main className="flex-1">
+          <ActiveStep />
+        </main>
+      </div>
     </>
   );
 }

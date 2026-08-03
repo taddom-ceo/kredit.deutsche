@@ -209,7 +209,7 @@ export default function Home() {
         </section>
 
         {/* Ablauf */}
-        <section id="ablauf" className="scroll-mt-8">
+        <section id="ablauf" className="hell scroll-mt-8 border-t border-border">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-24 flex flex-col gap-12">
             <Reveal className="flex flex-col gap-3 max-w-xl">
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
@@ -248,7 +248,7 @@ export default function Home() {
         </section>
 
         {/* Warum vergleichen */}
-        <section className="border-t border-border bg-surface/30">
+        <section className="hell-grau">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <Reveal className="flex flex-col gap-5">
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
@@ -283,7 +283,7 @@ export default function Home() {
         </section>
 
         {/* Kundenstimmen */}
-        <section className="border-t border-border">
+        <section className="hell border-t border-border">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-24 flex flex-col gap-10">
             <Reveal className="flex flex-col gap-3 max-w-xl">
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
@@ -316,7 +316,7 @@ export default function Home() {
         {/* Häufige Fragen. Als natives details/summary: Das klappt ohne
             JavaScript auf, ist über die Tastatur bedienbar und wird von der
             Seitensuche des Browsers gefunden. */}
-        <section className="border-t border-border bg-surface/30">
+        <section className="hell-grau border-t border-border">
           <div className="mx-auto max-w-3xl px-4 sm:px-6 py-16 lg:py-24 flex flex-col gap-8">
             <Reveal className="flex flex-col gap-3">
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">

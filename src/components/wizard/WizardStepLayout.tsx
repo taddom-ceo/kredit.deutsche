@@ -116,15 +116,15 @@ export default function WizardStepLayout({
             DEV_MODUS_VERFUEGBAR ist eine Konstante aus process.env, die Next
             beim Bauen einsetzt. */}
         {DEV_MODUS_VERFUEGBAR && (
-          <label className="mt-4 flex w-fit cursor-pointer items-center gap-2.5 rounded-[12px] border border-dashed border-amber-400/50 bg-amber-400/[0.06] px-3 py-2 text-xs font-medium text-amber-200/90">
+          <label className="dev-schalter mt-4 flex w-fit cursor-pointer items-center gap-2.5 rounded-[12px] border border-dashed px-3 py-2 text-xs font-medium">
             <input
               type="checkbox"
               checked={data.devModus}
               onChange={(e) => setDevModus(e.target.checked)}
-              className="size-3.5 accent-amber-400"
+              className="size-3.5"
             />
             dev mode
-            <span className="font-normal text-amber-200/60">
+            <span className="dev-schalter-zusatz font-normal">
               {data.devModus
                 ? "— Weiter immer frei, alle Schritte anklickbar"
                 : "— Schritte ohne Eingaben durchklicken"}
