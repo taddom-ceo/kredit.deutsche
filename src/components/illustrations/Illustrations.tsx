@@ -614,8 +614,8 @@ export function StepSliderIllustration({ className }: { className?: string }) {
         width="52"
         height="44"
         rx="12"
-        fill="var(--ill-akzent-flaeche)"
-        stroke="var(--ill-akzent-linie)"
+        fill="rgba(52,211,153,0.07)"
+        stroke="rgba(52,211,153,0.28)"
       />
       {/* Die Regler wandern minimal hin und her. Die gefuellte Strecke folgt
           ueber stroke-dashoffset im selben Takt — bewegte sich nur der Knopf,
@@ -625,7 +625,7 @@ export function StepSliderIllustration({ className }: { className?: string }) {
         y1="26"
         x2="48"
         y2="26"
-        stroke="var(--ill-neutral-linie)"
+        stroke="rgba(148,163,196,0.4)"
         strokeWidth="3"
         strokeLinecap="round"
       />
@@ -635,19 +635,19 @@ export function StepSliderIllustration({ className }: { className?: string }) {
         y1="26"
         x2="48"
         y2="26"
-        stroke="var(--ill-akzent)"
+        stroke="#34d399"
         strokeWidth="3"
         strokeLinecap="round"
         strokeDasharray="32"
         strokeDashoffset="10"
       />
-      <circle className="regler-knopf-a" cx="38" cy="26" r="6" fill="var(--ill-akzent)" />
+      <circle className="regler-knopf-a" cx="38" cy="26" r="6" fill="#34d399" />
       <line
         x1="16"
         y1="40"
         x2="48"
         y2="40"
-        stroke="var(--ill-neutral-linie)"
+        stroke="rgba(148,163,196,0.4)"
         strokeWidth="3"
         strokeLinecap="round"
       />
@@ -657,13 +657,13 @@ export function StepSliderIllustration({ className }: { className?: string }) {
         y1="40"
         x2="48"
         y2="40"
-        stroke="var(--ill-akzent)"
+        stroke="#34d399"
         strokeWidth="3"
         strokeLinecap="round"
         strokeDasharray="32"
         strokeDashoffset="21"
       />
-      <circle className="regler-knopf-b" cx="27" cy="40" r="6" fill="var(--ill-akzent)" />
+      <circle className="regler-knopf-b" cx="27" cy="40" r="6" fill="#34d399" />
     </svg>
   );
 }
@@ -674,8 +674,8 @@ export function StepShieldIllustration({ className }: { className?: string }) {
     <svg viewBox="0 0 64 64" className={className} {...gemeinsam}>
       <path
         d="M32 7 L52 15 V32 C52 44 43 52.5 32 57 C21 52.5 12 44 12 32 V15 Z"
-        fill="var(--ill-akzent-flaeche)"
-        stroke="var(--ill-akzent-linie)"
+        fill="rgba(52,211,153,0.07)"
+        stroke="rgba(52,211,153,0.28)"
         strokeWidth="2"
         strokeLinejoin="round"
       />
@@ -683,7 +683,7 @@ export function StepShieldIllustration({ className }: { className?: string }) {
         className="schild-haken"
         d="M23 32 L29.5 38.5 L42 25"
         fill="none"
-        stroke="var(--ill-akzent)"
+        stroke="#34d399"
         strokeWidth="4"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -703,9 +703,9 @@ export function StepPayoutIllustration({ className }: { className?: string }) {
           <rect x="5" y="13" width="54" height="38" rx="8" />
         </clipPath>
         <linearGradient id="schein-licht" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="var(--ill-glanz)" stopOpacity="0" />
-          <stop offset="50%" stopColor="var(--ill-glanz)" stopOpacity="0.38" />
-          <stop offset="100%" stopColor="var(--ill-glanz)" stopOpacity="0" />
+          <stop offset="0%" stopColor="#eaf6ff" stopOpacity="0" />
+          <stop offset="50%" stopColor="#eaf6ff" stopOpacity="0.38" />
+          <stop offset="100%" stopColor="#eaf6ff" stopOpacity="0" />
         </linearGradient>
       </defs>
 
@@ -717,8 +717,8 @@ export function StepPayoutIllustration({ className }: { className?: string }) {
           width="54"
           height="38"
           rx="8"
-          fill="var(--ill-akzent-flaeche)"
-          stroke="var(--ill-akzent-linie)"
+          fill="rgba(52,211,153,0.09)"
+          stroke="rgba(52,211,153,0.32)"
         />
         {/* Innerer Rahmen — das Merkmal, an dem ein Rechteck als Schein
             gelesen wird. */}
@@ -729,14 +729,14 @@ export function StepPayoutIllustration({ className }: { className?: string }) {
           height="29"
           rx="5"
           fill="none"
-          stroke="var(--ill-akzent-linie)"
+          stroke="rgba(52,211,153,0.2)"
         />
         {/* Eurozeichen als Zeichnung statt als Buchstabe: Als Schrift saesse
             es je nach geladener Schriftart anders im Schein, gezeichnet sitzt
             es genau in seiner Mitte. */}
         <g
           fill="none"
-          stroke="var(--ill-akzent)"
+          stroke="#34d399"
           strokeWidth="3.4"
           strokeLinecap="round"
         >
@@ -781,7 +781,7 @@ export function CompareIllustration({ className }: { className?: string }) {
         y1="170"
         x2="300"
         y2="170"
-        stroke="var(--ill-neutral-linie)"
+        stroke="rgba(148,163,196,0.25)"
         strokeWidth="2"
       />
 
@@ -792,7 +792,7 @@ export function CompareIllustration({ className }: { className?: string }) {
         width="72"
         height="130"
         rx="12"
-        fill="var(--ill-neutral-flaeche)"
+        fill="rgba(148,163,196,0.16)"
       />
       <rect
         x="58"
@@ -801,14 +801,14 @@ export function CompareIllustration({ className }: { className?: string }) {
         height="130"
         rx="12"
         fill="none"
-        stroke="var(--ill-neutral-linie)"
+        stroke="rgba(148,163,196,0.28)"
       />
       {/* Prozentzeichen als Zeichnung, im Ton des jeweiligen Balkens. Als
           Buchstabe gesetzt richtete es sich an der Grundlinie aus und säße
           je nach Schrift anders — gezeichnet sitzt es genau im Balken. */}
       <g
-        stroke="var(--ill-neutral-satt)"
-        fill="var(--ill-neutral-satt)"
+        stroke="rgba(148,163,196,0.55)"
+        fill="rgba(148,163,196,0.55)"
         strokeLinecap="round"
       >
         <circle cx="87" cy="66" r="4" stroke="none" />
@@ -824,7 +824,7 @@ export function CompareIllustration({ className }: { className?: string }) {
           width="72"
           height="78"
           rx="12"
-          fill="var(--ill-akzent-flaeche)"
+          fill="rgba(52,211,153,0.16)"
         />
         <rect
           x="190"
@@ -833,11 +833,11 @@ export function CompareIllustration({ className }: { className?: string }) {
           height="78"
           rx="12"
           fill="none"
-          stroke="var(--ill-akzent-linie)"
+          stroke="rgba(52,211,153,0.45)"
         />
         <g
-          stroke="var(--ill-akzent-satt)"
-          fill="var(--ill-akzent-satt)"
+          stroke="rgba(52,211,153,0.85)"
+          fill="rgba(52,211,153,0.85)"
           strokeLinecap="round"
         >
           <circle cx="219" cy="118" r="4" stroke="none" />
@@ -858,7 +858,7 @@ export function CompareIllustration({ className }: { className?: string }) {
         className="vergleich-bogen"
         d="M132 48 C155 8 226 14 226 75"
         fill="none"
-        stroke="var(--ill-akzent)"
+        stroke="#34d399"
         strokeWidth="2.5"
         strokeLinecap="round"
         strokeDasharray="5 7"
@@ -866,7 +866,7 @@ export function CompareIllustration({ className }: { className?: string }) {
       <path
         d="M219 76 L226 83 L233 76"
         fill="none"
-        stroke="var(--ill-akzent)"
+        stroke="#34d399"
         strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
