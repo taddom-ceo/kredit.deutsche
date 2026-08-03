@@ -2,8 +2,13 @@
 
 import type { ReactNode } from "react";
 import { useLanguage } from "@/lib/language-context";
-import { useWizard, DEV_MODUS_VERFUEGBAR } from "@/lib/wizard-context";
+import {
+  useWizard,
+  DEV_MODUS_VERFUEGBAR,
+  TOTAL_STEPS,
+} from "@/lib/wizard-context";
 import { wizardTranslations } from "@/lib/wizard-i18n";
+import DevAngeboteLink from "./DevAngeboteLink";
 
 export default function WizardStepLayout({
   eyebrow,
@@ -116,20 +121,26 @@ export default function WizardStepLayout({
             DEV_MODUS_VERFUEGBAR ist eine Konstante aus process.env, die Next
             beim Bauen einsetzt. */}
         {DEV_MODUS_VERFUEGBAR && (
-          <label className="mt-4 flex w-fit cursor-pointer items-center gap-2.5 rounded-[12px] border border-dashed border-amber-400/50 bg-amber-400/[0.06] px-3 py-2 text-xs font-medium text-amber-200/90">
-            <input
-              type="checkbox"
-              checked={data.devModus}
-              onChange={(e) => setDevModus(e.target.checked)}
-              className="size-3.5 accent-amber-400"
-            />
-            dev mode
-            <span className="font-normal text-amber-200/60">
-              {data.devModus
-                ? "— Weiter immer frei, alle Schritte anklickbar"
-                : "— Schritte ohne Eingaben durchklicken"}
-            </span>
-          </label>
+          <div className="mt-4 flex flex-col items-start gap-2">
+            <label className="flex w-fit cursor-pointer items-center gap-2.5 rounded-[12px] border border-dashed border-amber-400/50 bg-amber-400/[0.06] px-3 py-2 text-xs font-medium text-amber-200/90">
+              <input
+                type="checkbox"
+                checked={data.devModus}
+                onChange={(e) => setDevModus(e.target.checked)}
+                className="size-3.5 accent-amber-400"
+              />
+              dev mode
+              <span className="font-normal text-amber-200/60">
+                {data.devModus
+                  ? "— Weiter immer frei, alle Schritte anklickbar"
+                  : "— Schritte ohne Eingaben durchklicken"}
+              </span>
+            </label>
+
+            {/* Nur am Ende der Strecke: Vorher steht die Angebotsliste noch
+                nicht an, und der Weg dorthin würde den Ablauf nur zerreißen. */}
+            {data.step === TOTAL_STEPS && <DevAngeboteLink />}
+          </div>
         )}
       </div>
     </div>

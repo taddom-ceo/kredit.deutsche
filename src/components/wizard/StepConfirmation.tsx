@@ -6,6 +6,7 @@ import { useLanguage } from "@/lib/language-context";
 import { wizardTranslations } from "@/lib/wizard-i18n";
 import { useWizard } from "@/lib/wizard-context";
 import { formatEuro, monthlyPayment } from "@/lib/loan-calc";
+import DevAngeboteLink from "./DevAngeboteLink";
 
 export default function StepConfirmation() {
   const { lang } = useLanguage();
@@ -79,6 +80,8 @@ export default function StepConfirmation() {
       >
         {wt.confirmation.ctaHome}
       </Link>
+
+      <DevAngeboteLink className="mx-auto" />
     </div>
   );
 }
