@@ -199,15 +199,27 @@ export function WizardProvider({
   children,
   initialAmount,
   initialMonths,
+  initialKreditart,
 }: {
   children: ReactNode;
   initialAmount?: number;
   initialMonths?: number;
+  /**
+   * Verwendungszweck, der von einer Kreditartseite mitgebracht wird. Ist er
+   * gesetzt, ist Schritt 1 bereits beantwortet und der Antrag beginnt beim
+   * zweiten. maxStep zieht mit, sonst spränge die Fortschrittsleiste beim
+   * Zurückgehen auf einen Schritt, der als nie erreicht gälte.
+   */
+  initialKreditart?: string;
 }) {
   const [data, setData] = useState<WizardData>(() => ({
     ...initialData,
     amount: initialAmount ?? initialData.amount,
     months: initialMonths ?? initialData.months,
+    kreditart: initialKreditart ?? initialData.kreditart,
+    purpose: initialKreditart ?? initialData.purpose,
+    step: initialKreditart ? 2 : initialData.step,
+    maxStep: initialKreditart ? 2 : initialData.maxStep,
   }));
 
   function update(patch: Partial<WizardData>) {

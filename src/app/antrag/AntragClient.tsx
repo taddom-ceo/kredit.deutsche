@@ -57,12 +57,18 @@ function AntragShell() {
 export default function AntragClient({
   initialAmount,
   initialMonths,
+  initialKreditart,
 }: {
   initialAmount?: number;
   initialMonths?: number;
+  initialKreditart?: string;
 }) {
   return (
-    <WizardProvider initialAmount={initialAmount} initialMonths={initialMonths}>
+    <WizardProvider
+      initialAmount={initialAmount}
+      initialMonths={initialMonths}
+      initialKreditart={initialKreditart}
+    >
       <AntragShell />
     </WizardProvider>
   );
