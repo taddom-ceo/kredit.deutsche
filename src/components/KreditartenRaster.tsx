@@ -23,16 +23,28 @@ import { useLanguage } from "@/lib/language-context";
  */
 export default function KreditartenRaster({
   className = "",
+  anzahl,
 }: {
   className?: string;
+  /**
+   * Wie viele Kacheln gezeigt werden. Ohne Angabe alle.
+   *
+   * Die Startseite begrenzt hier: Sechzehn Kacheln zu je vier Zeilen sind
+   * dort viereinhalb Bildschirmhöhen und über ein Drittel der ganzen Seite —
+   * der Abschnitt soll aber nur zeigen, dass der eigene Fall dabei ist, und
+   * nicht alles aufzählen. Die Übersicht unter /kredit zeigt weiterhin alle;
+   * dort ist die vollständige Liste der Zweck der Seite.
+   */
+  anzahl?: number;
 }) {
   const { lang } = useLanguage();
+  const gezeigte = anzahl ? KREDITARTEN.slice(0, anzahl) : KREDITARTEN;
 
   return (
     <div
       className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${className}`}
     >
-      {KREDITARTEN.map((art, i) => {
+      {gezeigte.map((art, i) => {
         const inhalt = art[lang];
         return (
           // Der Versatz läuft nur über die ersten Kacheln hoch. Bei sechzehn
