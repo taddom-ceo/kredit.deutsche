@@ -51,9 +51,16 @@ export type KreditartInhalt = {
 export type Kreditart = {
   id: string;
   slug: string;
-  /** Bildzeichen der Kachel. Sprachunabhängig, deshalb hier und nicht im
-      Inhalt. */
-  emoji: string;
+  /**
+   * Farbe des Zeichens auf der Kachel. Sprachunabhängig, deshalb hier und
+   * nicht im Inhalt.
+   *
+   * Sie ist der eigentliche Unterscheider: Sechzehn gleich aussehende Kacheln
+   * zwingen zum Lesen. Zeichen und Farbe zusammen sagen die Art schon, bevor
+   * der Text an der Reihe ist. Die Werte sind so gewählt, dass benachbarte
+   * Kacheln im Dreierraster nie dieselbe Richtung treffen.
+   */
+  farbe: string;
   /** Voreinstellung des Rechners — ein für diesen Zweck üblicher Betrag. */
   betrag: number;
   /** Voreinstellung des Rechners in Monaten. */
@@ -71,7 +78,7 @@ export const KREDITARTEN: Kreditart[] = [
   {
     id: "frei",
     slug: "privatkredit",
-    emoji: "💶",
+    farbe: "#34d399",
     betrag: 20000,
     monate: 72,
     de: {
@@ -178,7 +185,7 @@ export const KREDITARTEN: Kreditart[] = [
   {
     id: "fahrzeug",
     slug: "autokredit",
-    emoji: "🚗",
+    farbe: "#38bdf8",
     betrag: 25000,
     monate: 72,
     de: {
@@ -285,7 +292,7 @@ export const KREDITARTEN: Kreditart[] = [
   {
     id: "umschuldung",
     slug: "umschuldung",
-    emoji: "🔄",
+    farbe: "#a78bfa",
     betrag: 30000,
     monate: 84,
     de: {
@@ -392,7 +399,7 @@ export const KREDITARTEN: Kreditart[] = [
   {
     id: "modernisierung",
     slug: "modernisierungskredit",
-    emoji: "🏠",
+    farbe: "#fbbf24",
     betrag: 50000,
     monate: 120,
     de: {
@@ -501,7 +508,7 @@ export const KREDITARTEN: Kreditart[] = [
   {
     id: "dispo",
     slug: "dispokredit-abloesen",
-    emoji: "💳",
+    farbe: "#fb7185",
     betrag: 8000,
     monate: 48,
     de: {
@@ -608,7 +615,7 @@ export const KREDITARTEN: Kreditart[] = [
   {
     id: "ratenkauf",
     slug: "ratenkauf-abloesen",
-    emoji: "🧾",
+    farbe: "#2dd4bf",
     betrag: 5000,
     monate: 36,
     de: {
@@ -715,7 +722,7 @@ export const KREDITARTEN: Kreditart[] = [
   {
     id: "moebel",
     slug: "moebelkredit",
-    emoji: "🛋️",
+    farbe: "#c084fc",
     betrag: 8000,
     monate: 48,
     de: {
@@ -818,7 +825,7 @@ export const KREDITARTEN: Kreditart[] = [
   {
     id: "kueche",
     slug: "kuechenkredit",
-    emoji: "🍳",
+    farbe: "#fb923c",
     betrag: 15000,
     monate: 60,
     de: {
@@ -921,7 +928,7 @@ export const KREDITARTEN: Kreditart[] = [
   {
     id: "wohnmobil",
     slug: "wohnmobil-finanzierung",
-    emoji: "🚐",
+    farbe: "#4ade80",
     betrag: 45000,
     monate: 96,
     de: {
@@ -1028,7 +1035,7 @@ export const KREDITARTEN: Kreditart[] = [
   {
     id: "motorrad",
     slug: "motorradkredit",
-    emoji: "🏍️",
+    farbe: "#60a5fa",
     betrag: 12000,
     monate: 48,
     de: {
@@ -1131,7 +1138,7 @@ export const KREDITARTEN: Kreditart[] = [
   {
     id: "ebike",
     slug: "e-bike-finanzierung",
-    emoji: "🚲",
+    farbe: "#a3e635",
     betrag: 4000,
     monate: 36,
     de: {
@@ -1234,7 +1241,7 @@ export const KREDITARTEN: Kreditart[] = [
   {
     id: "reise",
     slug: "reisekredit",
-    emoji: "✈️",
+    farbe: "#22d3ee",
     betrag: 5000,
     monate: 24,
     de: {
@@ -1337,7 +1344,7 @@ export const KREDITARTEN: Kreditart[] = [
   {
     id: "hochzeit",
     slug: "hochzeitskredit",
-    emoji: "💍",
+    farbe: "#f472b6",
     betrag: 10000,
     monate: 48,
     de: {
@@ -1440,7 +1447,7 @@ export const KREDITARTEN: Kreditart[] = [
   {
     id: "medizin",
     slug: "zahnbehandlung-finanzieren",
-    emoji: "🦷",
+    farbe: "#7dd3fc",
     betrag: 6000,
     monate: 36,
     de: {
@@ -1547,7 +1554,7 @@ export const KREDITARTEN: Kreditart[] = [
   {
     id: "ausbildung",
     slug: "ausbildungskredit",
-    emoji: "🎓",
+    farbe: "#facc15",
     betrag: 15000,
     monate: 84,
     de: {
@@ -1654,7 +1661,7 @@ export const KREDITARTEN: Kreditart[] = [
   {
     id: "umzug",
     slug: "umzugskredit",
-    emoji: "📦",
+    farbe: "#94a3b8",
     betrag: 5000,
     monate: 36,
     de: {

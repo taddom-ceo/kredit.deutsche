@@ -7,6 +7,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
+import { zweckIcon } from "@/components/illustrations/ZweckIcons";
 import { useLanguage } from "@/lib/language-context";
 import { wizardTranslations } from "@/lib/wizard-i18n";
 import { useWizard } from "@/lib/wizard-context";
@@ -147,10 +148,12 @@ export default function StepArt() {
   function karte(art: Kreditart) {
     const inhalt = art[lang];
     const active = data.kreditart === art.id;
+    const Zeichen = zweckIcon(art.id);
     return (
       <div
         key={art.id}
         data-zweck-karte
+        style={{ "--zweck": art.farbe } as CSSProperties}
         // Weiß ist die Farbe der Auswahl. Beim Überfahren erscheint sie
         // bereits, damit vorab erkennbar ist, was ein Klick auswählt; der Ring
         // bleibt dem tatsächlich gewählten Zweck vorbehalten, sodass beides
@@ -176,11 +179,10 @@ export default function StepArt() {
             pr-11 hält die rechte Spalte frei: Dort steht das ⓘ, der Text soll
             nicht darunter laufen. */}
         <span className="pointer-events-none relative flex gap-3 p-4 pr-11">
-          <span
-            aria-hidden="true"
-            className="grid size-9 shrink-0 place-items-center rounded-[11px] bg-accent/[0.12] text-base leading-none"
-          >
-            {art.emoji}
+          {/* Dasselbe Zeichen und dieselbe Farbe wie auf der Kachel der
+              Startseite — wer von dort kommt, erkennt seinen Zweck wieder. */}
+          <span className="zweck-zeichen grid size-12 shrink-0 place-items-center rounded-[13px]">
+            <Zeichen className="size-7" />
           </span>
           {/* min-w-0 hebt die Standard-Mindestbreite von Flex-Elementen auf,
               sonst schrumpft der Textblock nicht unter seine Inhaltsbreite und

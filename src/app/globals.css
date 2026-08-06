@@ -1205,3 +1205,32 @@ input[type="range"]:active::-moz-range-thumb {
     width: 100%;
   }
 }
+
+/* ── Verwendungszwecke ──────────────────────────────────────────────────
+   Jede Kachel führt ihre Farbe in --zweck. Sie steht als Inline-Angabe am
+   Element, weil sie aus den Daten kommt und Tailwind keine Klassen für Werte
+   erzeugen kann, die es beim Bauen noch nicht kennt.
+
+   color-mix mischt daraus die schwache Fläche und den Rahmen. Die Alternative
+   wäre, je Zweck drei fertige Farbwerte zu hinterlegen — dann müssten sie bei
+   jeder Änderung gemeinsam nachgezogen werden. */
+.zweck-zeichen {
+  color: var(--zweck);
+  background-color: color-mix(in srgb, var(--zweck) 14%, transparent);
+}
+
+.zweck-kachel:hover {
+  border-color: color-mix(in srgb, var(--zweck) 55%, transparent);
+}
+
+/* Ohne Farbmischung im Browser bleibt der Rahmen der gewohnte helle Strich,
+   und das Zeichen steht auf der Flaeche der Karte statt auf getoenter. Beides
+   ist ohne die Tönung lesbar — nur weniger unterscheidbar. */
+@supports not (color: color-mix(in srgb, red 50%, transparent)) {
+  .zweck-zeichen {
+    background-color: var(--surface-2);
+  }
+  .zweck-kachel:hover {
+    border-color: var(--border-strong);
+  }
+}
