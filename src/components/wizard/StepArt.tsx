@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Fragment,
   useCallback,
   useEffect,
   useRef,
@@ -11,31 +10,13 @@ import {
 import { useLanguage } from "@/lib/language-context";
 import { wizardTranslations } from "@/lib/wizard-i18n";
 import { useWizard } from "@/lib/wizard-context";
+import {
+  KREDITARTEN,
+  SICHTBAR_ANZAHL,
+  findeKreditartNachId,
+  type Kreditart,
+} from "@/lib/kreditarten";
 import WizardStepLayout from "./WizardStepLayout";
-
-// Die ersten vier Verwendungszwecke werden hervorgehoben — auf Schritt 1 durch
-// einen Akzentrand, auf Schritt 2 durch eine eigene Gruppe im Auswahlfeld.
-export const HIGHLIGHTED_COUNT = 4;
-
-// So viele Zwecke stehen sofort da. Der Rest liegt hinter "Sonstige", damit
-// die Auswahl auf den ersten Blick überschaubar bleibt.
-const SICHTBAR_COUNT = 5;
-
-// Erlaubt den Zeilenumbruch nach einem Schrägstrich. Ohne diesen Hinweis
-// bricht der Browser innerhalb des Wortes ("Baufin|anzierung"); so entsteht
-// stattdessen "Modernisierung/" und "Baufinanzierung".
-function withBreakAfterSlash(text: string) {
-  return text.split("/").map((part, i, parts) => (
-    <Fragment key={i}>
-      {part}
-      {i < parts.length - 1 && (
-        <>
-          /<wbr />
-        </>
-      )}
-    </Fragment>
-  ));
-}
 
 export default function StepArt() {
   const { lang } = useLanguage();
@@ -56,17 +37,17 @@ export default function StepArt() {
   const [obenMobil, setObenMobil] = useState(0);
   const ausfahrerRef = useRef<HTMLDivElement>(null);
 
-  const sichtbare = wt.step1.options.slice(0, SICHTBAR_COUNT);
-  const weitere = wt.step1.options.slice(SICHTBAR_COUNT);
+  const sichtbare = KREDITARTEN.slice(0, SICHTBAR_ANZAHL);
+  const weitere = KREDITARTEN.slice(SICHTBAR_ANZAHL);
 
   // Wer über die Fortschrittsleiste zurückkommt und einen der hinteren Zwecke
   // gewählt hat, soll ihn auch sehen — sonst wirkte die Auswahl verloren.
   const [mehrOffen, setMehrOffen] = useState(() =>
-    weitere.some((o) => o.id === data.kreditart)
+    weitere.some((a) => a.id === data.kreditart)
   );
   // Beschneiden nur während der Bewegung, siehe Kommentar am Ausklappbereich.
   const [ausklappFertig, setAusklappFertig] = useState(() =>
-    weitere.some((o) => o.id === data.kreditart)
+    weitere.some((a) => a.id === data.kreditart)
   );
 
   const schliessen = useCallback(() => setOffen(null), []);
@@ -117,7 +98,7 @@ export default function StepArt() {
     goNext();
   }
 
-  const gezeigterZweck = wt.step1.options.find((o) => o.id === gezeigt);
+  const gezeigterZweck = gezeigt ? findeKreditartNachId(gezeigt) : undefined;
 
   // Der Ausfahrer liegt als Geschwister hinter dem Hauptfenster. Geschlossen
   // steht er per translate-x-full genau darin verborgen; geöffnet fährt er
@@ -129,7 +110,7 @@ export default function StepArt() {
       ref={ausfahrerRef}
       id="zweck-hinweis"
       role="dialog"
-      aria-label={gezeigterZweck?.title}
+      aria-label={gezeigterZweck?.[lang].name}
       aria-hidden={!offen}
       style={
         {
@@ -144,7 +125,9 @@ export default function StepArt() {
       }`}
     >
       <div className="flex items-start justify-between gap-3">
-        <span className="text-sm font-semibold">{gezeigterZweck?.title}</span>
+        <span className="text-sm font-semibold">
+          {gezeigterZweck?.[lang].name}
+        </span>
         <button
           type="button"
           onClick={schliessen}
@@ -156,16 +139,17 @@ export default function StepArt() {
         </button>
       </div>
       <p className="mt-2 text-xs leading-relaxed text-foreground/85">
-        {gezeigterZweck?.hinweis}
+        {gezeigterZweck?.[lang].hinweis}
       </p>
     </div>
   );
 
-  function karte(option: (typeof wt.step1.options)[number]) {
-    const active = data.kreditart === option.id;
+  function karte(art: Kreditart) {
+    const inhalt = art[lang];
+    const active = data.kreditart === art.id;
     return (
       <div
-        key={option.id}
+        key={art.id}
         data-zweck-karte
         // Weiß ist die Farbe der Auswahl. Beim Überfahren erscheint sie
         // bereits, damit vorab erkennbar ist, was ein Klick auswählt; der Ring
@@ -183,52 +167,64 @@ export default function StepArt() {
             ist als Markup nicht zulässig. */}
         <button
           type="button"
-          onClick={() => select(option.id)}
-          aria-label={`${option.title} – ${option.description}`}
+          onClick={() => select(art.id)}
+          aria-label={`${inhalt.wunsch} – ${inhalt.name}`}
           className="absolute inset-0 rounded-[16px] focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
         />
         {/* Der Inhalt liegt darüber, lässt Klicks aber durch — nur das ⓘ
             nimmt sie wieder an.
-            pr-11 hält die rechte Spalte frei: Dort stehen ⓘ und Pfeil, der
-            Text soll nicht darunter laufen. */}
-        <span className="pointer-events-none relative flex flex-col gap-0.5 p-4 pr-11">
+            pr-11 hält die rechte Spalte frei: Dort steht das ⓘ, der Text soll
+            nicht darunter laufen. */}
+        <span className="pointer-events-none relative flex gap-3 p-4 pr-11">
+          <span
+            aria-hidden="true"
+            className="grid size-9 shrink-0 place-items-center rounded-[11px] bg-accent/[0.12] text-base leading-none"
+          >
+            {art.emoji}
+          </span>
           {/* min-w-0 hebt die Standard-Mindestbreite von Flex-Elementen auf,
               sonst schrumpft der Textblock nicht unter seine Inhaltsbreite und
-              lange Bezeichnungen wie "Modernisierung/Baufinanzierung" ragen
-              über die Karte hinaus. break-words erlaubt den Umbruch innerhalb
-              des Wortes. */}
-          <span className="min-w-0 text-sm font-semibold break-words">
-            {withBreakAfterSlash(option.title)}
-          </span>
-          <span className="min-w-0 text-xs text-muted break-words">
-            {option.description}
+              lange Zeilen ragen über die Karte hinaus. */}
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-sm font-semibold leading-snug break-words">
+              {inhalt.wunsch}
+            </span>
+            <span className="text-xs text-muted break-words">
+              {inhalt.teaser}
+            </span>
+            <span className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-accent">
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 12 12"
+                className="size-2.5 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                focusable="false"
+              >
+                <path d="M2.6 6.2 L4.9 8.5 L9.4 3.7" />
+              </svg>
+              {inhalt.vorteil}
+            </span>
           </span>
         </span>
 
-        {/* Der Pfeil sitzt unten rechts, weil die obere rechte Ecke dem ⓘ
-            gehört. Mittig rechts überschnitten sich beide auf den einzeiligen
-            Kacheln, die nur 79px hoch sind. */}
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute bottom-3.5 right-4 text-accent leading-none"
-        >
-          →
-        </span>
-
-        {option.hinweis && (
+        {inhalt.hinweis && (
           <button
             type="button"
             data-hinweis-knopf
-            onClick={(e) => umschalten(option.id, e.currentTarget)}
-            aria-expanded={offen === option.id}
+            onClick={(e) => umschalten(art.id, e.currentTarget)}
+            aria-expanded={offen === art.id}
             aria-controls="zweck-hinweis"
-            aria-label={`${wt.step1.hinweisOeffnen}: ${option.title}`}
+            aria-label={`${wt.step1.hinweisOeffnen}: ${inhalt.name}`}
             // Sichtbar 1,5rem, damit es die 24px Mindestgröße für Tippziele
             // erreicht. Die Fläche, die tatsächlich annimmt, geht über ::after
             // noch einmal 6px darüber hinaus — man trifft es also auch knapp
             // daneben.
             className={`absolute top-3 right-3 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full border transition-colors duration-200 after:absolute after:-inset-1.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-accent/40 ${
-              offen === option.id
+              offen === art.id
                 ? "border-accent bg-accent text-accent-foreground"
                 : "border-accent/50 text-accent hover:bg-accent/15"
             }`}
@@ -264,12 +260,14 @@ export default function StepArt() {
       showNav={false}
       ausfahrer={ausfahrer}
     >
+      {/* Eine Spalte, nicht zwei. Das Antragsfenster ist nur halb so breit wie
+          die Seite, und nach Bildzeichen und ⓘ blieben je Kachel keine 180px
+          für den Text — "Ich möchte bestehende Kredite zusammenfassen" brach
+          dort mitten im Wort um. Untereinander gelesen ist die Liste ohnehin
+          näher an der Frage, die sie stellt: Welcher Satz bin ich? */}
       <div className="flex flex-col">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {sichtbare.map(karte)}
-          {/* Der Schalter sitzt in der freien Rasterzelle neben dem fünften
-              Zweck — so bleibt das Raster geschlossen, statt eine Lücke zu
-              lassen. */}
           <button
             type="button"
             onClick={() => {
@@ -311,9 +309,16 @@ export default function StepArt() {
         {/* Ausklappbereich. Die äußere Ebene wächst über die Rasterzeile,
             die mittlere schneidet währenddessen ab. Nach dem Ausfahren wird
             das Abschneiden aufgehoben, sonst beschnitte es den Fokusrahmen
-            und das leichte Anheben beim Überfahren. */}
+            und das leichte Anheben beim Überfahren.
+
+            inert im zugeklappten Zustand: Die Kacheln sind zwar abgeschnitten
+            und nicht zu sehen, behalten aber einen Kasten im Layout und wären
+            sonst mit der Tabulatortaste erreichbar — bei elf verborgenen
+            Zwecken sind das fünfzehn Halte auf dem Weg zum nächsten Feld.
+            inert nimmt den Teilbaum aus Fokusfolge und Vorlesehilfe zugleich. */}
         <div
           id="weitere-zwecke"
+          inert={!mehrOffen}
           className={`ausklapp grid ${
             mehrOffen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
           }`}
@@ -325,7 +330,7 @@ export default function StepArt() {
         >
           <div className={ausklappFertig ? "overflow-visible" : "overflow-hidden"}>
             <div
-              className={`grid grid-cols-1 lg:grid-cols-2 gap-3 pt-3 ${
+              className={`grid grid-cols-1 gap-3 pt-3 ${
                 mehrOffen ? "opacity-100" : "opacity-0 -translate-y-2"
               }`}
             >

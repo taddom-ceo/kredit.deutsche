@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { useLanguage } from "@/lib/language-context";
 import { wizardTranslations } from "@/lib/wizard-i18n";
 import { useWizard } from "@/lib/wizard-context";
+import { findeKreditartNachId } from "@/lib/kreditarten";
 import { formatEuro, monthlyPayment } from "@/lib/loan-calc";
 import DevAngeboteLink from "./DevAngeboteLink";
 
@@ -18,9 +19,11 @@ export default function StepConfirmation() {
     [data.amount, data.months]
   );
 
-  const kreditartLabel = wt.step1.options.find(
-    (o) => o.id === data.kreditart
-  )?.title;
+  // In der Zusammenfassung steht der Produktname, nicht der Wunschsatz:
+  // Hier wird nachgelesen, was beantragt wurde, nicht ausgewählt.
+  const kreditartLabel = data.kreditart
+    ? findeKreditartNachId(data.kreditart)?.[lang].name
+    : undefined;
 
   const rows: [string, string][] = [
     [wt.confirmation.summaryKreditart, kreditartLabel ?? "—"],

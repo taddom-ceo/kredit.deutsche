@@ -1,11 +1,3 @@
-export interface WizardOption {
-  id: string;
-  title: string;
-  description: string;
-  // Optionaler Hinweis, der als Kurzinfo an der Karte eingeblendet wird.
-  hinweis?: string;
-}
-
 export interface WizardTranslations {
   progress: {
     stepLabels: string[];
@@ -25,7 +17,6 @@ export interface WizardTranslations {
     title: string;
     highlight: string;
     subtitle: string;
-    options: WizardOption[];
     haeufigLabel: string;
     weitereLabel: string;
     hinweisOeffnen: string;
@@ -44,7 +35,6 @@ export interface WizardTranslations {
     previewNote: string;
     purposeLabel: string;
     purposePlaceholder: string;
-    purposeOptions: { value: string; label: string }[];
     amountLabel: string;
     editAmount: string;
     editPayment: string;
@@ -233,77 +223,10 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
     },
     step1: {
       eyebrow: "1/8 · Kreditart",
-      title: "Welche Art Kredit",
-      highlight: "suchen Sie?",
+      title: "Was möchten Sie",
+      highlight: "finanzieren?",
       subtitle:
-        "Wählen Sie das Produkt, das Ihrem Bedarf am nächsten kommt, damit wir das passende Angebot finden.",
-      options: [
-        {
-          id: "frei",
-          title: "Freie Verwendung",
-          description: "Ohne festgelegten Zweck",
-          hinweis:
-            "Sie müssen nicht angeben, wofür das Geld gedacht ist, und keine Belege nachreichen. Das ist der flexibelste Weg — und meist auch der schnellste bis zur Auszahlung.",
-        },
-        {
-          id: "fahrzeug",
-          title: "Fahrzeugkauf",
-          description: "Neu- oder Gebrauchtwagen",
-          hinweis:
-            "Viele Banken verlangen weder einen Verwendungsnachweis noch die Hinterlegung des Kfz-Briefs. Über diesen Verwendungszweck sind aktuell die besten Zinsen möglich.",
-        },
-        {
-          id: "umschuldung",
-          title: "Umschuldung/Kredit ablösen",
-          description: "Bestehende Kredite zusammenfassen",
-          hinweis:
-            "Eine Umschuldung fasst laufende Kredite zusammen: Das senkt die monatliche Ratenbelastung und verbessert in der Regel die Bonität.",
-        },
-        {
-          id: "modernisierung",
-          title: "Modernisierung/Baufinanzierung",
-          description: "Umbau, Sanierung oder Hauskauf",
-          hinweis:
-            "Für Umbau und Sanierung ist meist kein Grundbucheintrag nötig — das spart Notarkosten und Wochen an Bearbeitungszeit. Viele Banken vergeben hier längere Laufzeiten und damit niedrigere Monatsraten.",
-        },
-        {
-          id: "dispo",
-          title: "Dispo/Kreditkarten Ausgleich",
-          description: "Teure Kontoüberziehung ausgleichen",
-          hinweis:
-            "Dispozinsen liegen häufig im zweistelligen Bereich, ein Ratenkredit deutlich darunter. Wer den Dispo ablöst, senkt die monatliche Belastung spürbar und hat wieder einen festen Tilgungsplan.",
-        },
-        {
-          id: "ratenkauf",
-          title: "Tilgung Ratenkauf",
-          description: "Laufende Ratenkäufe ablösen",
-        },
-        {
-          id: "ebike",
-          title: "E-Bike",
-          description: "Pedelec oder E-Bike",
-        },
-        {
-          id: "kueche",
-          title: "Küche",
-          description: "Einbauküche oder Geräte",
-        },
-        {
-          id: "moebel",
-          title: "Möbel",
-          description: "Einrichtung und Möbel",
-        },
-        {
-          id: "umzug",
-          title: "Umzug",
-          description: "Umzug und Nebenkosten",
-        },
-        {
-          id: "reise",
-          title: "Reise",
-          description: "Urlaub oder größere Reise",
-        },
-      ],
+        "Wählen Sie den passenden Finanzierungszweck. So finden wir die besten Kreditangebote für Ihre Situation.",
       haeufigLabel: "Häufig gewählt",
       weitereLabel: "Weitere Zwecke",
       hinweisOeffnen: "Hinweis anzeigen",
@@ -331,19 +254,6 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       previewNote: "Richtwert · genauer Zins nach Prüfung",
       purposeLabel: "VERWENDUNGSZWECK",
       purposePlaceholder: "Bitte wählen",
-      purposeOptions: [
-        { value: "frei", label: "Freie Verwendung" },
-        { value: "fahrzeug", label: "Fahrzeugkauf" },
-        { value: "umschuldung", label: "Umschuldung/Kredit ablösen" },
-        { value: "modernisierung", label: "Modernisierung/Baufinanzierung" },
-        { value: "dispo", label: "Dispo/Kreditkarten Ausgleich" },
-        { value: "ratenkauf", label: "Tilgung Ratenkauf" },
-        { value: "ebike", label: "E-Bike" },
-        { value: "kueche", label: "Küche" },
-        { value: "moebel", label: "Möbel" },
-        { value: "umzug", label: "Umzug" },
-        { value: "reise", label: "Reise" },
-      ],
       amountLabel: "KREDITBETRAG",
       editAmount: "Kreditbetrag eingeben",
       editPayment: "Monatliche Rate eingeben",
@@ -591,77 +501,10 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
     },
     step1: {
       eyebrow: "1/8 · Loan type",
-      title: "What kind of loan",
-      highlight: "are you looking for?",
+      title: "What would you like",
+      highlight: "to finance?",
       subtitle:
-        "Choose the product that fits your needs so we can find the right offer.",
-      options: [
-        {
-          id: "frei",
-          title: "General purpose",
-          description: "No specific purpose",
-          hinweis:
-            "You do not have to state what the money is for, and no receipts are required. This is the most flexible option — and usually the quickest to pay out.",
-        },
-        {
-          id: "fahrzeug",
-          title: "Vehicle purchase",
-          description: "New or used car",
-          hinweis:
-            "Many banks require neither proof of use nor the vehicle registration document as security. This purpose currently offers the best rates.",
-        },
-        {
-          id: "umschuldung",
-          title: "Debt consolidation/loan repayment",
-          description: "Combine existing loans",
-          hinweis:
-            "Consolidating existing loans lowers your monthly instalment burden and usually improves your credit rating.",
-        },
-        {
-          id: "modernisierung",
-          title: "Modernisation/mortgage",
-          description: "Renovation, refurbishment or home purchase",
-          hinweis:
-            "Renovation and refurbishment rarely require a land register entry — that saves notary fees and weeks of processing. Many banks also offer longer terms here, and therefore lower monthly instalments.",
-        },
-        {
-          id: "dispo",
-          title: "Overdraft/credit card settlement",
-          description: "Settle an expensive overdraft",
-          hinweis:
-            "Overdraft rates are often in double digits, an instalment loan well below that. Clearing the overdraft noticeably lowers the monthly burden and restores a fixed repayment plan.",
-        },
-        {
-          id: "ratenkauf",
-          title: "Instalment purchase repayment",
-          description: "Pay off running instalment plans",
-        },
-        {
-          id: "ebike",
-          title: "E-bike",
-          description: "Pedelec or e-bike",
-        },
-        {
-          id: "kueche",
-          title: "Kitchen",
-          description: "Fitted kitchen or appliances",
-        },
-        {
-          id: "moebel",
-          title: "Furniture",
-          description: "Furnishings and furniture",
-        },
-        {
-          id: "umzug",
-          title: "Moving",
-          description: "Relocation and related costs",
-        },
-        {
-          id: "reise",
-          title: "Travel",
-          description: "Holiday or longer trip",
-        },
-      ],
+        "Choose the purpose that fits. That is how we find the best loan offers for your situation.",
       haeufigLabel: "Frequently chosen",
       weitereLabel: "Other purposes",
       hinweisOeffnen: "Show details",
@@ -689,19 +532,6 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       previewNote: "Guide value · exact rate after review",
       purposeLabel: "PURPOSE",
       purposePlaceholder: "Please choose",
-      purposeOptions: [
-        { value: "frei", label: "General purpose" },
-        { value: "fahrzeug", label: "Vehicle purchase" },
-        { value: "umschuldung", label: "Debt consolidation/loan repayment" },
-        { value: "modernisierung", label: "Modernisation/mortgage" },
-        { value: "dispo", label: "Overdraft/credit card settlement" },
-        { value: "ratenkauf", label: "Instalment purchase repayment" },
-        { value: "ebike", label: "E-bike" },
-        { value: "kueche", label: "Kitchen" },
-        { value: "moebel", label: "Furniture" },
-        { value: "umzug", label: "Moving" },
-        { value: "reise", label: "Travel" },
-      ],
       amountLabel: "LOAN AMOUNT",
       editAmount: "Enter loan amount",
       editPayment: "Enter monthly rate",

@@ -17,7 +17,7 @@ import {
 } from "@/lib/loan-calc";
 import EditableValue from "@/components/EditableValue";
 import WizardStepLayout from "./WizardStepLayout";
-import { HIGHLIGHTED_COUNT } from "./StepArt";
+import { KREDITARTEN, HAEUFIG_ANZAHL } from "@/lib/kreditarten";
 
 export default function StepDetails() {
   const { lang } = useLanguage();
@@ -59,24 +59,23 @@ export default function StepDetails() {
           <option value="">{wt.step2.purposePlaceholder}</option>
           {/* Dieselben vier wie auf Schritt 1 hervorgehoben. Ein natives
               Auswahlfeld lässt einzelne Einträge nicht zuverlässig gestalten —
-              eine Gruppe mit Überschrift ist der Weg, den es dafür vorsieht. */}
+              eine Gruppe mit Überschrift ist der Weg, den es dafür vorsieht.
+              Hier steht der Produktname und nicht der Wunschsatz: In einer
+              Auswahlliste wird überflogen, und "Autokredit" ist dabei schneller
+              erfasst als "Ich möchte ein Auto kaufen". */}
           <optgroup label={wt.step1.haeufigLabel}>
-            {wt.step2.purposeOptions
-              .slice(0, HIGHLIGHTED_COUNT)
-              .map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
+            {KREDITARTEN.slice(0, HAEUFIG_ANZAHL).map((art) => (
+              <option key={art.id} value={art.id}>
+                {art[lang].name}
+              </option>
+            ))}
           </optgroup>
           <optgroup label={wt.step1.weitereLabel}>
-            {wt.step2.purposeOptions
-              .slice(HIGHLIGHTED_COUNT)
-              .map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
+            {KREDITARTEN.slice(HAEUFIG_ANZAHL).map((art) => (
+              <option key={art.id} value={art.id}>
+                {art[lang].name}
+              </option>
+            ))}
           </optgroup>
         </select>
       </div>
