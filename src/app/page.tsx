@@ -7,7 +7,15 @@ import KreditartenRaster from "@/components/KreditartenRaster";
 import Reveal from "@/components/Reveal";
 import VisibilityGate from "@/components/VisibilityGate";
 import PartnerLaufband from "@/components/PartnerLaufband";
-import { KREDITART_TEXTE } from "@/lib/kreditarten";
+import { KREDITARTEN, KREDITART_TEXTE } from "@/lib/kreditarten";
+
+/**
+ * So viele Verwendungszwecke stehen auf der Startseite. Sechs füllen das
+ * Raster in jeder Breite ohne Rest — drei Spalten ergeben zwei Zeilen, zwei
+ * Spalten drei — und der Abschnitt bleibt auf dem Handy unter zwei
+ * Bildschirmhöhen. Der Verweis darunter führt zu den übrigen.
+ */
+const STARTSEITE_KACHELN = 6;
 import {
   CompareIllustration,
   HeroIllustration,
@@ -229,7 +237,26 @@ export default function Home() {
               <p className="text-muted leading-relaxed">{x.uebersichtText}</p>
             </Reveal>
 
-            <KreditartenRaster />
+            {/* Nur die häufigsten. Vollständig aufgezählt wäre der Block auf
+                dem Handy viereinhalb Bildschirme lang — hier soll erkennbar
+                sein, dass der eigene Fall dabei ist, den Rest trägt die
+                Übersicht. */}
+            <KreditartenRaster anzahl={STARTSEITE_KACHELN} />
+
+            <Reveal>
+              <Link
+                href="/kredit"
+                className="group inline-flex w-fit items-center gap-2 rounded-[16px] border border-border px-5 py-3.5 text-sm font-semibold text-muted transition-all duration-200 hover:border-border-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                {x.alleAnsehen.replace("{n}", String(KREDITARTEN.length))}
+                <span
+                  aria-hidden="true"
+                  className="text-accent transition-transform duration-200 group-hover:translate-x-0.5"
+                >
+                  →
+                </span>
+              </Link>
+            </Reveal>
           </div>
         </section>
 

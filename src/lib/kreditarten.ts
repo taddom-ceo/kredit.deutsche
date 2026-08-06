@@ -1839,6 +1839,8 @@ export type KreditartTexte = {
   uebersichtTitel: string;
   uebersichtHighlight: string;
   uebersichtText: string;
+  /** Verweis von der Startseite auf die vollständige Übersicht. */
+  alleAnsehen: string;
 };
 
 export const KREDITART_TEXTE: Record<Language, KreditartTexte> = {
@@ -1869,6 +1871,8 @@ export const KREDITART_TEXTE: Record<Language, KreditartTexte> = {
     uebersichtHighlight: "finanzieren?",
     uebersichtText:
       "Wählen Sie den passenden Finanzierungszweck. So finden wir die besten Kreditangebote für Ihre Situation.",
+    // {n} wird durch die Zahl der Zwecke ersetzt.
+    alleAnsehen: "Alle {n} Verwendungszwecke ansehen",
   },
   en: {
     brotkrumeStart: "Home",
@@ -1896,5 +1900,6 @@ export const KREDITART_TEXTE: Record<Language, KreditartTexte> = {
     uebersichtHighlight: "to finance?",
     uebersichtText:
       "Choose the purpose that fits. That is how we find the best loan offers for your situation.",
+    alleAnsehen: "See all {n} loan purposes",
   },
 };
