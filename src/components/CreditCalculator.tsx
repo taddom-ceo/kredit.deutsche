@@ -17,10 +17,27 @@ import {
 } from "@/lib/loan-calc";
 import EditableValue from "@/components/EditableValue";
 
-export default function CreditCalculator() {
+/**
+ * Der Rechner der Startseite, wiederverwendet auf den Seiten der einzelnen
+ * Kreditarten.
+ *
+ * Die drei Angaben sind bewusst optional und mit den bisherigen Werten
+ * vorbelegt: Ohne sie verhält sich der Rechner genau wie zuvor. Die
+ * Kreditartseiten setzen einen für ihren Zweck üblichen Betrag und geben den
+ * Zweck an den Antrag weiter, damit der dortige erste Schritt entfällt.
+ */
+export default function CreditCalculator({
+  zweck,
+  startBetrag = 20000,
+  startMonate = 72,
+}: {
+  zweck?: string;
+  startBetrag?: number;
+  startMonate?: number;
+} = {}) {
   const { t } = useLanguage();
-  const [amount, setAmount] = useState(20000);
-  const [months, setMonths] = useState(72);
+  const [amount, setAmount] = useState(startBetrag);
+  const [months, setMonths] = useState(startMonate);
 
   const payment = useMemo(
     () => monthlyPayment(amount, months),
@@ -108,7 +125,9 @@ export default function CreditCalculator() {
         </div>
 
         <Link
-          href={`/antrag?amount=${amount}&months=${months}`}
+          href={`/antrag?amount=${amount}&months=${months}${
+            zweck ? `&zweck=${zweck}` : ""
+          }`}
           className="w-full text-center rounded-[16px] bg-accent text-accent-foreground font-semibold px-4 py-3.5 text-sm shadow-[0_8px_24px_-6px_rgba(52,211,153,0.45)] transition-all duration-200 hover:bg-accent-strong hover:shadow-[0_10px_30px_-6px_rgba(52,211,153,0.55)] hover:-translate-y-px active:translate-y-0 active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
         >
           {t.calculator.cta}

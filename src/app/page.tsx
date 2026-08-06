@@ -3,9 +3,11 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
+import KreditartenRaster from "@/components/KreditartenRaster";
 import Reveal from "@/components/Reveal";
 import VisibilityGate from "@/components/VisibilityGate";
 import PartnerLaufband from "@/components/PartnerLaufband";
+import { KREDITART_TEXTE } from "@/lib/kreditarten";
 import {
   CompareIllustration,
   HeroIllustration,
@@ -28,8 +30,9 @@ const SCHRITT_BILDER = [
 const KENNZAHL_SYMBOLE = [IconBanks, IconPercent, IconClock, IconWallet];
 
 export default function Home() {
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
   const l = t.landing;
+  const x = KREDITART_TEXTE[lang];
 
   return (
     <>
@@ -205,6 +208,28 @@ export default function Home() {
                 </Reveal>
               );
             })}
+          </div>
+        </section>
+
+        {/* Kreditarten. Der Zweck ist die erste Frage, die der Antrag stellt —
+            hier steht sie schon auf der Startseite, und jede Kachel führt auf
+            eine eigene Seite mit Rechner und Erklärung.
+            Bewusst weit oben: Wer mit einem konkreten Vorhaben kommt, soll es
+            wiederfinden, bevor er sich durch den allgemeinen Teil liest. */}
+        <section id="kreditarten" className="scroll-mt-8">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-20 flex flex-col gap-10">
+            <Reveal className="flex flex-col gap-3 max-w-2xl">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
+                {x.uebersichtEyebrow}
+              </span>
+              <h2 className="text-3xl lg:text-4xl font-bold tracking-[-0.02em]">
+                {x.uebersichtTitel}{" "}
+                <span className="text-accent">{x.uebersichtHighlight}</span>
+              </h2>
+              <p className="text-muted leading-relaxed">{x.uebersichtText}</p>
+            </Reveal>
+
+            <KreditartenRaster />
           </div>
         </section>
 

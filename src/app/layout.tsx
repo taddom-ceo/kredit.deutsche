@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { LanguageProvider } from "@/lib/language-context";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,8 +15,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "kredit.deutsche",
-  description: "Dein Kredit. Fair. Transparent. Digital.",
+  // Ohne Basisadresse dürfen einzelne Seiten keine relativen Pfade als
+  // kanonische Adresse angeben — Next bricht den Bau dann ab.
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "cresolu.de — Kredite vergleichen, Schufa-neutral",
+    // Unterseiten setzen ihren vollständigen Titel selbst; die Vorlage greift
+    // nur, wo keiner gesetzt ist.
+    template: "%s",
+  },
+  description:
+    "Ein Antrag, über 20 Banken im Vergleich: Rate berechnen und Schufa-neutral sehen, welches Angebot am wenigsten kostet. Kostenlos und unverbindlich.",
+  alternates: { canonical: "/" },
 };
 
 export default function RootLayout({
