@@ -21,10 +21,15 @@ export function FormField({
       <label htmlFor={inputProps.id} className="text-sm font-medium text-muted">
         {label}
       </label>
+      {/* Ein gesperrtes Feld muss als gesperrt zu erkennen sein: Ohne eigene
+          Gestaltung sähe es aus wie ein Feld, in das man tippen kann, und der
+          ausbleibende Text wirkte wie ein Fehler. Der Zeiger und die
+          zurückgenommene Deckkraft sagen stattdessen "noch nicht dran" — der
+          Rahmen bleibt beim Überfahren unverändert. */}
       <input
         ref={inputRef}
         {...inputProps}
-        className={`w-full rounded-[16px] border bg-surface-2 px-4 py-2.5 text-sm text-foreground transition-colors duration-200 hover:border-border-strong focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
+        className={`w-full rounded-[16px] border bg-surface-2 px-4 py-2.5 text-sm text-foreground transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface enabled:hover:border-border-strong disabled:cursor-not-allowed disabled:opacity-55 ${
           error ? "border-red-400/60" : "border-border"
         }`}
       />

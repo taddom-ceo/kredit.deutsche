@@ -179,38 +179,10 @@ export default function StepAdresse() {
       onNext={goNext}
       nextDisabled={!valid}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4">
-        <FormField
-          id="strasse"
-          label={wt.step5.strasse}
-          value={data.strasse}
-          onChange={(e) => update({ strasse: e.target.value })}
-          list="strassen"
-          autoComplete="address-line1"
-          error={strasseError}
-        />
-        <FormField
-          id="hausnummer"
-          label={wt.step5.hausnummer}
-          value={data.hausnummer}
-          onChange={(e) => update({ hausnummer: e.target.value })}
-          className="lg:w-28"
-          error={
-            hausnummerTouched && !hausnummerOk
-              ? wt.step5.hausnummerInvalid
-              : undefined
-          }
-        />
-      </div>
-
-      {streets.status === "ok" && (
-        <datalist id="strassen">
-          {streets.streets.map((street) => (
-            <option key={street} value={street} />
-          ))}
-        </datalist>
-      )}
-
+      {/* Postleitzahl und Ort stehen oben, die Straße darunter — in genau der
+          Reihenfolge, in der die Angaben auseinander hervorgehen: Erst die
+          Postleitzahl bestimmt, welcher Ort infrage kommt und welches
+          Straßenverzeichnis geladen wird. */}
       <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-4">
         <FormField
           id="plz"
@@ -247,6 +219,47 @@ export default function StepAdresse() {
           )}
         </FormSelect>
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4">
+        {/* Solange die Postleitzahl nicht bestätigt ist, nimmt das Feld nichts
+            an. Das ist keine reine Formsache: Die Vorschlagsliste und die
+            Prüfung gegen das Verzeichnis hängen an der Postleitzahl, und eine
+            vorher getippte Straße würde gegen ein Verzeichnis geprüft, das
+            noch gar nicht geladen ist.
+            Der Platzhalter sagt, worauf gewartet wird — dieselbe Zeile, die
+            auch im Ortsfeld steht, solange es nichts auszuwählen gibt. */}
+        <FormField
+          id="strasse"
+          label={wt.step5.strasse}
+          value={data.strasse}
+          onChange={(e) => update({ strasse: e.target.value })}
+          list="strassen"
+          autoComplete="address-line1"
+          disabled={!plzOk}
+          placeholder={plzOk ? undefined : wt.step5.ortAwaitingPlz}
+          error={strasseError}
+        />
+        <FormField
+          id="hausnummer"
+          label={wt.step5.hausnummer}
+          value={data.hausnummer}
+          onChange={(e) => update({ hausnummer: e.target.value })}
+          className="lg:w-28"
+          error={
+            hausnummerTouched && !hausnummerOk
+              ? wt.step5.hausnummerInvalid
+              : undefined
+          }
+        />
+      </div>
+
+      {streets.status === "ok" && (
+        <datalist id="strassen">
+          {streets.streets.map((street) => (
+            <option key={street} value={street} />
+          ))}
+        </datalist>
+      )}
 
       <p
         className={`text-xs leading-relaxed ${
