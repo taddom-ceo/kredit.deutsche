@@ -221,13 +221,14 @@ export default function StepAdresse() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4">
-        {/* Solange die Postleitzahl nicht bestätigt ist, nimmt das Feld nichts
-            an. Das ist keine reine Formsache: Die Vorschlagsliste und die
-            Prüfung gegen das Verzeichnis hängen an der Postleitzahl, und eine
-            vorher getippte Straße würde gegen ein Verzeichnis geprüft, das
-            noch gar nicht geladen ist.
-            Der Platzhalter sagt, worauf gewartet wird — dieselbe Zeile, die
-            auch im Ortsfeld steht, solange es nichts auszuwählen gibt. */}
+        {/* Solange die Postleitzahl nicht bestätigt ist, nimmt keines der
+            beiden Felder etwas an. Das ist keine reine Formsache: Die
+            Vorschlagsliste und die Prüfung gegen das Verzeichnis hängen an der
+            Postleitzahl, und eine vorher getippte Straße würde gegen ein
+            Verzeichnis geprüft, das noch gar nicht geladen ist.
+            Den Platzhalter trägt nur die Straße — im schmalen Feld der
+            Hausnummer bliebe der Satz ohnehin abgeschnitten, und einmal
+            ausgesprochen genügt er für die ganze Zeile. */}
         <FormField
           id="strasse"
           label={wt.step5.strasse}
@@ -244,6 +245,7 @@ export default function StepAdresse() {
           label={wt.step5.hausnummer}
           value={data.hausnummer}
           onChange={(e) => update({ hausnummer: e.target.value })}
+          disabled={!plzOk}
           className="lg:w-28"
           error={
             hausnummerTouched && !hausnummerOk
