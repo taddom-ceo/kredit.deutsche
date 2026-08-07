@@ -163,6 +163,8 @@ export interface WizardTranslations {
     schaetzung: string;
     uebernehmen: string;
     schaetzungFehlt: string;
+    /** Alle Angaben da, aber sie beschreiben zusammen keinen tilgbaren Kredit. */
+    schaetzungPasstNicht: string;
     zinsWarnung: string;
     abbezahlt: string;
     bank: string;
@@ -440,6 +442,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       uebernehmen: "übernehmen",
       schaetzungFehlt:
         "Für eine Schätzung fehlen noch Betrag, Rate, Auszahlungsdatum und Laufzeit oder Zinssatz.",
+      schaetzungPasstNicht:
+        "Betrag, Rate und Laufzeit passen nicht zusammen — mit dieser Rate ist der Kredit so nicht zu tilgen. Bitte die drei Zahlen prüfen.",
       zinsWarnung:
         "Aus Ihren Angaben ergibt sich rechnerisch ein Zinssatz von mehr als {grenze} % p. a. — bitte prüfen. Gerechnet wird mit {grenze} %.",
       abbezahlt: "Nach diesen Angaben ist der Kredit bereits zurückgeführt.",
@@ -718,6 +722,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       uebernehmen: "use this",
       schaetzungFehlt:
         "An estimate still needs the amount, payment, payout date and either the term or the rate.",
+      schaetzungPasstNicht:
+        "Amount, payment and term don't add up — this payment cannot repay the loan. Please check the three figures.",
       zinsWarnung:
         "Your figures imply an interest rate above {grenze} % p.a. — please check. The estimate uses {grenze} %.",
       abbezahlt: "According to these figures the loan is already repaid.",

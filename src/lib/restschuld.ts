@@ -38,6 +38,22 @@ export type RestschuldEingabe = {
   stichtag?: Date;
 };
 
+/**
+ * Warum keine Schätzung herauskommt.
+ *
+ * Die Unterscheidung ist nicht kosmetisch: Beide Fälle liefen vorher als
+ * `null` zusammen, und die Oberfläche sagte darum auch dann "es fehlen noch
+ * Angaben", wenn alle vier Felder ausgefüllt waren. Wer 30.000 € aufgenommen
+ * hat und 100 € im Monat zahlt, sucht dann den Fehler bei den Feldern statt
+ * bei seinen Zahlen.
+ *
+ * - `unvollstaendig`: Eine der nötigen Angaben fehlt.
+ * - `passtNichtZusammen`: Alles da, aber die Zahlen beschreiben keinen Kredit,
+ *   der sich tilgen lässt — 100 € über 60 Monate sind 6.000 € und tilgen
+ *   30.000 € bei keinem Zinssatz.
+ */
+export type RestschuldAusfall = "unvollstaendig" | "passtNichtZusammen";
+
 export type RestschuldErgebnis = {
   /** Geschätzte Restschuld in Euro, nie unter null. */
   wert: number;
@@ -52,6 +68,11 @@ export type RestschuldErgebnis = {
   /** Rechnerisch bereits vollständig zurückgeführt. */
   abbezahlt: boolean;
 };
+
+/** Entweder eine Schätzung — oder der Grund, warum es keine gibt. */
+export type RestschuldAntwort =
+  | ({ ok: true } & RestschuldErgebnis)
+  | { ok: false; grund: RestschuldAusfall };
 
 /** Volle Monate zwischen einem Auszahlungsmonat (JJJJ-MM) und dem Stichtag. */
 function monateSeit(auszahlung: string, stichtag: Date): number | null {
@@ -104,12 +125,18 @@ export function berechneRestschuld({
   zins,
   laufzeit,
   stichtag = new Date(),
-}: RestschuldEingabe): RestschuldErgebnis | null {
-  if (!Number.isFinite(summe) || summe <= 0) return null;
-  if (!Number.isFinite(rate) || rate <= 0) return null;
+}: RestschuldEingabe): RestschuldAntwort {
+  const unvollstaendig = { ok: false, grund: "unvollstaendig" } as const;
+  const passtNichtZusammen = {
+    ok: false,
+    grund: "passtNichtZusammen",
+  } as const;
+
+  if (!Number.isFinite(summe) || summe <= 0) return unvollstaendig;
+  if (!Number.isFinite(rate) || rate <= 0) return unvollstaendig;
 
   const vergangen = monateSeit(auszahlung, stichtag);
-  if (vergangen === null) return null;
+  if (vergangen === null) return unvollstaendig;
 
   const hatLaufzeit =
     laufzeit != null && Number.isFinite(laufzeit) && laufzeit > 0;
@@ -129,28 +156,39 @@ export function berechneRestschuld({
     i = Math.pow(1 + zins / 100, 1 / 12) - 1;
   } else if (hatLaufzeit) {
     const abgeleitet = leiteMonatszinsAb(summe, rate, laufzeit as number);
-    if (abgeleitet !== null) {
-      hergeleitet = true;
-      const jahr = (Math.pow(1 + abgeleitet, 12) - 1) * 100;
-      if (jahr > ZINS_OBERGRENZE) {
-        gekappt = true;
-        i = Math.pow(1 + ZINS_OBERGRENZE / 100, 1 / 12) - 1;
-      } else {
-        i = abgeleitet;
-      }
+    // Kein Zins zu finden heisst nicht "Angabe fehlt", sondern "die drei
+    // Zahlen ergeben keinen Kredit": Entweder decken die Raten zusammen den
+    // Betrag nicht, oder sie liegen so hoch, dass keine Laufzeit dazu passt.
+    if (abgeleitet === null) return passtNichtZusammen;
+
+    hergeleitet = true;
+    const jahr = (Math.pow(1 + abgeleitet, 12) - 1) * 100;
+    if (jahr > ZINS_OBERGRENZE) {
+      gekappt = true;
+      i = Math.pow(1 + ZINS_OBERGRENZE / 100, 1 / 12) - 1;
+    } else {
+      i = abgeleitet;
     }
   }
 
   // Ohne jeden Anhaltspunkt für den Zins lässt sich keine Restschuld schätzen,
   // die diesen Namen verdient. Die frühere lineare Näherung fiel um über einen
   // Tausender zu niedrig aus und wäre als Zahl im Feld irreführend gewesen.
-  if (i === null) return null;
+  if (i === null) return unvollstaendig;
+
+  // Deckt die Rate nicht einmal die Zinsen des ersten Monats, tilgt der Kredit
+  // nie: Die "Restschuld" waechst dann mit jedem Monat ueber den aufgenommenen
+  // Betrag hinaus. Bei 30.000 € zu 5,49 % sind das rund 134 € Zinsen im Monat —
+  // eine Rate von 100 € ergab bisher 34.263 € Restschuld und sah aus wie ein
+  // Rechenfehler der Seite, war aber ein Vertipper in den Angaben.
+  if (monate > 0 && rate <= summe * i) return passtNichtZusammen;
 
   // Ein Auszahlungsdatum in der Zukunft ergibt keine Tilgung.
   const q = Math.pow(1 + i, monate);
   const wert = monate <= 0 ? summe : summe * q - (rate * (q - 1)) / i;
 
   return {
+    ok: true,
     wert: wert <= 0 ? 0 : wert,
     monate: Math.max(monate, 0),
     zinsProzent: (Math.pow(1 + i, 12) - 1) * 100,

@@ -254,7 +254,7 @@ export function KreditBlock({
         {/* Die Schätzung wird angeboten, nicht eingesetzt. Der Kunde übernimmt
             sie mit einem Klick oder trägt seinen eigenen Wert ein — sie ist
             eine Hilfe, kein Ersatz für den Kontoauszug. */}
-        {schaetzung ? (
+        {schaetzung.ok ? (
           <p className="text-xs text-muted">
             {t.schaetzung.replace(
               "{zins}",
@@ -277,14 +277,21 @@ export function KreditBlock({
             </button>
           </p>
         ) : (
-          <p className="text-xs text-muted">{t.schaetzungFehlt}</p>
+          // Zwei verschiedene Gruende, zwei verschiedene Saetze: Sonst steht
+          // "es fehlen noch Angaben" auch dann da, wenn alles ausgefuellt ist
+          // und nur die Zahlen nicht zusammenpassen.
+          <p className="text-xs text-muted">
+            {schaetzung.grund === "passtNichtZusammen"
+              ? t.schaetzungPasstNicht
+              : t.schaetzungFehlt}
+          </p>
         )}
 
-        {schaetzung?.abbezahlt && (
+        {schaetzung.ok && schaetzung.abbezahlt && (
           <p className="text-xs text-muted">{t.abbezahlt}</p>
         )}
 
-        {schaetzung?.gekappt && (
+        {schaetzung.ok && schaetzung.gekappt && (
           <div className="flex items-start gap-2.5 rounded-[14px] border border-amber-400/40 bg-amber-400/[0.07] px-4 py-3 text-xs leading-relaxed text-amber-200/90">
             <span aria-hidden="true" className="mt-px shrink-0 text-amber-300">
               ⚠
