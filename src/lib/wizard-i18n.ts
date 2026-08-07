@@ -117,6 +117,8 @@ export interface WizardTranslations {
     beschaeftigungsartPlaceholder: string;
     beschaeftigungsartOptions: string[];
     arbeitgeber: string;
+    /** Traeger, der bei "Rentner/-in" als Arbeitgeber vorgeschlagen wird. */
+    rentnerArbeitgeber: string;
     beschaeftigtSeit: string;
     monat: string;
     jahr: string;
@@ -203,6 +205,17 @@ export interface WizardTranslations {
     ctaHome: string;
   };
 }
+
+/**
+ * Stelle von "Rentner/-in" in `beschaeftigungsartOptions`.
+ *
+ * Die Auswahl speichert die Beschriftung selbst als Wert, es gibt also keine
+ * sprachunabhaengige Kennung, an der sich der Eintrag erkennen liesse. Ueber
+ * die Position geht es: Beide Sprachen fuehren dieselben Arten in derselben
+ * Reihenfolge. Wer die Listen umsortiert, muss diese Zahl mitziehen — deshalb
+ * steht sie hier neben ihnen und nicht in der Oberflaeche.
+ */
+export const BESCHAEFTIGUNG_RENTNER = 3;
 
 export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
   de: {
@@ -379,6 +392,7 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
         "Sonstiges",
       ],
       arbeitgeber: "Arbeitgeber",
+      rentnerArbeitgeber: "Deutsche Rentenversicherung",
       beschaeftigtSeit: "Beschäftigt seit",
       monat: "Monat",
       jahr: "Jahr",
@@ -660,6 +674,7 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
         "Other",
       ],
       arbeitgeber: "Employer",
+      rentnerArbeitgeber: "Deutsche Rentenversicherung",
       beschaeftigtSeit: "Employed since",
       monat: "Month",
       jahr: "Year",

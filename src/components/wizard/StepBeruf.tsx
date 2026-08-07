@@ -2,7 +2,10 @@
 
 import { useMemo } from "react";
 import { useLanguage } from "@/lib/language-context";
-import { wizardTranslations } from "@/lib/wizard-i18n";
+import {
+  BESCHAEFTIGUNG_RENTNER,
+  wizardTranslations,
+} from "@/lib/wizard-i18n";
 import { useWizard } from "@/lib/wizard-context";
 import WizardStepLayout from "./WizardStepLayout";
 import { FormField, FormSelect } from "./FormField";
@@ -58,6 +61,36 @@ export default function StepBeruf() {
     });
   }
 
+  const rentner = wt.step6.beschaeftigungsartOptions[BESCHAEFTIGUNG_RENTNER];
+
+  /**
+   * Beschaeftigungsart waehlen — und den Arbeitgeber mitfuehren.
+   *
+   * Bei "Rentner/-in" gibt es keinen Arbeitgeber im Wortsinn; gefragt ist der
+   * Traeger, und der ist bei den allermeisten die Deutsche
+   * Rentenversicherung. Sie wird deshalb eingesetzt, statt den Kunden vor ein
+   * Pflichtfeld zu stellen, auf das er keine Antwort hat. Das Feld bleibt
+   * offen: Wer eine Pensionskasse oder ein Versorgungswerk hat, ueberschreibt
+   * es.
+   *
+   * Beim Wechsel weg von "Rentner/-in" wird der Vorschlag wieder
+   * zurueckgenommen — aber nur, wenn er unveraendert dasteht. Ein selbst
+   * eingetragener Arbeitgeber bleibt stehen, sonst loeschte ein Verklicken in
+   * der Auswahl eine Eingabe, die niemand mehr sieht.
+   */
+  function waehleArt(art: string) {
+    const vorschlagSteht = data.arbeitgeber === wt.step6.rentnerArbeitgeber;
+    update({
+      beschaeftigungsart: art,
+      arbeitgeber:
+        art === rentner
+          ? wt.step6.rentnerArbeitgeber
+          : vorschlagSteht
+            ? ""
+            : data.arbeitgeber,
+    });
+  }
+
   const valid =
     data.beschaeftigungsart.trim() !== "" &&
     data.arbeitgeber.trim() !== "" &&
@@ -78,7 +111,7 @@ export default function StepBeruf() {
         id="beschaeftigungsart"
         label={wt.step6.beschaeftigungsart}
         value={data.beschaeftigungsart}
-        onChange={(e) => update({ beschaeftigungsart: e.target.value })}
+        onChange={(e) => waehleArt(e.target.value)}
       >
         <option value="">{wt.step6.beschaeftigungsartPlaceholder}</option>
         {wt.step6.beschaeftigungsartOptions.map((option) => (
