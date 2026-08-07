@@ -15,6 +15,7 @@ import {
   KREDITARTEN,
   SICHTBAR_ANZAHL,
   findeKreditartNachId,
+  teileWunsch,
   type Kreditart,
 } from "@/lib/kreditarten";
 import WizardStepLayout from "./WizardStepLayout";
@@ -149,6 +150,7 @@ export default function StepArt() {
     const inhalt = art[lang];
     const active = data.kreditart === art.id;
     const Zeichen = zweckIcon(art.id);
+    const [vor, schlagwort, nach] = teileWunsch(inhalt);
     return (
       <div
         key={art.id}
@@ -188,8 +190,11 @@ export default function StepArt() {
               sonst schrumpft der Textblock nicht unter seine Inhaltsbreite und
               lange Zeilen ragen über die Karte hinaus. */}
           <span className="flex min-w-0 flex-col gap-0.5">
+            {/* Dieselbe Hervorhebung wie auf der Kachel der Startseite. */}
             <span className="text-sm font-semibold leading-snug break-words">
-              {inhalt.wunsch}
+              {vor}
+              <span className="text-accent">{schlagwort}</span>
+              {nach}
             </span>
             <span className="text-xs text-muted break-words">
               {inhalt.teaser}
