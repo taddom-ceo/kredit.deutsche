@@ -1234,3 +1234,48 @@ input[type="range"]:active::-moz-range-thumb {
     border-color: var(--border-strong);
   }
 }
+
+/* ── Mitlaufender Handlungsaufruf ───────────────────────────────────────
+   Auf dem Handy eine Leiste über die volle Breite, ab dem großen Umbruch
+   eine schwebende Schaltfläche unten rechts. Dort steht ohnehin die Hand
+   am Bildschirmrand, und über die volle Breite verdeckte sie zu viel.
+
+   pointer-events wird mitgeschaltet: Ausgeblendet liegt der Kasten sonst
+   unsichtbar über dem Inhalt und schluckt Klicks. */
+.mitlauf-cta {
+  position: fixed;
+  z-index: 50;
+  left: 1rem;
+  right: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  opacity: 0;
+  transform: translateY(140%);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mitlauf-cta-an {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+@media (min-width: 1024px) {
+  .mitlauf-cta {
+    left: auto;
+    right: 2rem;
+    bottom: 2rem;
+  }
+}
+
+/* Wer Bewegung reduziert haben möchte, bekommt nur das Aufblenden — das
+   Hereinfahren von unten ist genau die Art Bewegung, die dabei stört. */
+@media (prefers-reduced-motion: reduce) {
+  .mitlauf-cta {
+    transform: none;
+    transition: opacity 0.2s ease;
+  }
+  .mitlauf-cta-an {
+    transform: none;
+  }
+}

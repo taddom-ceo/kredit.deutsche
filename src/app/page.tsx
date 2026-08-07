@@ -3,19 +3,14 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
+import CreditCalculator from "@/components/CreditCalculator";
 import KreditartenRaster from "@/components/KreditartenRaster";
+import MitlaufenderCta from "@/components/MitlaufenderCta";
 import Reveal from "@/components/Reveal";
 import VisibilityGate from "@/components/VisibilityGate";
 import PartnerLaufband from "@/components/PartnerLaufband";
 import { KREDITARTEN, KREDITART_TEXTE } from "@/lib/kreditarten";
 
-/**
- * So viele Verwendungszwecke stehen auf der Startseite. Sechs füllen das
- * Raster in jeder Breite ohne Rest — drei Spalten ergeben zwei Zeilen, zwei
- * Spalten drei — und der Abschnitt bleibt auf dem Handy unter zwei
- * Bildschirmhöhen. Der Verweis darunter führt zu den übrigen.
- */
-const STARTSEITE_KACHELN = 6;
 import {
   CompareIllustration,
   HeroIllustration,
@@ -36,6 +31,14 @@ const SCHRITT_BILDER = [
 ];
 
 const KENNZAHL_SYMBOLE = [IconBanks, IconPercent, IconClock, IconWallet];
+/**
+ * So viele Verwendungszwecke stehen auf der Startseite. Sechs füllen das
+ * Raster in jeder Breite ohne Rest — drei Spalten ergeben zwei Zeilen, zwei
+ * Spalten drei — und der Abschnitt bleibt auf dem Handy unter zwei
+ * Bildschirmhöhen. Der Verweis darunter führt zu den übrigen.
+ */
+const STARTSEITE_KACHELN = 6;
+
 
 export default function Home() {
   const { lang, t } = useLanguage();
@@ -87,6 +90,9 @@ export default function Home() {
             >
               <Link
                 href="/rechner"
+                // Der mitlaufende Aufruf hängt an dieser Marke: Er erscheint,
+                // sobald dieser Knopf nach oben aus dem Bild gewandert ist.
+                data-haupt-cta
                 // Weißer Rahmen als Hervorhebung. Als ring statt border, weil
                 // ring außerhalb des Kastens gezeichnet wird und die Größe der
                 // Schaltfläche damit unverändert bleibt.
@@ -260,6 +266,36 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Rechner. Er steht bewusst hinter den Kreditarten: Wer bis hierher
+            gelesen hat, weiß, worum es geht, und will jetzt eine Zahl sehen.
+            Derselbe Rechner wie auf /rechner und auf den Kreditartseiten,
+            hier ohne Zweck und damit mit den allgemeinen Vorgaben. */}
+        <section id="rechner" className="border-y border-border bg-surface/40 scroll-mt-8">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <Reveal className="flex flex-col gap-5">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
+                {l.rechnerEyebrow}
+              </span>
+              <h2 className="text-3xl lg:text-4xl font-bold tracking-[-0.02em] leading-[1.1]">
+                {l.rechnerTitle}
+              </h2>
+              <p className="text-muted leading-relaxed">{l.rechnerText}</p>
+              <ul className="flex flex-col gap-2.5 mt-1">
+                {l.rechnerPunkte.map((punkt) => (
+                  <li key={punkt} className="flex items-start gap-2.5 text-sm">
+                    <span className="mt-0.5 text-accent shrink-0">✓</span>
+                    <span className="text-muted leading-relaxed">{punkt}</span>
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
+
+            <Reveal delay={160} className="flex justify-center lg:justify-end">
+              <CreditCalculator />
+            </Reveal>
+          </div>
+        </section>
+
         {/* Ablauf */}
         <section id="ablauf" className="scroll-mt-8">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-24 flex flex-col gap-12">
@@ -410,7 +446,10 @@ export default function Home() {
         {/* Abschließender Aufruf */}
         <section className="border-t border-border">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-20">
-            <Reveal className="rounded-[24px] border border-accent/25 bg-accent/[0.06] ring-1 ring-white/5 px-6 py-10 lg:px-12 lg:py-12 flex flex-col items-center gap-4 text-center">
+            <Reveal
+              data-schluss-cta
+              className="rounded-[24px] border border-accent/25 bg-accent/[0.06] ring-1 ring-white/5 px-6 py-10 lg:px-12 lg:py-12 flex flex-col items-center gap-4 text-center"
+            >
               <h2 className="text-2xl lg:text-3xl font-bold tracking-[-0.02em] max-w-xl leading-[1.15]">
                 {l.schlussTitle}
               </h2>
@@ -427,6 +466,16 @@ export default function Home() {
           </div>
         </section>
       </main>
+
+      {/* Liegt außerhalb von main: Er gehört zu keinem Abschnitt, sondern
+          schwebt über der ganzen Seite. */}
+      <MitlaufenderCta
+        beobachte="[data-haupt-cta]"
+        bisZu="[data-schluss-cta]"
+        href="/rechner"
+        label={l.mitlaufCta}
+        hinweis={l.mitlaufNote}
+      />
 
       <footer className="border-t border-border">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 text-xs text-muted tracking-wide">

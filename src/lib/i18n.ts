@@ -60,6 +60,14 @@ export interface Translations {
     faqEyebrow: string;
     faqTitle: string;
     faq: { frage: string; antwort: string }[];
+    // Abschnitt mit dem Rechner unter den Kreditarten.
+    rechnerEyebrow: string;
+    rechnerTitle: string;
+    rechnerText: string;
+    rechnerPunkte: string[];
+    // Aufruf, der beim Scrollen mitläuft, sobald der obere aus dem Bild ist.
+    mitlaufCta: string;
+    mitlaufNote: string;
     schlussTitle: string;
     schlussText: string;
     schlussCta: string;
@@ -233,6 +241,17 @@ export const translations: Record<Language, Translations> = {
             "Für die Berechnung nichts. Für den Antrag Ihre persönlichen Daten, Angaben zum Beruf und zum Einkommen — Unterlagen erst dann, wenn Sie sich für ein Angebot entschieden haben.",
         },
       ],
+      rechnerEyebrow: "Kreditrechner",
+      rechnerTitle: "Was kostet Sie das im Monat?",
+      rechnerText:
+        "Betrag und Laufzeit einstellen — die Rate rechnet sich sofort mit. Unverbindlich und ohne Wirkung auf Ihre Bonität.",
+      rechnerPunkte: [
+        "Von 1.000 € bis 100.000 €",
+        "Laufzeiten von 12 bis 240 Monaten",
+        "Rate oder Betrag anpassen — beides geht",
+      ],
+      mitlaufCta: "Kostenlos vergleichen",
+      mitlaufNote: "2 Minuten · Schufa-neutral",
       schlussTitle: "Sehen Sie in zwei Minuten, was möglich ist",
       schlussText:
         "Unverbindlich, kostenlos und ohne Wirkung auf Ihre Bonität.",
@@ -405,6 +424,17 @@ export const translations: Record<Language, Translations> = {
             "Nothing for the calculation. For the application your personal details, employment and income — documents only once you have picked an offer.",
         },
       ],
+      rechnerEyebrow: "Loan calculator",
+      rechnerTitle: "What does it cost you per month?",
+      rechnerText:
+        "Set the amount and the term — the instalment updates as you go. Non-binding and with no effect on your credit score.",
+      rechnerPunkte: [
+        "From €1,000 to €100,000",
+        "Terms from 12 to 240 months",
+        "Adjust the instalment or the amount — either works",
+      ],
+      mitlaufCta: "Compare for free",
+      mitlaufNote: "2 minutes · credit-score-neutral",
       schlussTitle: "See in two minutes what is possible",
       schlussText: "Non-binding, free, and with no effect on your credit score.",
       schlussCta: "Calculate my instalment",
