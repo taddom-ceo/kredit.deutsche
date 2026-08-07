@@ -6,10 +6,11 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      // Formular und Beispielliste gehören nicht in den Index. Beide tragen
-      // dieselbe Angabe zusätzlich in ihren eigenen Metadaten — hier steht sie
-      // für Crawler, die gar nicht erst anfragen sollen.
-      disallow: ["/antrag", "/angebote"],
+      // Formular, Beispielliste und das interne CRM gehören nicht in den
+      // Index. Alle tragen dieselbe Angabe zusätzlich in ihren eigenen
+      // Metadaten — hier steht sie für Crawler, die gar nicht erst anfragen
+      // sollen.
+      disallow: ["/antrag", "/angebote", "/crm"],
     },
     sitemap: absolut("/sitemap.xml"),
   };
