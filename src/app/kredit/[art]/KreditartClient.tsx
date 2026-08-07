@@ -136,6 +136,27 @@ export default function KreditartClient({ slug }: { slug: string }) {
                 </li>
               ))}
             </ul>
+
+            {/* Der Aufruf in der Textspalte. Rechts steht zwar der Rechner mit
+                eigenem Knopf, aber der liegt auf dem Handy erst weit unter
+                dem Text — bis dorthin gab es hier keinen Weg weiter. Auf
+                breiten Schirmen füllt er zugleich die Spalte, die vorher
+                nach den Plaketten leer auslief.
+                Er führt dorthin, wohin auch der Rechner führt: in den
+                Antrag mit dem Zweck und den Werten dieser Kreditart. */}
+            <Link
+              href={`/antrag?amount=${art.betrag}&months=${art.monate}&zweck=${art.id}`}
+              className="auftakt group inline-flex w-fit items-center gap-2 rounded-[16px] bg-accent px-7 py-4 text-[15px] font-semibold text-accent-foreground ring-2 ring-white shadow-[0_10px_34px_-8px_rgba(52,211,153,0.6)] transition-all duration-200 hover:bg-accent-strong hover:-translate-y-px focus-visible:ring-4 focus-visible:ring-white"
+              style={{ animationDelay: "420ms" }}
+            >
+              {l.ctaPrimary}
+              <span
+                aria-hidden="true"
+                className="transition-transform duration-200 group-hover:translate-x-0.5"
+              >
+                →
+              </span>
+            </Link>
           </div>
 
           {/* Auf dieser Seite ist der Rechner der Hauptaufruf. Er traegt
