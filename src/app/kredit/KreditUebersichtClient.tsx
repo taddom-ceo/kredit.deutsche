@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Header from "@/components/Header";
 import KreditartenRaster from "@/components/KreditartenRaster";
+import MitlaufenderCta from "@/components/MitlaufenderCta";
 import Reveal from "@/components/Reveal";
 import { KREDITART_TEXTE } from "@/lib/kreditarten";
 import { useLanguage } from "@/lib/language-context";
@@ -55,6 +56,25 @@ export default function KreditUebersichtClient() {
             >
               {x.uebersichtText}
             </p>
+
+            {/* Bisher führte von hier oben gar nichts weiter: Wer schon weiß,
+                was er will, musste erst an sechzehn Kacheln vorbei. Der
+                Aufruf ist zugleich die Marke, an der der mitlaufende
+                hängt. */}
+            <Link
+              href="/rechner"
+              data-haupt-cta
+              className="auftakt group inline-flex w-fit items-center gap-2 rounded-[16px] bg-accent px-7 py-4 text-[15px] font-semibold text-accent-foreground ring-2 ring-white shadow-[0_10px_34px_-8px_rgba(52,211,153,0.6)] transition-all duration-200 hover:bg-accent-strong hover:-translate-y-px focus-visible:ring-4 focus-visible:ring-white"
+              style={{ animationDelay: "280ms" }}
+            >
+              {l.ctaPrimary}
+              <span
+                aria-hidden="true"
+                className="transition-transform duration-200 group-hover:translate-x-0.5"
+              >
+                →
+              </span>
+            </Link>
           </div>
 
           <KreditartenRaster />
@@ -62,7 +82,10 @@ export default function KreditUebersichtClient() {
 
         <section className="border-t border-border">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-20">
-            <Reveal className="rounded-[24px] border border-accent/25 bg-accent/[0.06] ring-1 ring-white/5 px-6 py-10 lg:px-12 lg:py-12 flex flex-col items-center gap-4 text-center">
+            <Reveal
+              data-schluss-cta
+              className="rounded-[24px] border border-accent/25 bg-accent/[0.06] ring-1 ring-white/5 px-6 py-10 lg:px-12 lg:py-12 flex flex-col items-center gap-4 text-center"
+            >
               <h2 className="text-2xl lg:text-3xl font-bold tracking-[-0.02em] max-w-xl leading-[1.15]">
                 {l.schlussTitle}
               </h2>
@@ -79,6 +102,14 @@ export default function KreditUebersichtClient() {
           </div>
         </section>
       </main>
+
+      <MitlaufenderCta
+        beobachte="[data-haupt-cta]"
+        bisZu="[data-schluss-cta]"
+        href="/rechner"
+        label={l.mitlaufCta}
+        hinweis={l.mitlaufNote}
+      />
 
       <footer className="border-t border-border">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 flex flex-wrap items-center justify-between gap-4 text-xs text-muted tracking-wide">
