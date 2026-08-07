@@ -17,12 +17,20 @@ export default function Reveal({
   delay = 0,
   as: Tag = "div",
   className = "",
+  ...weitere
 }: {
   children: ReactNode;
   /** Versatz in Millisekunden, für gestaffelte Gruppen. */
   delay?: number;
   as?: ElementType;
   className?: string;
+  /**
+   * Alles Weitere geht an das erzeugte Element durch — etwa data-Marken, an
+   * denen andere Teile der Seite hängen. Ohne die Weitergabe fielen sie hier
+   * stillschweigend unter den Tisch, und was daran hing, liefe ins Leere,
+   * ohne dass es einen Fehler gäbe.
+   */
+  [weiteres: string]: unknown;
 }) {
   const ref = useRef<HTMLElement>(null);
 
@@ -57,6 +65,7 @@ export default function Reveal({
       ref={ref}
       className={`einblenden ${className}`}
       style={delay ? { transitionDelay: `${delay}ms` } : undefined}
+      {...weitere}
     >
       {children}
     </Tag>

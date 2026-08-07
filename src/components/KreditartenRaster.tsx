@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import Reveal from "@/components/Reveal";
 import { zweckIcon } from "@/components/illustrations/ZweckIcons";
-import { KREDITARTEN, kreditartPfad } from "@/lib/kreditarten";
+import { KREDITARTEN, kreditartPfad, teileWunsch } from "@/lib/kreditarten";
 import { useLanguage } from "@/lib/language-context";
 
 /**
@@ -53,6 +53,7 @@ export default function KreditartenRaster({
       {gezeigte.map((art, i) => {
         const inhalt = art[lang];
         const Zeichen = zweckIcon(art.id);
+        const [vor, schlagwort, nach] = teileWunsch(inhalt);
         return (
           // Der Versatz läuft nur über die ersten Kacheln hoch. Bei sechzehn
           // Stück wartete man auf die letzte sonst mehrere Sekunden.
@@ -73,8 +74,13 @@ export default function KreditartenRaster({
                 <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted break-words">
                   {inhalt.name}
                 </span>
+                {/* Das Schlagwort in der Akzentfarbe: Es sagt, worum es
+                    geht, und wird schon beim Ueberfliegen erfasst. Der Rest
+                    des Satzes traegt ihn nur. */}
                 <span className="text-[15px] font-semibold leading-snug tracking-[-0.01em] break-words">
-                  {inhalt.wunsch}
+                  {vor}
+                  <span className="text-accent">{schlagwort}</span>
+                  {nach}
                 </span>
               </span>
 
