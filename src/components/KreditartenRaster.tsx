@@ -84,7 +84,7 @@ export default function KreditartenRaster({
                 <span className="mt-2 text-[13px] font-medium leading-none text-muted break-words">
                   {inhalt.wunschVor}
                 </span>
-                <span className="mt-1 text-[1.3rem] font-bold leading-[1.15] tracking-[-0.02em] break-words">
+                <span className="mt-1 text-[1.15rem] font-bold leading-[1.2] tracking-[-0.015em] break-words">
                   {inhalt.wunschKern}
                 </span>
               </span>

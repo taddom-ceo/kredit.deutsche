@@ -95,7 +95,7 @@ export const KREDITARTEN: Kreditart[] = [
     monate: 72,
     de: {
       name: "Privatkredit",
-      wunschVor: "Ich brauche Geld",
+      wunschVor: "Ich möchte Geld",
       wunschKern: "zur freien Verfügung",
       teaser: "Freie Verwendung – für alles, was Ihnen wichtig ist.",
       vorteil: "freie Verwendung",
@@ -146,7 +146,7 @@ export const KREDITARTEN: Kreditart[] = [
     },
     en: {
       name: "Personal loan",
-      wunschVor: "I need money",
+      wunschVor: "I want money",
       wunschKern: "to spend freely",
       teaser: "Spend it freely — on whatever matters to you.",
       vorteil: "no restrictions",
