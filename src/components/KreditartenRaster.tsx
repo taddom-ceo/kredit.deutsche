@@ -62,26 +62,33 @@ export default function KreditartenRaster({
               style={{ "--zweck": art.farbe } as CSSProperties}
               className="zweck-kachel group h-full rounded-[18px] border border-border bg-surface ring-1 ring-white/5 p-5 flex flex-col gap-3 transition-all duration-300 hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              {/* Groß genug, um aus dem Augenwinkel erkannt zu werden. Die
-                  Fläche dahinter trägt dieselbe Farbe stark abgeschwächt,
-                  damit das Zeichen nicht frei im Dunkeln steht. */}
-              <span className="zweck-zeichen grid size-14 shrink-0 place-items-center rounded-[14px] transition-transform duration-300 group-hover:scale-105">
-                <Zeichen className="size-8" />
-              </span>
-
-              <span className="flex min-w-0 flex-col">
+              {/* Zeichen und Produktname in einer Zeile. Beide gehören
+                  zusammen — sie benennen die Art, während darunter steht,
+                  was man damit vorhat. Nebeneinander gelesen sind es zwei
+                  Blöcke statt vier Zeilen, und der Kopf der Kachel wird
+                  flacher.
+                  Das Zeichen ist groß genug, um aus dem Augenwinkel erkannt
+                  zu werden; die Fläche dahinter trägt dieselbe Farbe stark
+                  abgeschwächt, damit es nicht frei im Dunkeln steht. */}
+              <span className="flex items-center gap-3">
+                <span className="zweck-zeichen grid size-14 shrink-0 place-items-center rounded-[14px] transition-transform duration-300 group-hover:scale-105">
+                  <Zeichen className="size-8" />
+                </span>
                 {/* Der Produktname trägt die Farbe des Zwecks. Klein genug,
                     dass sechzehn verschiedene Farben als Beschriftung wirken
                     und nicht als Jahrmarkt — und er bleibt das Wort, unter
                     dem gesucht wird. */}
-                <span className="zweck-name text-[10px] font-bold uppercase tracking-[0.16em] break-words">
+                <span className="zweck-name min-w-0 text-[11px] font-bold uppercase leading-[1.3] tracking-[0.14em] break-words">
                   {inhalt.name}
                 </span>
+              </span>
+
+              <span className="flex min-w-0 flex-col">
                 {/* Anlauf klein, Kernaussage groß. Der Anlauf steht auf fast
                     jeder Kachel gleich; groß gesetzt las man beim
                     Überfliegen sechsmal "Ich möchte", bevor der Unterschied
                     kam. */}
-                <span className="mt-2 text-[13px] font-medium leading-none text-muted break-words">
+                <span className="text-[13px] font-medium leading-none text-muted break-words">
                   {inhalt.wunschVor}
                 </span>
                 <span className="mt-1 text-[1.15rem] font-bold leading-[1.2] tracking-[-0.015em] break-words">
