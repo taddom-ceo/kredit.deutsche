@@ -20,17 +20,23 @@ export type KreditartInhalt = {
   /** Produktname. Trägt das Wort, nach dem gesucht wird. */
   name: string;
   /**
-   * Dasselbe in Kundensprache. Niemand sucht nach "Modernisierungskredit" —
-   * gedacht wird in "Ich möchte renovieren". Diese Zeile führt die Kachel an,
-   * der Produktname steht als Zeile darüber und bleibt damit auffindbar.
+   * Der Wunsch in Kundensprache, in zwei Teilen — und die Teilung ist kein
+   * Schmuck, sondern der Kern der Gestaltung.
+   *
+   * `wunschVor` ist der Anlauf ("Ich möchte ein"). Er steht auf fast jeder
+   * Kachel gleich und unterscheidet damit nichts. Früher führte er die Zeile
+   * an und drängte das eigentliche Wort an die dritte Stelle — beim
+   * Überfliegen las man sechsmal "Ich möchte".
+   *
+   * `wunschKern` ist das, worum es geht ("Auto kaufen"). Er steht groß und
+   * beginnt die Zeile, an der das Auge hängen bleibt.
+   *
+   * Zwei Felder statt einer Teilzeichenkette: Die Teilung entscheidet über
+   * den Aufbau der Kachel, nicht nur über eine Farbe. Sie darf deshalb nicht
+   * daran scheitern können, dass eine Suche ins Leere läuft.
    */
-  wunsch: string;
-  /**
-   * Das Schlagwort innerhalb von `wunsch`, das farbig hervorgehoben wird —
-   * also das, was finanziert werden soll. Muss wörtlich in `wunsch`
-   * vorkommen, sonst bleibt die Zeile schlicht.
-   */
-  wunschAkzent: string;
+  wunschVor: string;
+  wunschKern: string;
   /** Nutzenzeile unter dem Wunsch. */
   teaser: string;
   /** Der eine Vorteil, der auf einen Blick hängen bleibt. Ohne Haken — den
@@ -89,8 +95,8 @@ export const KREDITARTEN: Kreditart[] = [
     monate: 72,
     de: {
       name: "Privatkredit",
-      wunsch: "Ich brauche Geld zur freien Verfügung",
-      wunschAkzent: "zur freien Verfügung",
+      wunschVor: "Ich brauche Geld",
+      wunschKern: "zur freien Verfügung",
       teaser: "Freie Verwendung – für alles, was Ihnen wichtig ist.",
       vorteil: "freie Verwendung",
       hinweis:
@@ -140,8 +146,8 @@ export const KREDITARTEN: Kreditart[] = [
     },
     en: {
       name: "Personal loan",
-      wunsch: "I need money I can spend freely",
-      wunschAkzent: "spend freely",
+      wunschVor: "I need money",
+      wunschKern: "to spend freely",
       teaser: "Spend it freely — on whatever matters to you.",
       vorteil: "no restrictions",
       hinweis:
@@ -198,8 +204,8 @@ export const KREDITARTEN: Kreditart[] = [
     monate: 72,
     de: {
       name: "Autokredit",
-      wunsch: "Ich möchte ein Auto kaufen",
-      wunschAkzent: "Auto",
+      wunschVor: "Ich möchte ein",
+      wunschKern: "Auto kaufen",
       teaser: "Günstige Finanzierung für Neu- und Gebrauchtwagen.",
       vorteil: "häufig günstigere Zinsen",
       hinweis:
@@ -249,8 +255,8 @@ export const KREDITARTEN: Kreditart[] = [
     },
     en: {
       name: "Car loan",
-      wunsch: "I want to buy a car",
-      wunschAkzent: "car",
+      wunschVor: "I want to",
+      wunschKern: "buy a car",
       teaser: "Affordable financing for new and used cars.",
       vorteil: "often better rates",
       hinweis:
@@ -307,8 +313,8 @@ export const KREDITARTEN: Kreditart[] = [
     monate: 84,
     de: {
       name: "Umschuldung",
-      wunsch: "Ich möchte bestehende Kredite zusammenfassen",
-      wunschAkzent: "bestehende Kredite",
+      wunschVor: "Ich möchte",
+      wunschKern: "Kredite zusammenfassen",
       teaser: "Kredite zusammenfassen und monatliche Rate reduzieren.",
       vorteil: "Rate oft deutlich senken",
       hinweis:
@@ -358,8 +364,8 @@ export const KREDITARTEN: Kreditart[] = [
     },
     en: {
       name: "Debt consolidation",
-      wunsch: "I want to combine my existing loans",
-      wunschAkzent: "existing loans",
+      wunschVor: "I want to",
+      wunschKern: "combine my loans",
       teaser: "Combine your loans and reduce the monthly payment.",
       vorteil: "often a much lower instalment",
       hinweis:
@@ -416,8 +422,8 @@ export const KREDITARTEN: Kreditart[] = [
     monate: 120,
     de: {
       name: "Modernisierungskredit",
-      wunsch: "Ich möchte renovieren oder modernisieren",
-      wunschAkzent: "renovieren oder modernisieren",
+      wunschVor: "Ich möchte",
+      wunschKern: "renovieren oder sanieren",
       teaser:
         "Renovieren, modernisieren oder energetisch sanieren – ohne Grundschuldeintrag.",
       vorteil: "ohne Grundschuldeintrag",
@@ -468,8 +474,8 @@ export const KREDITARTEN: Kreditart[] = [
     },
     en: {
       name: "Home improvement loan",
-      wunsch: "I want to renovate or modernise",
-      wunschAkzent: "renovate or modernise",
+      wunschVor: "I want to",
+      wunschKern: "renovate my home",
       teaser:
         "Renovate, modernise or improve energy efficiency — with no land charge.",
       vorteil: "no land charge",
@@ -527,8 +533,8 @@ export const KREDITARTEN: Kreditart[] = [
     monate: 48,
     de: {
       name: "Dispo ablösen",
-      wunsch: "Ich möchte meinen Dispo ablösen",
-      wunschAkzent: "Dispo",
+      wunschVor: "Ich möchte meinen",
+      wunschKern: "Dispo ablösen",
       teaser: "Hohe Dispozinsen ablösen und planbar zurückzahlen.",
       vorteil: "hohe Zinsen vermeiden",
       hinweis:
@@ -578,8 +584,8 @@ export const KREDITARTEN: Kreditart[] = [
     },
     en: {
       name: "Clear an overdraft",
-      wunsch: "I want to clear my overdraft",
-      wunschAkzent: "overdraft",
+      wunschVor: "I want to",
+      wunschKern: "clear my overdraft",
       teaser: "Replace high overdraft rates with a predictable instalment.",
       vorteil: "avoid high interest",
       hinweis:
@@ -636,8 +642,8 @@ export const KREDITARTEN: Kreditart[] = [
     monate: 36,
     de: {
       name: "Ratenkauf ablösen",
-      wunsch: "Ich möchte meine Ratenkäufe zusammenfassen",
-      wunschAkzent: "Ratenkäufe",
+      wunschVor: "Ich möchte meine",
+      wunschKern: "Ratenkäufe ablösen",
       teaser: "Mehrere Finanzierungen zusammenfassen und den Überblick behalten.",
       vorteil: "alles in einer Rate",
       hinweis:
@@ -687,8 +693,8 @@ export const KREDITARTEN: Kreditart[] = [
     },
     en: {
       name: "Clear instalment plans",
-      wunsch: "I want to combine my instalment plans",
-      wunschAkzent: "instalment plans",
+      wunschVor: "I want to",
+      wunschKern: "clear instalment plans",
       teaser: "Combine several plans and keep track of what you owe.",
       vorteil: "everything in one instalment",
       hinweis:
@@ -745,8 +751,8 @@ export const KREDITARTEN: Kreditart[] = [
     monate: 48,
     de: {
       name: "Möbelkredit",
-      wunsch: "Ich möchte Möbel finanzieren",
-      wunschAkzent: "Möbel",
+      wunschVor: "Ich möchte",
+      wunschKern: "Möbel finanzieren",
       teaser: "Einrichtung über einen Vertrag statt über drei Händler.",
       vorteil: "im Möbelhaus Barzahler sein",
       h1: "Möbel finanzieren",
@@ -794,8 +800,8 @@ export const KREDITARTEN: Kreditart[] = [
     },
     en: {
       name: "Furniture loan",
-      wunsch: "I want to finance furniture",
-      wunschAkzent: "furniture",
+      wunschVor: "I want to",
+      wunschKern: "finance furniture",
       teaser: "One contract for your interior instead of three retailers.",
       vorteil: "be a cash buyer in the showroom",
       h1: "Finance furniture",
@@ -850,8 +856,8 @@ export const KREDITARTEN: Kreditart[] = [
     monate: 60,
     de: {
       name: "Küchenkredit",
-      wunsch: "Ich möchte eine neue Küche kaufen",
-      wunschAkzent: "neue Küche",
+      wunschVor: "Ich möchte eine",
+      wunschKern: "neue Küche kaufen",
       teaser: "Einbauküche und Geräte zum Barzahlerpreis finanzieren.",
       vorteil: "Barzahlerpreis sichern",
       h1: "Küche finanzieren",
@@ -899,8 +905,8 @@ export const KREDITARTEN: Kreditart[] = [
     },
     en: {
       name: "Kitchen loan",
-      wunsch: "I want to buy a new kitchen",
-      wunschAkzent: "new kitchen",
+      wunschVor: "I want to",
+      wunschKern: "buy a new kitchen",
       teaser: "Finance a fitted kitchen and appliances at the cash price.",
       vorteil: "secure the cash price",
       h1: "Finance a kitchen",
@@ -955,8 +961,8 @@ export const KREDITARTEN: Kreditart[] = [
     monate: 96,
     de: {
       name: "Wohnmobil-Finanzierung",
-      wunsch: "Ich möchte ein Wohnmobil oder einen Wohnwagen kaufen",
-      wunschAkzent: "Wohnmobil oder einen Wohnwagen",
+      wunschVor: "Ich möchte ein",
+      wunschKern: "Wohnmobil kaufen",
       teaser: "Reisemobil, Wohnwagen und Ausbau in einem Betrag finanzieren.",
       vorteil: "Fahrzeugbrief bleibt bei Ihnen",
       hinweis:
@@ -1006,8 +1012,8 @@ export const KREDITARTEN: Kreditart[] = [
     },
     en: {
       name: "Motorhome financing",
-      wunsch: "I want to buy a motorhome or caravan",
-      wunschAkzent: "motorhome or caravan",
+      wunschVor: "I want to",
+      wunschKern: "buy a motorhome",
       teaser: "Finance a motorhome, caravan and conversion in one amount.",
       vorteil: "keep the vehicle documents",
       hinweis:
@@ -1064,8 +1070,8 @@ export const KREDITARTEN: Kreditart[] = [
     monate: 48,
     de: {
       name: "Motorradkredit",
-      wunsch: "Ich möchte ein Motorrad kaufen",
-      wunschAkzent: "Motorrad",
+      wunschVor: "Ich möchte ein",
+      wunschKern: "Motorrad kaufen",
       teaser: "Maschine, Ausrüstung und Zulassung in einem Betrag.",
       vorteil: "unabhängig vom Händler",
       h1: "Motorrad finanzieren",
@@ -1113,8 +1119,8 @@ export const KREDITARTEN: Kreditart[] = [
     },
     en: {
       name: "Motorbike loan",
-      wunsch: "I want to buy a motorbike",
-      wunschAkzent: "motorbike",
+      wunschVor: "I want to",
+      wunschKern: "buy a motorbike",
       teaser: "The bike, the gear and the registration in one amount.",
       vorteil: "independent of the dealer",
       h1: "Finance a motorbike",
@@ -1169,8 +1175,8 @@ export const KREDITARTEN: Kreditart[] = [
     monate: 36,
     de: {
       name: "E-Bike-Finanzierung",
-      wunsch: "Ich möchte ein E-Bike kaufen",
-      wunschAkzent: "E-Bike",
+      wunschVor: "Ich möchte ein",
+      wunschKern: "E-Bike kaufen",
       teaser: "Pedelec und Zubehör kaufen, ohne an einen Händler gebunden zu sein.",
       vorteil: "kein Leasingvertrag nötig",
       h1: "E-Bike finanzieren",
@@ -1218,8 +1224,8 @@ export const KREDITARTEN: Kreditart[] = [
     },
     en: {
       name: "E-bike financing",
-      wunsch: "I want to buy an e-bike",
-      wunschAkzent: "e-bike",
+      wunschVor: "I want to",
+      wunschKern: "buy an e-bike",
       teaser: "Buy a pedelec and accessories without being tied to a dealer.",
       vorteil: "no leasing contract needed",
       h1: "Finance an e-bike",
@@ -1274,8 +1280,8 @@ export const KREDITARTEN: Kreditart[] = [
     monate: 24,
     de: {
       name: "Urlaubs- und Reisekredit",
-      wunsch: "Ich möchte eine Reise finanzieren",
-      wunschAkzent: "Reise",
+      wunschVor: "Ich möchte eine",
+      wunschKern: "Reise finanzieren",
       teaser: "Frühbucherpreis sichern und in festen Raten zurückzahlen.",
       vorteil: "günstiger als die Kreditkarte",
       h1: "Reise finanzieren",
@@ -1323,8 +1329,8 @@ export const KREDITARTEN: Kreditart[] = [
     },
     en: {
       name: "Holiday and travel loan",
-      wunsch: "I want to finance a trip",
-      wunschAkzent: "trip",
+      wunschVor: "I want to",
+      wunschKern: "finance a trip",
       teaser: "Lock in the early-booking price and repay in fixed instalments.",
       vorteil: "cheaper than a credit card",
       h1: "Finance a trip",
@@ -1379,8 +1385,8 @@ export const KREDITARTEN: Kreditart[] = [
     monate: 48,
     de: {
       name: "Hochzeitskredit",
-      wunsch: "Ich möchte unsere Hochzeit finanzieren",
-      wunschAkzent: "Hochzeit",
+      wunschVor: "Ich möchte unsere",
+      wunschKern: "Hochzeit finanzieren",
       teaser: "Feier, Ringe und Flitterwochen ohne Druck auf das Ersparte.",
       vorteil: "planbar statt Dispo",
       h1: "Hochzeit finanzieren",
@@ -1428,8 +1434,8 @@ export const KREDITARTEN: Kreditart[] = [
     },
     en: {
       name: "Wedding loan",
-      wunsch: "I want to finance our wedding",
-      wunschAkzent: "wedding",
+      wunschVor: "I want to",
+      wunschKern: "finance our wedding",
       teaser: "The party, the rings and the honeymoon without draining savings.",
       vorteil: "predictable, not an overdraft",
       h1: "Finance a wedding",
@@ -1484,8 +1490,8 @@ export const KREDITARTEN: Kreditart[] = [
     monate: 36,
     de: {
       name: "Zahnbehandlung & Medizin",
-      wunsch: "Ich möchte eine Behandlung finanzieren",
-      wunschAkzent: "Behandlung",
+      wunschVor: "Ich möchte eine",
+      wunschKern: "Behandlung finanzieren",
       teaser: "Zahnersatz, Implantate und Eigenanteile in festen Raten zahlen.",
       vorteil: "feste Rate statt Dispo",
       hinweis:
@@ -1535,8 +1541,8 @@ export const KREDITARTEN: Kreditart[] = [
     },
     en: {
       name: "Dental and medical",
-      wunsch: "I want to finance a treatment",
-      wunschAkzent: "treatment",
+      wunschVor: "I want to",
+      wunschKern: "finance treatment",
       teaser: "Pay for dentures, implants and co-payments in fixed instalments.",
       vorteil: "a fixed instalment, not an overdraft",
       hinweis:
@@ -1593,8 +1599,8 @@ export const KREDITARTEN: Kreditart[] = [
     monate: 84,
     de: {
       name: "Ausbildung & Studium",
-      wunsch: "Ich möchte meine Ausbildung finanzieren",
-      wunschAkzent: "Ausbildung",
+      wunschVor: "Ich möchte meine",
+      wunschKern: "Ausbildung finanzieren",
       teaser: "Weiterbildung, Meisterkurs oder Studium ohne Nebenjob-Zwang.",
       vorteil: "lange Laufzeiten möglich",
       hinweis:
@@ -1644,8 +1650,8 @@ export const KREDITARTEN: Kreditart[] = [
     },
     en: {
       name: "Education and training",
-      wunsch: "I want to finance my education",
-      wunschAkzent: "education",
+      wunschVor: "I want to",
+      wunschKern: "finance my studies",
       teaser: "Training, qualification or study without relying on a side job.",
       vorteil: "longer terms available",
       hinweis:
@@ -1702,8 +1708,8 @@ export const KREDITARTEN: Kreditart[] = [
     monate: 36,
     de: {
       name: "Umzugskredit",
-      wunsch: "Ich möchte meinen Umzug finanzieren",
-      wunschAkzent: "Umzug",
+      wunschVor: "Ich möchte meinen",
+      wunschKern: "Umzug finanzieren",
       teaser: "Kaution, Spedition und doppelte Miete auf einmal abdecken.",
       vorteil: "Kaution sofort verfügbar",
       h1: "Umzug finanzieren:",
@@ -1751,8 +1757,8 @@ export const KREDITARTEN: Kreditart[] = [
     },
     en: {
       name: "Moving loan",
-      wunsch: "I want to finance my move",
-      wunschAkzent: "move",
+      wunschVor: "I want to",
+      wunschKern: "finance my move",
       teaser: "Cover the deposit, the movers and a double rent at once.",
       vorteil: "deposit available immediately",
       h1: "Finance a move:",
@@ -1815,23 +1821,11 @@ export const HAEUFIG_ANZAHL = 4;
 export const SICHTBAR_ANZAHL = 5;
 
 /**
- * Zerlegt den Wunschsatz in die Teile vor, in und nach dem Schlagwort.
- *
- * Über eine Teilzeichenkette statt über drei einzelne Felder: Der Satz bleibt
- * in den Daten als ganzer Satz lesbar und übersetzbar. Wird das Schlagwort
- * darin nicht gefunden — etwa nach einer Umformulierung —, steht die Zeile
- * schlicht da, statt dass etwas fehlt.
+ * Der ganze Wunschsatz am Stück — für Vorlesehilfen und Beschriftungen, wo
+ * die Gestaltung keine Rolle spielt und nur der Sinn zählt.
  */
-export function teileWunsch(inhalt: KreditartInhalt): [string, string, string] {
-  const stelle = inhalt.wunschAkzent
-    ? inhalt.wunsch.indexOf(inhalt.wunschAkzent)
-    : -1;
-  if (stelle === -1) return [inhalt.wunsch, "", ""];
-  return [
-    inhalt.wunsch.slice(0, stelle),
-    inhalt.wunschAkzent,
-    inhalt.wunsch.slice(stelle + inhalt.wunschAkzent.length),
-  ];
+export function ganzerWunsch(inhalt: KreditartInhalt): string {
+  return `${inhalt.wunschVor} ${inhalt.wunschKern}`;
 }
 
 /** Schnellzugriff über die Adresse. */
