@@ -71,22 +71,22 @@ export const TOTAL_STEPS = 8;
 /**
  * Ob der Entwicklermodus angeboten wird.
  *
- * Waehrend der Entwicklungsphase bewusst ueberall, auch auf der
- * veroeffentlichten Seite — der Schalter soll ohne eigenes Deployment und
- * ohne gesetzte Umgebungsvariable erreichbar sein.
+ * Bis hierher stand die Konstante auf true, auch auf der veroeffentlichten
+ * Seite. Das war vertretbar, solange der Antrag nirgendwohin ging: Wer die
+ * Strecke ohne Angaben durchklickte, sah nur eine leere Bestaetigung.
  *
- * Das ist vertretbar, weil der Antrag nirgendwohin verschickt wird: Der
- * letzte Schritt setzt nur ein Kennzeichen im Zustand der Seite und zeigt die
- * Bestaetigung. Wer die Strecke ohne Angaben durchklickt, erzeugt also keinen
- * unvollstaendigen Datensatz, sondern sieht nur eine leere Bestaetigung.
+ * Seit der letzte Schritt den Antrag wirklich abschickt, gilt das nicht mehr
+ * — durchgeklickte Strecken landeten sonst als halbe Faelle im CRM. Die
+ * Bedingung ist die, die an dieser Stelle schon vorgesehen war: in der
+ * Entwicklung immer an, auf der Produktivseite nur, wenn
+ * NEXT_PUBLIC_DEV_MODUS ausdruecklich auf "1" steht.
  *
- * Sobald der Antrag tatsaechlich abgeschickt wird, gehoert hier wieder eine
- * Bedingung hin — etwa
- *   process.env.NODE_ENV !== "production" ||
- *   process.env.NEXT_PUBLIC_DEV_MODUS === "1"
- * damit auf der Produktivseite keine leeren Antraege eingehen koennen.
+ * Der Wert wird beim Bauen eingesetzt, nicht zur Laufzeit gelesen. Nach dem
+ * Setzen der Variable bei Vercel gehoert also ein Redeploy dazu.
  */
-export const DEV_MODUS_VERFUEGBAR = true;
+export const DEV_MODUS_VERFUEGBAR =
+  process.env.NODE_ENV !== "production" ||
+  process.env.NEXT_PUBLIC_DEV_MODUS === "1";
 
 /** Antwort auf eine Pflichtfrage. null heisst "noch nicht beantwortet". */
 export type JaNein = "ja" | "nein" | null;

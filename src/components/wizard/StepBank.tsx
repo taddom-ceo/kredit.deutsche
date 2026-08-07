@@ -13,6 +13,8 @@ export default function StepBank() {
   const wt = wizardTranslations[lang];
   const { data, update, goNext, goBack } = useWizard();
   const [touched, setTouched] = useState(false);
+  const [sendet, setSendet] = useState(false);
+  const [fehler, setFehler] = useState(false);
 
   const ibanValid = isValidIban(data.iban);
   const valid =
@@ -20,9 +22,65 @@ export default function StepBank() {
     data.bankname.trim() !== "" &&
     data.kontoinhaber.trim() !== "";
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setTouched(true);
-    if (!valid) return;
+    if (!valid || sendet) return;
+
+    setSendet(true);
+    setFehler(false);
+
+    // Nur die Angaben des Antrags, nicht der ganze Zustand: step, maxStep und
+    // devModus gehoeren zur Bedienung der Strecke und haben im Fall nichts
+    // verloren.
+    const antwort = await fetch("/api/antraege", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        kreditart: data.kreditart,
+        amount: data.amount,
+        months: data.months,
+        personCount: data.personCount,
+        vorname: data.vorname,
+        zweiterVorname: data.zweiterVorname,
+        nachname: data.nachname,
+        geburtsdatum: data.geburtsdatum,
+        email: data.email,
+        telefonVorwahl: data.telefonVorwahl,
+        telefon: data.telefon,
+        strasse: data.strasse,
+        hausnummer: data.hausnummer,
+        plz: data.plz,
+        ort: data.ort,
+        beschaeftigungsart: data.beschaeftigungsart,
+        arbeitgeber: data.arbeitgeber,
+        beschaeftigtSeit: data.beschaeftigtSeit,
+        nettoeinkommen: data.nettoeinkommen,
+        mieteinnahmen: data.mieteinnahmen,
+        mieteinnahmenBetrag: data.mieteinnahmenBetrag,
+        wohnnebenkosten: data.wohnnebenkosten,
+        krankenversicherung: data.krankenversicherung,
+        unterhalt: data.unterhalt,
+        hatKredite: data.hatKredite,
+        kredite: data.kredite,
+        iban: data.iban,
+        bankname: data.bankname,
+        kontoinhaber: data.kontoinhaber,
+      }),
+    }).catch(() => null);
+
+    const angekommen = await antwort
+      ?.json()
+      .then((d: { ok?: boolean }) => d?.ok === true)
+      .catch(() => false);
+
+    if (!angekommen) {
+      // Kein Weiterblaettern: Die Bestaetigung waere sonst eine Zusage, die
+      // niemand einloesen kann — der Antrag liegt dann nirgends.
+      setSendet(false);
+      setFehler(true);
+      return;
+    }
+
     update({ submitted: true });
     goNext();
   }
@@ -36,7 +94,8 @@ export default function StepBank() {
       trust={wt.step8.trust}
       onBack={goBack}
       onNext={handleSubmit}
-      nextLabel={wt.nav.submit}
+      nextLabel={sendet ? wt.step8.sendet : wt.nav.submit}
+      nextDisabled={sendet}
     >
       <FormField
         id="iban"
@@ -59,6 +118,11 @@ export default function StepBank() {
         value={data.kontoinhaber}
         onChange={(e) => update({ kontoinhaber: e.target.value })}
       />
+      {fehler && (
+        <p className="text-sm text-red-400 leading-relaxed">
+          {wt.step8.sendeFehler}
+        </p>
+      )}
     </WizardStepLayout>
   );
 }

@@ -183,6 +183,10 @@ export interface WizardTranslations {
     ibanError: string;
     bankname: string;
     kontoinhaber: string;
+    /** Der Antrag liess sich nicht uebermitteln — Netz weg oder Server hakt. */
+    sendeFehler: string;
+    /** Beschriftung des Knopfes, solange der Antrag unterwegs ist. */
+    sendet: string;
   };
   confirmation: {
     title: string;
@@ -461,6 +465,9 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       ibanError: "Bitte eine gültige IBAN eingeben.",
       bankname: "Name der Bank",
       kontoinhaber: "Kontoinhaber",
+      sendeFehler:
+        "Der Antrag konnte nicht übermittelt werden. Bitte noch einmal versuchen.",
+      sendet: "Wird gesendet",
     },
     confirmation: {
       title: "Antrag",
@@ -736,6 +743,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       ibanError: "Please enter a valid IBAN.",
       bankname: "Bank name",
       kontoinhaber: "Account holder",
+      sendeFehler: "The application could not be submitted. Please try again.",
+      sendet: "Sending",
     },
     confirmation: {
       title: "Application",

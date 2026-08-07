@@ -1,21 +1,27 @@
 import Link from "next/link";
 import AbmeldeKnopf from "@/components/crm/AbmeldeKnopf";
+import {
+  alleAntraege,
+  ibanVerkuerzt,
+  vollerName,
+  zaehleNachStatus,
+} from "@/lib/crm/antraege";
 import { ROLLEN_NAMEN } from "@/lib/crm/benutzer";
 import { ENDSTATIONEN, PIPELINE } from "@/lib/crm/pipeline";
 import { verlangeAnmeldung } from "@/lib/crm/zugang";
+import { findeKreditartNachId } from "@/lib/kreditarten";
+import { formatEuro } from "@/lib/loan-calc";
 
 /**
- * Die Startseite des CRM.
+ * Die Startseite des CRM: der Eingang.
  *
- * Sie zeigt heute noch keine Faelle, und das ist kein Versehen: Die
- * Antragsstrecke schickt ihre Daten bisher nirgendwohin, es gibt also nichts
- * anzuzeigen. Erfundene Beispielfaelle waeren hier das Schlechteste — man
- * gewoehnt sich an Zahlen, die nichts bedeuten. Stattdessen steht die
- * vereinbarte Pipeline schon da, damit sichtbar ist, wohin die Faelle
- * einsortiert werden, sobald sie ankommen.
+ * Die Zahlen an den Stationen sind gezaehlt, nicht gesetzt — steht dort eine
+ * Null, ist die Station wirklich leer.
  */
 export default async function CrmSeite() {
   const benutzer = await verlangeAnmeldung("/crm");
+  const antraege = alleAntraege();
+  const zaehler = zaehleNachStatus();
 
   return (
     <main className="min-h-screen bg-background">
@@ -38,20 +44,18 @@ export default async function CrmSeite() {
       </header>
 
       <div className="mx-auto max-w-6xl px-6 py-10 flex flex-col gap-10">
-        <section className="rounded-[24px] border border-border bg-surface p-6 lg:p-8 flex flex-col gap-3">
-          <span className="text-[11px] font-semibold text-muted tracking-wide">
-            Stand
+        <section className="rounded-[20px] border border-dashed border-amber-400/40 bg-amber-400/[0.06] p-5 flex flex-col gap-2">
+          <span className="text-xs font-semibold text-amber-200/90">
+            Zwischenlösung ohne Datenbank
           </span>
-          <h1 className="text-2xl font-bold tracking-[-0.02em]">
-            Noch keine Anträge — <span className="text-accent">die Ablage fehlt</span>
-          </h1>
-          <p className="text-sm text-muted leading-relaxed max-w-2xl">
-            Der letzte Schritt der Antragsstrecke setzt bisher nur ein
-            Kennzeichen im Browser: Es gibt keinen Endpunkt, der den Antrag
-            entgegennimmt, und keine Datenbank, die ihn behaelt. Solange das so
-            ist, bleibt diese Liste leer. Der nächste Schritt ist eine
-            Postgres-Datenbank in der EU und die Umgebungsvariable{" "}
-            <code className="text-foreground">DATABASE_URL</code>.
+          <p className="text-xs text-amber-200/70 leading-relaxed max-w-3xl">
+            Eingehende Anträge liegen im Arbeitsspeicher des Servers. Auf der
+            veröffentlichten Seite beantwortet nicht immer dieselbe Instanz die
+            nächste Anfrage, und eine Instanz wird nach kurzer Ruhe
+            weggeräumt — Einträge können hier also wieder verschwinden. Zum
+            Ansehen des Ablaufs reicht das, für echte Kunden nicht. Dauerhaft
+            wird es mit einer Postgres-Datenbank und{" "}
+            <code>DATABASE_URL</code>.
           </p>
         </section>
 
@@ -59,7 +63,8 @@ export default async function CrmSeite() {
           <div className="flex items-baseline justify-between gap-4">
             <h2 className="text-sm font-semibold">Pipeline</h2>
             <span className="text-xs text-muted">
-              {PIPELINE.length} Stationen bis zur Entscheidung
+              {antraege.length}{" "}
+              {antraege.length === 1 ? "Fall" : "Fälle"} insgesamt
             </span>
           </div>
 
@@ -71,14 +76,13 @@ export default async function CrmSeite() {
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold">{station.name}</span>
-                  <span className="text-xs text-muted tabular-nums">0</span>
+                  <span className="text-xs text-muted tabular-nums">
+                    {zaehler[station.id] ?? 0}
+                  </span>
                 </div>
                 <p className="text-[11px] text-muted leading-relaxed">
                   {station.beschreibung}
                 </p>
-                <div className="rounded-[12px] border border-dashed border-border px-3 py-4 text-center text-[11px] text-muted">
-                  leer
-                </div>
               </div>
             ))}
           </div>
@@ -89,36 +93,120 @@ export default async function CrmSeite() {
                 key={station.id}
                 className="rounded-[12px] border border-border bg-surface-2 px-3 py-2 text-[11px] text-muted"
               >
-                {station.name} <span className="tabular-nums">0</span>
+                {station.name}{" "}
+                <span className="tabular-nums">{zaehler[station.id] ?? 0}</span>
               </span>
             ))}
           </div>
+        </section>
+
+        <section className="flex flex-col gap-4">
+          <h2 className="text-sm font-semibold">Eingang</h2>
+
+          {antraege.length === 0 ? (
+            <div className="rounded-[24px] border border-border bg-surface p-8 flex flex-col gap-2 text-center">
+              <span className="text-sm font-semibold">
+                Noch kein Antrag eingegangen
+              </span>
+              <p className="text-xs text-muted leading-relaxed">
+                Sobald jemand die Antragsstrecke abschließt, steht der Fall
+                hier — mit allen Angaben aus den acht Schritten.
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-[24px] border border-border bg-surface overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-[11px] text-muted">
+                      <th className="text-left font-semibold px-5 py-3">
+                        Eingang
+                      </th>
+                      <th className="text-left font-semibold px-5 py-3">Name</th>
+                      <th className="text-left font-semibold px-5 py-3">
+                        Verwendung
+                      </th>
+                      <th className="text-right font-semibold px-5 py-3">
+                        Betrag
+                      </th>
+                      <th className="text-right font-semibold px-5 py-3">
+                        Laufzeit
+                      </th>
+                      <th className="text-left font-semibold px-5 py-3">IBAN</th>
+                      <th className="text-left font-semibold px-5 py-3">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {antraege.map((antrag) => {
+                      const art = antrag.kreditart
+                        ? findeKreditartNachId(antrag.kreditart)?.de.name
+                        : undefined;
+                      return (
+                        <tr
+                          key={antrag.id}
+                          className="border-b border-border/60 last:border-0 hover:bg-surface-2/60 transition-colors duration-150"
+                        >
+                          <td className="px-5 py-3 text-xs text-muted whitespace-nowrap">
+                            {new Date(antrag.eingang).toLocaleString("de-DE", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </td>
+                          <td className="px-5 py-3">
+                            <Link
+                              href={`/crm/antrag/${antrag.id}`}
+                              className="font-semibold hover:text-accent transition-colors duration-150"
+                            >
+                              {vollerName(antrag)}
+                            </Link>
+                            <div className="text-[11px] text-muted">
+                              {antrag.ort || "—"}
+                            </div>
+                          </td>
+                          <td className="px-5 py-3 text-xs text-muted">
+                            {art ?? "—"}
+                          </td>
+                          <td className="px-5 py-3 text-right tabular-nums whitespace-nowrap">
+                            {formatEuro(antrag.amount)}
+                          </td>
+                          <td className="px-5 py-3 text-right text-xs text-muted tabular-nums whitespace-nowrap">
+                            {antrag.months} Mon.
+                          </td>
+                          <td className="px-5 py-3 text-xs text-muted tabular-nums">
+                            {ibanVerkuerzt(antrag.iban)}
+                          </td>
+                          <td className="px-5 py-3">
+                            <span className="rounded-full border border-accent/40 bg-accent/10 px-2.5 py-1 text-[11px] text-accent">
+                              Neu
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="rounded-[24px] border border-border bg-surface p-6 lg:p-8 flex flex-col gap-4">
           <h2 className="text-sm font-semibold">Was als Nächstes kommt</h2>
           <ol className="flex flex-col gap-3 text-sm text-muted leading-relaxed list-decimal pl-5">
             <li>
-              Antrag wirklich absenden: Endpunkt, serverseitige Prüfung,
-              Speichern — dazu den Entwicklermodus der Strecke schließen,
-              sonst laufen leere Anträge ein.
+              Postgres in der EU, damit die Fälle bleiben — und die IBAN
+              verschlüsselt liegt statt offen im Speicher.
             </li>
             <li>
-              Schema und Migrationen: Kontakt, Antrag, laufende Kredite,
-              Aktivität, Aufgabe. IBAN verschlüsselt, in Listen nur die
-              letzten vier Stellen.
-            </li>
-            <li>
-              Fallliste und Falldetails mit Statuswechsel, Notiz, Wiedervorlage
-              und Zuweisung.
+              Statuswechsel, Notiz, Wiedervorlage und Zuweisung, damit aus dem
+              Eingang eine Bearbeitung wird.
             </li>
             <li>Benachrichtigung ans Team bei Eingang, CSV-Export.</li>
           </ol>
-          <p className="text-xs text-muted">
-            Die Anmeldung hier ist vorläufig: Konten stehen in einer
-            Umgebungsvariable statt in der Datenbank, und eine Sitzung lässt
-            sich noch nicht vorzeitig beenden. Beides wechselt mit Schritt 2.
-          </p>
         </section>
 
         <Link
