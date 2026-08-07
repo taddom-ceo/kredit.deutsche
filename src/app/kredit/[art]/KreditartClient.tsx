@@ -3,6 +3,7 @@
 import Link from "next/link";
 import CreditCalculator from "@/components/CreditCalculator";
 import Header from "@/components/Header";
+import MitlaufenderCta from "@/components/MitlaufenderCta";
 import Reveal from "@/components/Reveal";
 import {
   StepPayoutIllustration,
@@ -137,7 +138,11 @@ export default function KreditartClient({ slug }: { slug: string }) {
             </ul>
           </div>
 
-          <div className="flex flex-col gap-4 lg:items-end">
+          {/* Auf dieser Seite ist der Rechner der Hauptaufruf. Er traegt
+              deshalb die Marke, an der der mitlaufende Aufruf haengt: Sobald
+              er nach oben aus dem Bild gewandert ist, bleibt der Weg zum
+              Antrag trotzdem in Reichweite. */}
+          <div data-haupt-cta className="flex flex-col gap-4 lg:items-end">
             <div className="flex w-full max-w-md flex-col gap-1.5 lg:self-end">
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
                 {x.rechnerEyebrow}
@@ -344,7 +349,10 @@ export default function KreditartClient({ slug }: { slug: string }) {
         {/* Abschließender Aufruf */}
         <section className="border-t border-border">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-20">
-            <Reveal className="rounded-[24px] border border-accent/25 bg-accent/[0.06] ring-1 ring-white/5 px-6 py-10 lg:px-12 lg:py-12 flex flex-col items-center gap-4 text-center">
+            <Reveal
+              data-schluss-cta
+              className="rounded-[24px] border border-accent/25 bg-accent/[0.06] ring-1 ring-white/5 px-6 py-10 lg:px-12 lg:py-12 flex flex-col items-center gap-4 text-center"
+            >
               <h2 className="text-2xl lg:text-3xl font-bold tracking-[-0.02em] max-w-xl leading-[1.15]">
                 {x.schlussTitel}
               </h2>
@@ -361,6 +369,16 @@ export default function KreditartClient({ slug }: { slug: string }) {
           </div>
         </section>
       </main>
+
+      {/* Fuehrt dorthin, wohin auch der Schlussaufruf dieser Seite fuehrt:
+          in den Antrag mit dem Zweck und den Werten dieser Kreditart. */}
+      <MitlaufenderCta
+        beobachte="[data-haupt-cta]"
+        bisZu="[data-schluss-cta]"
+        href={`/antrag?amount=${art.betrag}&months=${art.monate}&zweck=${art.id}`}
+        label={t.landing.mitlaufCta}
+        hinweis={t.landing.mitlaufNote}
+      />
 
       <footer className="border-t border-border">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 flex flex-wrap items-center justify-between gap-4 text-xs text-muted tracking-wide">
