@@ -114,13 +114,22 @@ export function sitzungLesen(wert: string | undefined): Sitzung | null {
   };
 }
 
-/** Einstellungen des Cookies — an einer Stelle, damit An- und Abmeldung nicht auseinanderlaufen. */
+/**
+ * Einstellungen des Cookies — an einer Stelle, damit An- und Abmeldung nicht
+ * auseinanderlaufen.
+ *
+ * Ohne `maxAge` und ohne `expires`: Der Browser haelt das Cookie dann nur im
+ * Arbeitsspeicher und wirft es weg, sobald er geschlossen wird. Die acht
+ * Stunden aus `SITZUNGSDAUER_SEKUNDEN` bleiben trotzdem in Kraft — sie
+ * stehen im signierten Inhalt und werden vom Server geprueft. Beides
+ * zusammen heisst: spaetestens nach acht Stunden neu anmelden, und schon
+ * vorher, sobald der Browser zu war.
+ */
 export function cookieEinstellungen() {
   return {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax" as const,
     path: "/",
-    maxAge: SITZUNGSDAUER_SEKUNDEN,
   };
 }

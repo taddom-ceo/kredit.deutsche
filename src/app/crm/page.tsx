@@ -43,13 +43,13 @@ export default async function CrmSeite() {
             Stand
           </span>
           <h1 className="text-2xl font-bold tracking-[-0.02em]">
-            Noch keine Antraege — <span className="text-accent">die Ablage fehlt</span>
+            Noch keine Anträge — <span className="text-accent">die Ablage fehlt</span>
           </h1>
           <p className="text-sm text-muted leading-relaxed max-w-2xl">
             Der letzte Schritt der Antragsstrecke setzt bisher nur ein
             Kennzeichen im Browser: Es gibt keinen Endpunkt, der den Antrag
             entgegennimmt, und keine Datenbank, die ihn behaelt. Solange das so
-            ist, bleibt diese Liste leer. Der naechste Schritt ist eine
+            ist, bleibt diese Liste leer. Der nächste Schritt ist eine
             Postgres-Datenbank in der EU und die Umgebungsvariable{" "}
             <code className="text-foreground">DATABASE_URL</code>.
           </p>
@@ -96,16 +96,16 @@ export default async function CrmSeite() {
         </section>
 
         <section className="rounded-[24px] border border-border bg-surface p-6 lg:p-8 flex flex-col gap-4">
-          <h2 className="text-sm font-semibold">Was als Naechstes kommt</h2>
+          <h2 className="text-sm font-semibold">Was als Nächstes kommt</h2>
           <ol className="flex flex-col gap-3 text-sm text-muted leading-relaxed list-decimal pl-5">
             <li>
-              Antrag wirklich absenden: Endpunkt, serverseitige Pruefung,
-              Speichern — dazu den Entwicklermodus der Strecke schliessen,
-              sonst laufen leere Antraege ein.
+              Antrag wirklich absenden: Endpunkt, serverseitige Prüfung,
+              Speichern — dazu den Entwicklermodus der Strecke schließen,
+              sonst laufen leere Anträge ein.
             </li>
             <li>
               Schema und Migrationen: Kontakt, Antrag, laufende Kredite,
-              Aktivitaet, Aufgabe. IBAN verschluesselt, in Listen nur die
+              Aktivität, Aufgabe. IBAN verschlüsselt, in Listen nur die
               letzten vier Stellen.
             </li>
             <li>
@@ -115,8 +115,8 @@ export default async function CrmSeite() {
             <li>Benachrichtigung ans Team bei Eingang, CSV-Export.</li>
           </ol>
           <p className="text-xs text-muted">
-            Die Anmeldung hier ist vorlaeufig: Konten stehen in einer
-            Umgebungsvariable statt in der Datenbank, und eine Sitzung laesst
+            Die Anmeldung hier ist vorläufig: Konten stehen in einer
+            Umgebungsvariable statt in der Datenbank, und eine Sitzung lässt
             sich noch nicht vorzeitig beenden. Beides wechselt mit Schritt 2.
           </p>
         </section>

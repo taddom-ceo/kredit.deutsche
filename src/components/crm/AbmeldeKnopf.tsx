@@ -10,7 +10,7 @@ export default function AbmeldeKnopf() {
   async function abmelden() {
     setLaeuft(true);
     await fetch("/api/crm-login", { method: "DELETE" }).catch(() => null);
-    router.push("/crm/login");
+    router.push("/login");
     // Ohne refresh bliebe die zwischengespeicherte Server-Ansicht mit dem
     // alten Namen im Kopf stehen.
     router.refresh();

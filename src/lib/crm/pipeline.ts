@@ -53,7 +53,7 @@ export const STATIONEN: Station[] = [
   },
   {
     id: "unterlagen_vollstaendig",
-    name: "Unterlagen vollstaendig",
+    name: "Unterlagen vollständig",
     beschreibung: "Alles da, der Fall kann eingereicht werden.",
   },
   {
@@ -69,7 +69,7 @@ export const STATIONEN: Station[] = [
   {
     id: "ausgezahlt",
     name: "Ausgezahlt",
-    beschreibung: "Geld ist beim Kunden, Provision faellig.",
+    beschreibung: "Geld ist beim Kunden, Provision fällig.",
     ende: true,
   },
   {

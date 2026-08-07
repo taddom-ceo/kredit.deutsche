@@ -66,8 +66,10 @@ export async function verlangeAnmeldung(
 ): Promise<BenutzerAnzeige> {
   const benutzer = await angemeldeterBenutzer();
   if (!benutzer) {
+    // Zur gemeinsamen Maske: Sie traegt Seitenpasswort und CRM-Zugang und
+    // blendet aus, was schon vorliegt.
     const nach = ziel ? `?from=${encodeURIComponent(ziel)}` : "";
-    redirect(`/crm/login${nach}`);
+    redirect(`/login${nach}`);
   }
   return benutzer;
 }

@@ -42,14 +42,12 @@ export function proxy(request: NextRequest) {
   }
 
   if (pathname === "/crm" || pathname.startsWith("/crm/")) {
-    // Die Anmeldemaske selbst muss offen bleiben, sonst dreht sich die
-    // Weiterleitung im Kreis.
-    if (pathname !== "/crm/login") {
-      const sitzung = sitzungLesen(
-        request.cookies.get(CRM_SITZUNG_COOKIE)?.value
-      );
-      if (!sitzung) return zurAnmeldung(request, "/crm/login");
-    }
+    const sitzung = sitzungLesen(
+      request.cookies.get(CRM_SITZUNG_COOKIE)?.value
+    );
+    // Dieselbe Maske wie fuer das Seitenpasswort: Sie traegt beide
+    // Anmeldungen und zeigt jeweils nur den Teil, der noch fehlt.
+    if (!sitzung) return zurAnmeldung(request, "/login");
   }
 
   return NextResponse.next();

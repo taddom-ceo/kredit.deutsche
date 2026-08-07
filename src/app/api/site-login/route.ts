@@ -20,7 +20,11 @@ export async function POST(request: Request) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    // Kein maxAge und kein expires: Damit ist das hier ein reines
+    // Sitzungscookie. Der Browser legt es nur im Arbeitsspeicher ab und
+    // wirft es weg, sobald er geschlossen wird — beim naechsten Start steht
+    // das Passwort wieder an. Vorher galt es dreissig Tage, ein einmal
+    // eingegebenes Passwort liess das Geraet also einen Monat lang offen.
   });
   return response;
 }
