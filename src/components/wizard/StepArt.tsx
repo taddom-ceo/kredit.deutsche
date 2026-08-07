@@ -15,7 +15,7 @@ import {
   KREDITARTEN,
   SICHTBAR_ANZAHL,
   findeKreditartNachId,
-  teileWunsch,
+  ganzerWunsch,
   type Kreditart,
 } from "@/lib/kreditarten";
 import WizardStepLayout from "./WizardStepLayout";
@@ -150,7 +150,6 @@ export default function StepArt() {
     const inhalt = art[lang];
     const active = data.kreditart === art.id;
     const Zeichen = zweckIcon(art.id);
-    const [vor, schlagwort, nach] = teileWunsch(inhalt);
     return (
       <div
         key={art.id}
@@ -173,7 +172,7 @@ export default function StepArt() {
         <button
           type="button"
           onClick={() => select(art.id)}
-          aria-label={`${inhalt.wunsch} – ${inhalt.name}`}
+          aria-label={`${ganzerWunsch(inhalt)} – ${inhalt.name}`}
           className="absolute inset-0 rounded-[16px] focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
         />
         {/* Der Inhalt liegt darüber, lässt Klicks aber durch — nur das ⓘ
@@ -189,14 +188,17 @@ export default function StepArt() {
           {/* min-w-0 hebt die Standard-Mindestbreite von Flex-Elementen auf,
               sonst schrumpft der Textblock nicht unter seine Inhaltsbreite und
               lange Zeilen ragen über die Karte hinaus. */}
-          <span className="flex min-w-0 flex-col gap-0.5">
-            {/* Dieselbe Hervorhebung wie auf der Kachel der Startseite. */}
-            <span className="text-sm font-semibold leading-snug break-words">
-              {vor}
-              <span className="text-accent">{schlagwort}</span>
-              {nach}
+          <span className="flex min-w-0 flex-col">
+            {/* Derselbe Aufbau wie auf der Kachel der Startseite: Anlauf
+                klein, Kernaussage groß. Wer von dort kommt, sucht denselben
+                Satz und findet ihn an derselben Stelle. */}
+            <span className="text-[11px] font-medium leading-none text-muted break-words">
+              {inhalt.wunschVor}
             </span>
-            <span className="text-xs text-muted break-words">
+            <span className="mt-1 text-[1.05rem] font-bold leading-[1.2] tracking-[-0.015em] break-words">
+              {inhalt.wunschKern}
+            </span>
+            <span className="mt-1.5 text-xs text-muted break-words">
               {inhalt.teaser}
             </span>
             <span className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-accent">

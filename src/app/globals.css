@@ -1279,3 +1279,10 @@ input[type="range"]:active::-moz-range-thumb {
     transform: none;
   }
 }
+
+/* Der Produktname auf der Kachel in der Farbe des Zwecks. Zusammen mit dem
+   Zeichen darüber trägt er die Farbe; die große Kernaussage bleibt weiß und
+   damit im stärksten Kontrast, den dieser Hintergrund hergibt (15,9:1). */
+.zweck-name {
+  color: var(--zweck);
+}

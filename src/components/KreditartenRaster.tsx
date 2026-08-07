@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import Reveal from "@/components/Reveal";
 import { zweckIcon } from "@/components/illustrations/ZweckIcons";
-import { KREDITARTEN, kreditartPfad, teileWunsch } from "@/lib/kreditarten";
+import { KREDITARTEN, kreditartPfad } from "@/lib/kreditarten";
 import { useLanguage } from "@/lib/language-context";
 
 /**
@@ -53,7 +53,6 @@ export default function KreditartenRaster({
       {gezeigte.map((art, i) => {
         const inhalt = art[lang];
         const Zeichen = zweckIcon(art.id);
-        const [vor, schlagwort, nach] = teileWunsch(inhalt);
         return (
           // Der Versatz läuft nur über die ersten Kacheln hoch. Bei sechzehn
           // Stück wartete man auf die letzte sonst mehrere Sekunden.
@@ -70,21 +69,27 @@ export default function KreditartenRaster({
                 <Zeichen className="size-8" />
               </span>
 
-              <span className="flex min-w-0 flex-col gap-1">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted break-words">
+              <span className="flex min-w-0 flex-col">
+                {/* Der Produktname trägt die Farbe des Zwecks. Klein genug,
+                    dass sechzehn verschiedene Farben als Beschriftung wirken
+                    und nicht als Jahrmarkt — und er bleibt das Wort, unter
+                    dem gesucht wird. */}
+                <span className="zweck-name text-[10px] font-bold uppercase tracking-[0.16em] break-words">
                   {inhalt.name}
                 </span>
-                {/* Das Schlagwort in der Akzentfarbe: Es sagt, worum es
-                    geht, und wird schon beim Ueberfliegen erfasst. Der Rest
-                    des Satzes traegt ihn nur. */}
-                <span className="text-[15px] font-semibold leading-snug tracking-[-0.01em] break-words">
-                  {vor}
-                  <span className="text-accent">{schlagwort}</span>
-                  {nach}
+                {/* Anlauf klein, Kernaussage groß. Der Anlauf steht auf fast
+                    jeder Kachel gleich; groß gesetzt las man beim
+                    Überfliegen sechsmal "Ich möchte", bevor der Unterschied
+                    kam. */}
+                <span className="mt-2 text-[13px] font-medium leading-none text-muted break-words">
+                  {inhalt.wunschVor}
+                </span>
+                <span className="mt-1 text-[1.3rem] font-bold leading-[1.15] tracking-[-0.02em] break-words">
+                  {inhalt.wunschKern}
                 </span>
               </span>
 
-              <span className="text-sm text-muted leading-relaxed break-words">
+              <span className="text-[13px] text-muted leading-relaxed break-words">
                 {inhalt.teaser}
               </span>
 
