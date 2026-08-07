@@ -1,11 +1,15 @@
 import Link from "next/link";
 import AbmeldeKnopf from "@/components/crm/AbmeldeKnopf";
 import {
+  ablageart,
   alleAntraege,
   ibanVerkuerzt,
   vollerName,
+  zaehleAntraege,
   zaehleNachStatus,
+  type Antrag,
 } from "@/lib/crm/antraege";
+import { adressName } from "@/lib/crm/db";
 import { ROLLEN_NAMEN } from "@/lib/crm/benutzer";
 import { ENDSTATIONEN, PIPELINE } from "@/lib/crm/pipeline";
 import { verlangeAnmeldung } from "@/lib/crm/zugang";
@@ -20,8 +24,25 @@ import { formatEuro } from "@/lib/loan-calc";
  */
 export default async function CrmSeite() {
   const benutzer = await verlangeAnmeldung("/crm");
-  const antraege = alleAntraege();
-  const zaehler = zaehleNachStatus();
+
+  // Faellt die Datenbank aus, soll hier nicht eine leere Liste stehen — die
+  // saehe aus wie "keine Antraege" und ist etwas ganz anderes.
+  let antraege: Antrag[] = [];
+  let gesamt = 0;
+  let zaehler: Record<string, number> = {};
+  let fehler: string | null = null;
+
+  try {
+    [antraege, gesamt, zaehler] = await Promise.all([
+      alleAntraege(),
+      zaehleAntraege(),
+      zaehleNachStatus(),
+    ]);
+  } catch (ausnahme) {
+    fehler = ausnahme instanceof Error ? ausnahme.message : String(ausnahme);
+  }
+
+  const art = ablageart();
 
   return (
     <main className="min-h-screen bg-background">
@@ -44,27 +65,58 @@ export default async function CrmSeite() {
       </header>
 
       <div className="mx-auto max-w-6xl px-6 py-10 flex flex-col gap-10">
-        <section className="rounded-[20px] border border-dashed border-amber-400/40 bg-amber-400/[0.06] p-5 flex flex-col gap-2">
-          <span className="text-xs font-semibold text-amber-200/90">
-            Zwischenlösung ohne Datenbank
-          </span>
-          <p className="text-xs text-amber-200/70 leading-relaxed max-w-3xl">
-            Eingehende Anträge liegen im Arbeitsspeicher des Servers. Auf der
-            veröffentlichten Seite beantwortet nicht immer dieselbe Instanz die
-            nächste Anfrage, und eine Instanz wird nach kurzer Ruhe
-            weggeräumt — Einträge können hier also wieder verschwinden. Zum
-            Ansehen des Ablaufs reicht das, für echte Kunden nicht. Dauerhaft
-            wird es mit einer Postgres-Datenbank und{" "}
-            <code>DATABASE_URL</code>.
-          </p>
-        </section>
+        {fehler && (
+          <section className="rounded-[20px] border border-red-400/40 bg-red-400/[0.08] p-5 flex flex-col gap-2">
+            <span className="text-xs font-semibold text-red-300">
+              Die Datenbank antwortet nicht
+            </span>
+            <p className="text-xs text-red-200/80 leading-relaxed max-w-3xl">
+              Diese Liste ist deshalb leer — das heißt nicht, dass keine
+              Anträge da sind. Eingehende Anträge werden derzeit ebenfalls
+              abgewiesen, damit kein Fall verloren geht.
+            </p>
+            <code className="text-[11px] text-red-200/60 break-words">
+              {fehler}
+            </code>
+          </section>
+        )}
 
+        {!fehler && art === "postgres" && (
+          <section className="rounded-[20px] border border-border bg-surface px-5 py-3 flex items-center gap-3">
+            <span className="size-2 rounded-full bg-accent shrink-0" />
+            <span className="text-xs text-muted">
+              Postgres verbunden über{" "}
+              <code className="text-foreground">{adressName()}</code> — Anträge
+              bleiben gespeichert.
+            </span>
+          </section>
+        )}
+
+        {!fehler && art === "speicher" && (
+          <section className="rounded-[20px] border border-dashed border-amber-400/40 bg-amber-400/[0.06] p-5 flex flex-col gap-2">
+            <span className="text-xs font-semibold text-amber-200/90">
+              Zwischenlösung ohne Datenbank
+            </span>
+            <p className="text-xs text-amber-200/70 leading-relaxed max-w-3xl">
+              Es ist keine Verbindungsadresse gesetzt, eingehende Anträge
+              liegen deshalb im Arbeitsspeicher des Servers und können wieder
+              verschwinden. Sobald <code>DATABASE_URL</code> in den
+              Projekteinstellungen steht, wechselt das CRM von selbst auf
+              Postgres.
+            </p>
+          </section>
+        )}
+
+        {/* Bei einem Ausfall bleiben Pipeline und Liste ganz weg. Sonst stuenden
+            dort lauter Nullen und "Noch kein Antrag eingegangen" — eine
+            Aussage ueber die Faelle, die niemand treffen kann, solange die
+            Datenbank schweigt. Die Meldung darueber sagt, was Sache ist. */}
+        {!fehler && (
         <section className="flex flex-col gap-4">
           <div className="flex items-baseline justify-between gap-4">
             <h2 className="text-sm font-semibold">Pipeline</h2>
             <span className="text-xs text-muted">
-              {antraege.length}{" "}
-              {antraege.length === 1 ? "Fall" : "Fälle"} insgesamt
+              {gesamt} {gesamt === 1 ? "Fall" : "Fälle"} insgesamt
             </span>
           </div>
 
@@ -99,7 +151,9 @@ export default async function CrmSeite() {
             ))}
           </div>
         </section>
+        )}
 
+        {!fehler && (
         <section className="flex flex-col gap-4">
           <h2 className="text-sm font-semibold">Eingang</h2>
 
@@ -193,19 +247,22 @@ export default async function CrmSeite() {
             </div>
           )}
         </section>
+        )}
 
         <section className="rounded-[24px] border border-border bg-surface p-6 lg:p-8 flex flex-col gap-4">
           <h2 className="text-sm font-semibold">Was als Nächstes kommt</h2>
           <ol className="flex flex-col gap-3 text-sm text-muted leading-relaxed list-decimal pl-5">
             <li>
-              Postgres in der EU, damit die Fälle bleiben — und die IBAN
-              verschlüsselt liegt statt offen im Speicher.
+              Statuswechsel, Notiz, Wiedervorlage und Zuweisung, damit aus dem
+              Eingang eine Bearbeitung wird. Dafür kommen die Tabellen
+              <code> aktivitaet</code> und <code>aufgabe</code> dazu.
             </li>
             <li>
-              Statuswechsel, Notiz, Wiedervorlage und Zuweisung, damit aus dem
-              Eingang eine Bearbeitung wird.
+              IBAN verschlüsselt ablegen. Neon verschlüsselt die Festplatte,
+              aber ein Auszug der Tabelle liest sich heute im Klartext — dafür
+              braucht es einen eigenen Schlüssel in der Umgebung.
             </li>
-            <li>Benachrichtigung ans Team bei Eingang, CSV-Export.</li>
+            <li>Benachrichtigung ans Team bei Eingang, Excel-Export.</li>
           </ol>
         </section>
 

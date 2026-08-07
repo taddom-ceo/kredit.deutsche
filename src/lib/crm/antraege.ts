@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { abfrage, datenbankVorhanden, stelleSchemaSicher } from "./db";
 import type { StatusId } from "./pipeline";
 
 /**
@@ -183,8 +184,25 @@ export function pruefeAntrag(roh: unknown): Pruefergebnis {
 /* ------------------------------------------------------------------ */
 
 /**
- * Obergrenze der Liste. Ohne sie waechst der Speicher der Instanz
- * unbegrenzt; mit ihr faellt im Zweifel der aelteste Eintrag heraus.
+ * Wo die Antraege liegen.
+ *
+ * Steht eine Verbindungsadresse in der Umgebung, ist es Postgres. Fehlt sie —
+ * beim Arbeiten an der Seite ohne eigene Datenbank —, bleibt es bei der Liste
+ * im Arbeitsspeicher. Der Notbehelf ist absichtlich geblieben: Ohne ihn
+ * liesse sich die Antragsstrecke lokal nicht mehr durchklicken, und ein
+ * fehlender Eintrag in den Projekteinstellungen legte die Seite lahm, statt
+ * sie nur um das CRM zu erleichtern. Welcher Weg gerade gilt, sagt das CRM
+ * offen an, damit niemand eine Vollstaendigkeit annimmt, die es nicht gibt.
+ */
+export type Ablageart = "postgres" | "speicher";
+
+export function ablageart(): Ablageart {
+  return datenbankVorhanden() ? "postgres" : "speicher";
+}
+
+/**
+ * Obergrenze der Liste im Arbeitsspeicher. Ohne sie waechst der Speicher der
+ * Instanz unbegrenzt; mit ihr faellt im Zweifel der aelteste Eintrag heraus.
  */
 const HOECHSTENS = 200;
 
@@ -197,34 +215,135 @@ const HOECHSTENS = 200;
 const ablage = globalThis as unknown as { __crmAntraege?: Antrag[] };
 ablage.__crmAntraege ??= [];
 
+/** Eine Zeile aus der Tabelle `antrag`. */
+type AntragZeile = {
+  id: string;
+  eingang: Date | string;
+  status: string;
+  rohdaten: AntragEingang;
+};
+
+/**
+ * Aus der Zeile wird der Antrag: Die Angaben kommen aus `rohdaten`, Kennung,
+ * Eingang und Status aus den eigenen Spalten. Die uebrigen Spalten sind
+ * Kopien fuer Sortierung und Suche und werden hier bewusst nicht gelesen —
+ * so gibt es nur eine Quelle fuer den Inhalt.
+ */
+function ausZeile(zeile: AntragZeile): Antrag {
+  return {
+    ...zeile.rohdaten,
+    id: zeile.id,
+    eingang:
+      zeile.eingang instanceof Date
+        ? zeile.eingang.toISOString()
+        : new Date(zeile.eingang).toISOString(),
+    status: zeile.status as StatusId,
+  };
+}
+
 /** Antrag aufnehmen. Neueste stehen vorn. */
-export function nimmAntragAn(eingang: AntragEingang): Antrag {
+export async function nimmAntragAn(eingang: AntragEingang): Promise<Antrag> {
   const antrag: Antrag = {
     ...eingang,
     id: randomUUID(),
     eingang: new Date().toISOString(),
     status: "neu",
   };
-  ablage.__crmAntraege!.unshift(antrag);
-  ablage.__crmAntraege!.splice(HOECHSTENS);
+
+  if (ablageart() === "speicher") {
+    ablage.__crmAntraege!.unshift(antrag);
+    ablage.__crmAntraege!.splice(HOECHSTENS);
+    return antrag;
+  }
+
+  await stelleSchemaSicher();
+  await abfrage(
+    `INSERT INTO antrag
+       (id, eingang, status, kreditart, betrag, laufzeit,
+        vorname, nachname, email, ort, iban, rohdaten)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+    [
+      antrag.id,
+      antrag.eingang,
+      antrag.status,
+      antrag.kreditart,
+      Math.round(antrag.amount),
+      Math.round(antrag.months),
+      antrag.vorname,
+      antrag.nachname,
+      antrag.email,
+      antrag.ort,
+      antrag.iban,
+      JSON.stringify(eingang),
+    ]
+  );
   return antrag;
 }
 
-export function alleAntraege(): Antrag[] {
-  return ablage.__crmAntraege ?? [];
+export async function alleAntraege(): Promise<Antrag[]> {
+  if (ablageart() === "speicher") return ablage.__crmAntraege ?? [];
+
+  await stelleSchemaSicher();
+  const zeilen = await abfrage<AntragZeile>(
+    `SELECT id, eingang, status, rohdaten
+       FROM antrag
+      ORDER BY eingang DESC
+      LIMIT 500`
+  );
+  return zeilen.map(ausZeile);
 }
 
-export function findeAntrag(id: string): Antrag | undefined {
-  return alleAntraege().find((a) => a.id === id);
+export async function findeAntrag(id: string): Promise<Antrag | undefined> {
+  if (ablageart() === "speicher") {
+    return (ablage.__crmAntraege ?? []).find((a) => a.id === id);
+  }
+
+  // Eine erfundene Kennung ist keine gueltige UUID, und Postgres wirft dann
+  // statt einer leeren Antwort einen Fehler. Deshalb vorher pruefen: Ein
+  // Tippfehler in der Adresse soll eine 404 ergeben, keine Fehlerseite.
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+  ) {
+    return undefined;
+  }
+
+  await stelleSchemaSicher();
+  const zeilen = await abfrage<AntragZeile>(
+    `SELECT id, eingang, status, rohdaten FROM antrag WHERE id = $1`,
+    [id]
+  );
+  return zeilen[0] ? ausZeile(zeilen[0]) : undefined;
 }
 
 /** Wie viele Faelle je Station stehen — fuer die Spalten der Pipeline. */
-export function zaehleNachStatus(): Record<string, number> {
-  const zaehler: Record<string, number> = {};
-  for (const antrag of alleAntraege()) {
-    zaehler[antrag.status] = (zaehler[antrag.status] ?? 0) + 1;
+export async function zaehleNachStatus(): Promise<Record<string, number>> {
+  if (ablageart() === "speicher") {
+    const zaehler: Record<string, number> = {};
+    for (const antrag of ablage.__crmAntraege ?? []) {
+      zaehler[antrag.status] = (zaehler[antrag.status] ?? 0) + 1;
+    }
+    return zaehler;
   }
+
+  await stelleSchemaSicher();
+  // Gezaehlt wird in der Datenbank, nicht ueber die geladene Liste: Sonst
+  // stimmten die Zahlen nur fuer die ersten 500 Faelle.
+  const zeilen = await abfrage<{ status: string; anzahl: string }>(
+    `SELECT status, count(*)::text AS anzahl FROM antrag GROUP BY status`
+  );
+  const zaehler: Record<string, number> = {};
+  for (const zeile of zeilen) zaehler[zeile.status] = Number(zeile.anzahl);
   return zaehler;
+}
+
+/** Zahl aller Faelle — unabhaengig von der Grenze der geladenen Liste. */
+export async function zaehleAntraege(): Promise<number> {
+  if (ablageart() === "speicher") return (ablage.__crmAntraege ?? []).length;
+  await stelleSchemaSicher();
+  const zeilen = await abfrage<{ anzahl: string }>(
+    `SELECT count(*)::text AS anzahl FROM antrag`
+  );
+  return Number(zeilen[0]?.anzahl ?? 0);
 }
 
 /* ------------------------------------------------------------------ */

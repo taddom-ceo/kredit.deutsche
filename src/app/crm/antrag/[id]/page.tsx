@@ -60,7 +60,7 @@ export default async function AntragSeite({
   const { id } = await params;
   await verlangeAnmeldung(`/crm/antrag/${id}`);
 
-  const antrag = findeAntrag(id);
+  const antrag = await findeAntrag(id);
   // Auch ein Fall, der es nie gab, und einer, der mit der Instanz
   // verschwunden ist, landen hier — von aussen sind sie nicht zu
   // unterscheiden.

@@ -27,6 +27,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const antrag = nimmAntragAn(ergebnis.antrag);
-  return NextResponse.json({ ok: true, id: antrag.id });
+  try {
+    const antrag = await nimmAntragAn(ergebnis.antrag);
+    return NextResponse.json({ ok: true, id: antrag.id });
+  } catch (fehler) {
+    // Die Ablage hat nicht angenommen — Datenbank nicht erreichbar, Schema
+    // nicht anlegbar, was auch immer. Entscheidend ist, dass der Kunde davon
+    // erfaehrt: Die Strecke bleibt dann stehen und zeigt einen Fehler, statt
+    // eine Bestaetigung fuer einen Antrag zu zeigen, den niemand hat.
+    console.error("Antrag konnte nicht abgelegt werden:", fehler);
+    return NextResponse.json({ ok: false, grund: "speicher" }, { status: 500 });
+  }
 }
