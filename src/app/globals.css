@@ -1286,3 +1286,9 @@ input[type="range"]:active::-moz-range-thumb {
 .zweck-name {
   color: var(--zweck);
 }
+
+/* Die Kernaussage auf der Kachel in der Farbe des Zwecks — dieselbe Quelle
+   wie Zeichen und Fläche, damit die Kachel eine Kennung hat statt zweier. */
+.zweck-kern {
+  color: var(--zweck);
+}
