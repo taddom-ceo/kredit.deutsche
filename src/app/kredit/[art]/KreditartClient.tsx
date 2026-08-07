@@ -146,6 +146,11 @@ export default function KreditartClient({ slug }: { slug: string }) {
                 Antrag mit dem Zweck und den Werten dieser Kreditart. */}
             <Link
               href={`/antrag?amount=${art.betrag}&months=${art.monate}&zweck=${art.id}`}
+              // Der mitlaufende Aufruf haengt an diesem Knopf, nicht am
+              // Rechner daneben. Am Rechner gemessen erschien er auf dem
+              // Handy erst 900 Pixel spaeter — so lange stand die Seite ohne
+              // jeden Aufruf da.
+              data-haupt-cta
               className="auftakt group inline-flex w-fit items-center gap-2 rounded-[16px] bg-accent px-7 py-4 text-[15px] font-semibold text-accent-foreground ring-2 ring-white shadow-[0_10px_34px_-8px_rgba(52,211,153,0.6)] transition-all duration-200 hover:bg-accent-strong hover:-translate-y-px focus-visible:ring-4 focus-visible:ring-white"
               style={{ animationDelay: "420ms" }}
             >
@@ -159,11 +164,7 @@ export default function KreditartClient({ slug }: { slug: string }) {
             </Link>
           </div>
 
-          {/* Auf dieser Seite ist der Rechner der Hauptaufruf. Er traegt
-              deshalb die Marke, an der der mitlaufende Aufruf haengt: Sobald
-              er nach oben aus dem Bild gewandert ist, bleibt der Weg zum
-              Antrag trotzdem in Reichweite. */}
-          <div data-haupt-cta className="flex flex-col gap-4 lg:items-end">
+          <div className="flex flex-col gap-4 lg:items-end">
             <div className="flex w-full max-w-md flex-col gap-1.5 lg:self-end">
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
                 {x.rechnerEyebrow}
