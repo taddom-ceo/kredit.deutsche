@@ -50,15 +50,21 @@ export default async function CrmSeite() {
   return (
     <main className="min-h-screen bg-background">
       <header className="border-b border-border">
-        <div className="mx-auto max-w-6xl px-6 py-5 flex items-center justify-between gap-6">
+        {/* Umbrechend und mit truncate: Auf schmalen Geraeten schob der Name
+            sonst den Abmelden-Knopf ueber den Rand hinaus. */}
+        <div className="w-full px-6 lg:px-10 py-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <div className="flex items-baseline gap-3">
             <span className="text-lg font-bold tracking-[-0.02em]">CRM</span>
-            <span className="text-xs text-muted">kredit.deutsche</span>
+            <span className="hidden sm:inline text-xs text-muted">
+              kredit.deutsche
+            </span>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right leading-tight">
-              <div className="text-sm font-semibold">{benutzer.anzeigename}</div>
-              <div className="text-[11px] text-muted">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="min-w-0 text-right leading-tight">
+              <div className="truncate text-sm font-semibold">
+                {benutzer.anzeigename}
+              </div>
+              <div className="truncate text-[11px] text-muted">
                 {ROLLEN_NAMEN[benutzer.rolle]}
               </div>
             </div>
@@ -67,7 +73,7 @@ export default async function CrmSeite() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-6xl px-6 py-10 flex flex-col gap-10">
+      <div className="w-full px-6 lg:px-10 py-10 flex flex-col gap-10">
         {fehler && (
           <section className="rounded-[20px] border border-red-400/40 bg-red-400/[0.08] p-5 flex flex-col gap-2">
             <span className="text-xs font-semibold text-red-300">

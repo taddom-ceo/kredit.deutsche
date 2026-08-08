@@ -70,6 +70,22 @@
   zoom: var(--stage-zoom);
 }
 
+/* Das CRM bricht aus der Buehne aus.
+   Die feste Breite von 1440px ist eine Entscheidung fuer die Marketingseite:
+   Dort sollen Abstaende und Widgets auf jedem Bildschirm im selben Verhaeltnis
+   stehen. Ein Arbeitswerkzeug will das Gegenteil — eine Falltabelle nutzt
+   jeden Zentimeter, und auf einem breiten Monitor laege sonst links und rechts
+   schwarze Flaeche neben der Arbeit.
+   Umgesetzt ueber :has(), weil die Entscheidung von innen kommt: Die Seite
+   selbst kennzeichnet sich, die Buehne darueber reagiert. Ohne das braeuchte
+   es ein zweites Wurzel-Layout und damit einen Umbau des ganzen
+   Verzeichnisbaums. */
+#stage:has([data-vollbreite]) {
+  width: 100%;
+  zoom: 1;
+  min-height: 100vh;
+}
+
 body {
   background-color: var(--background);
   background-image: radial-gradient(

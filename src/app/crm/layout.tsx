@@ -14,5 +14,10 @@ export default function CrmLayout({
   // Unterseiten nicht neu gerendert, eine Pruefung hier liefe also nicht bei
   // jedem Aufruf. Sie steht deshalb in jeder Seite ueber `verlangeAnmeldung`,
   // nah an den Daten.
-  return children;
+  //
+  // Das Kennzeichen `data-vollbreite` sagt der Buehne im Wurzel-Layout, dass
+  // sie ihre feste Breite von 1440px hier aufgeben soll — siehe globals.css.
+  // Es steht am Layout und nicht an den einzelnen Seiten, damit keine neue
+  // CRM-Seite es vergessen kann.
+  return <div data-vollbreite>{children}</div>;
 }

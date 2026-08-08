@@ -108,13 +108,16 @@ export default async function AntragSeite({
   return (
     <main className="min-h-screen bg-background">
       <header className="border-b border-border">
-        <div className="mx-auto max-w-4xl px-6 py-5 flex items-center justify-between gap-6">
+        <div className="w-full px-6 lg:px-10 py-5 flex flex-wrap items-center gap-x-4 gap-y-2">
           <Link
             href="/crm"
             className="text-xs text-muted hover:text-foreground transition-colors duration-200"
           >
             ← Eingang
           </Link>
+          {/* Schiebt Station und Hinweis nach rechts, laesst sie auf schmalen
+              Geraeten aber umbrechen statt ueber den Rand zu draengen. */}
+          <span className="ml-auto" />
           <span
             className={`rounded-full px-2.5 py-1 text-[11px] ${
               antrag.status === "abbrecher"
@@ -133,7 +136,7 @@ export default async function AntragSeite({
         </div>
       </header>
 
-      <div className="mx-auto max-w-4xl px-6 py-10 flex flex-col gap-6">
+      <div className="w-full px-6 lg:px-10 py-10 flex flex-col gap-6">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold tracking-[-0.02em]">
             {vollerName(antrag)}
@@ -245,7 +248,7 @@ export default async function AntragSeite({
           </p>
         )}
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
           <Block titel="Kreditwunsch">
             <Feld name="Verwendung" wert={art} />
             <Feld name="Betrag" wert={formatEuro(antrag.amount)} />
