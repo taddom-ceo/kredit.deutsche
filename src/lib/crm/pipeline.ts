@@ -12,6 +12,7 @@
  */
 
 export type StatusId =
+  | "abbrecher"
   | "neu"
   | "kontaktiert"
   | "unterlagen_angefordert"
@@ -36,6 +37,12 @@ export type Station = {
 };
 
 export const STATIONEN: Station[] = [
+  {
+    id: "abbrecher",
+    name: "Abbrecher",
+    beschreibung:
+      "Strecke bis zu den persönlichen Daten ausgefüllt, dann verlassen. Kontakt liegt vor.",
+  },
   {
     id: "neu",
     name: "Neu",

@@ -3,10 +3,17 @@
 import {
   createContext,
   useContext,
+  useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { DEFAULT_COUNTRY_ISO } from "./country-codes";
+import {
+  antragNutzlast,
+  kontaktVorhanden,
+  sendeAntrag,
+} from "./antrag-senden";
 
 export interface WizardData {
   step: number;
@@ -67,6 +74,15 @@ export interface WizardData {
 }
 
 export const TOTAL_STEPS = 8;
+
+/**
+ * Ab diesem Schritt wird der Stand gesichert, sobald ein Kontakt dasteht.
+ *
+ * Vier ist der Schritt mit den persoenlichen Daten. Frueher gibt es nichts zu
+ * sichern, was einen Menschen erreichbar machte — nur Betrag, Laufzeit und
+ * Verwendungszweck, und damit kann niemand zurueckrufen.
+ */
+export const SICHERN_AB_SCHRITT = 4;
 
 /**
  * Ob der Entwicklermodus angeboten wird.
@@ -191,6 +207,8 @@ type WizardContextValue = {
   goBack: () => void;
   goToStep: (step: number) => void;
   setDevModus: (an: boolean) => void;
+  /** Den fertigen Antrag abschicken. Falsch heisst: nicht angekommen. */
+  sendeFertigenAntrag: () => Promise<boolean>;
 };
 
 const WizardContext = createContext<WizardContextValue | null>(null);
@@ -222,11 +240,114 @@ export function WizardProvider({
     maxStep: initialKreditart ? 2 : initialData.maxStep,
   }));
 
+  /**
+   * Kennung des Falls im CRM, sobald er einmal gesendet wurde. Als Ref und
+   * nicht als Zustand: Sie aendert nichts an der Anzeige, und ein zusaetzliches
+   * Rendern mitten in der Strecke waere nur Unruhe.
+   */
+  const antragId = useRef<string | null>(null);
+
+  /**
+   * Alle Sendungen haengen an einer Kette.
+   *
+   * Wer schnell durchklickt, loest mehrere Aufrufe aus, bevor der erste
+   * geantwortet hat. Liefen sie nebeneinander, haette keiner die Kennung des
+   * anderen und es entstuenden mehrere Faelle fuer denselben Menschen.
+   * Nacheinander kennt jeder das Ergebnis seines Vorgaengers.
+   */
+  const kette = useRef<Promise<void>>(Promise.resolve());
+
+  /**
+   * Was zuletzt hinausging. Verhindert, dass derselbe Satz mehrfach gesendet
+   * wird — etwa wenn der Zeitgeber und der Klick auf "Weiter" zusammenfallen.
+   */
+  const zuletztGesendet = useRef<string>("");
+
+  function sichereZwischenstand(stand: WizardData, dringend = false) {
+    if (stand.step < SICHERN_AB_SCHRITT) return;
+    if (!kontaktVorhanden(stand)) return;
+
+    const nutzlast = JSON.stringify(antragNutzlast(stand));
+    if (nutzlast === zuletztGesendet.current) return;
+    zuletztGesendet.current = nutzlast;
+
+    kette.current = kette.current
+      .then(async () => {
+        const ergebnis = await sendeAntrag(
+          stand,
+          antragId.current,
+          false,
+          dringend
+        );
+        if (ergebnis.id) antragId.current = ergebnis.id;
+        // Misslungen? Dann das Merkzeichen zuruecknehmen, damit der naechste
+        // Anlass es erneut versucht, statt den Stand fuer gesendet zu halten.
+        else if (!ergebnis.ok) zuletztGesendet.current = "";
+      })
+      // Ein misslungener Zwischenstand darf die Strecke nicht stoeren: Der
+      // Kunde merkt nichts davon, und der naechste Anlass versucht es neu.
+      .catch(() => {
+        zuletztGesendet.current = "";
+      });
+  }
+
+  /**
+   * Sichern, waehrend getippt wird — nicht erst beim Weiterblaettern.
+   *
+   * "Weiter" gibt auf Schritt 4 erst frei, wenn alle Felder stimmen. Wer nur
+   * seine E-Mail eintraegt und dann geht, kaeme also nie ueber den Knopf, und
+   * genau dieser Mensch soll erreichbar bleiben. Deshalb haengt das Sichern
+   * an der Eingabe: eineinhalb Sekunden nach der letzten Aenderung geht der
+   * Stand hinaus. Der Zeitgeber wird bei jedem Tastendruck neu gestellt,
+   * sonst entstuende bei jedem Zeichen eine Anfrage.
+   */
+  useEffect(() => {
+    if (data.step < SICHERN_AB_SCHRITT || !kontaktVorhanden(data)) return;
+    const zeitgeber = setTimeout(() => sichereZwischenstand(data), 1500);
+    return () => clearTimeout(zeitgeber);
+  }, [data]);
+
+  /**
+   * Und beim Verlassen des Fensters sofort, ohne die anderthalb Sekunden
+   * abzuwarten: Tab schliessen, wegwischen, Bildschirm sperren. `hidden` ist
+   * dafuer der verlaessliche Anlass — "beforeunload" wird auf Handys
+   * regelmaessig gar nicht ausgeloest.
+   */
+  useEffect(() => {
+    function beimVerlassen() {
+      if (document.visibilityState !== "hidden") return;
+      sichereZwischenstand(data, true);
+    }
+    document.addEventListener("visibilitychange", beimVerlassen);
+    return () =>
+      document.removeEventListener("visibilitychange", beimVerlassen);
+  }, [data]);
+
+  async function sendeFertigenAntrag(): Promise<boolean> {
+    // Erst die laufenden Zwischenstaende abwarten. Sonst geht der fertige
+    // Antrag ohne Kennung hinaus, weil sie noch unterwegs ist — und im CRM
+    // stuenden zwei Faelle.
+    await kette.current.catch(() => undefined);
+    const ergebnis = await sendeAntrag(data, antragId.current, true);
+    if (ergebnis.id) antragId.current = ergebnis.id;
+    // Damit der Zeitgeber danach nicht denselben Satz noch einmal als
+    // Zwischenstand hinterherschickt.
+    if (ergebnis.ok) zuletztGesendet.current = JSON.stringify(antragNutzlast(data));
+    return ergebnis.ok;
+  }
+
   function update(patch: Partial<WizardData>) {
     setData((prev) => ({ ...prev, ...patch }));
   }
 
   function goNext() {
+    // Beim Verlassen der Schritte mit Kontaktdaten den Stand sichern. Der
+    // letzte Schritt ist ausgenommen: Dort geht ohnehin der fertige Antrag
+    // hinaus, ein Zwischenstand davor waere derselbe Satz zweimal.
+    if (data.step >= SICHERN_AB_SCHRITT && data.step < TOTAL_STEPS) {
+      sichereZwischenstand(data);
+    }
+
     setData((prev) => {
       const step = Math.min(prev.step + 1, TOTAL_STEPS + 1);
       return {
@@ -283,7 +404,15 @@ export function WizardProvider({
 
   return (
     <WizardContext.Provider
-      value={{ data, update, goNext, goBack, goToStep, setDevModus }}
+      value={{
+        data,
+        update,
+        goNext,
+        goBack,
+        goToStep,
+        setDevModus,
+        sendeFertigenAntrag,
+      }}
     >
       {children}
     </WizardContext.Provider>

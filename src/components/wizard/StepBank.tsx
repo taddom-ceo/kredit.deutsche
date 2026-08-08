@@ -11,7 +11,7 @@ import { FormField } from "./FormField";
 export default function StepBank() {
   const { lang } = useLanguage();
   const wt = wizardTranslations[lang];
-  const { data, update, goNext, goBack } = useWizard();
+  const { data, update, goNext, goBack, sendeFertigenAntrag } = useWizard();
   const [touched, setTouched] = useState(false);
   const [sendet, setSendet] = useState(false);
   const [fehler, setFehler] = useState(false);
@@ -29,49 +29,11 @@ export default function StepBank() {
     setSendet(true);
     setFehler(false);
 
-    // Nur die Angaben des Antrags, nicht der ganze Zustand: step, maxStep und
-    // devModus gehoeren zur Bedienung der Strecke und haben im Fall nichts
-    // verloren.
-    const antwort = await fetch("/api/antraege", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        kreditart: data.kreditart,
-        amount: data.amount,
-        months: data.months,
-        personCount: data.personCount,
-        vorname: data.vorname,
-        zweiterVorname: data.zweiterVorname,
-        nachname: data.nachname,
-        geburtsdatum: data.geburtsdatum,
-        email: data.email,
-        telefonVorwahl: data.telefonVorwahl,
-        telefon: data.telefon,
-        strasse: data.strasse,
-        hausnummer: data.hausnummer,
-        plz: data.plz,
-        ort: data.ort,
-        beschaeftigungsart: data.beschaeftigungsart,
-        arbeitgeber: data.arbeitgeber,
-        beschaeftigtSeit: data.beschaeftigtSeit,
-        nettoeinkommen: data.nettoeinkommen,
-        mieteinnahmen: data.mieteinnahmen,
-        mieteinnahmenBetrag: data.mieteinnahmenBetrag,
-        wohnnebenkosten: data.wohnnebenkosten,
-        krankenversicherung: data.krankenversicherung,
-        unterhalt: data.unterhalt,
-        hatKredite: data.hatKredite,
-        kredite: data.kredite,
-        iban: data.iban,
-        bankname: data.bankname,
-        kontoinhaber: data.kontoinhaber,
-      }),
-    }).catch(() => null);
-
-    const angekommen = await antwort
-      ?.json()
-      .then((d: { ok?: boolean }) => d?.ok === true)
-      .catch(() => false);
+    // Der Zusammenbau des Antrags und das Senden liegen im Zustand der
+    // Strecke: Von dort ging schon der Zwischenstand hinaus, und beide
+    // muessen dieselbe Kennung benutzen, damit im CRM ein Fall steht und
+    // nicht zwei.
+    const angekommen = await sendeFertigenAntrag();
 
     if (!angekommen) {
       // Kein Weiterblaettern: Die Bestaetigung waere sonst eine Zusage, die

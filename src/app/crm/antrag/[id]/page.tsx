@@ -115,9 +115,21 @@ export default async function AntragSeite({
           >
             ← Eingang
           </Link>
-          <span className="rounded-full border border-accent/40 bg-accent/10 px-2.5 py-1 text-[11px] text-accent">
+          <span
+            className={`rounded-full px-2.5 py-1 text-[11px] ${
+              antrag.status === "abbrecher"
+                ? "border border-amber-400/40 bg-amber-400/10 text-amber-200"
+                : "border border-accent/40 bg-accent/10 text-accent"
+            }`}
+          >
             {station?.name ?? antrag.status}
           </span>
+          {antrag.status === "abbrecher" && (
+            <span className="text-[11px] text-muted">
+              Strecke nicht abgeschlossen — Angaben ab Schritt 5 fehlen
+              möglicherweise.
+            </span>
+          )}
         </div>
       </header>
 

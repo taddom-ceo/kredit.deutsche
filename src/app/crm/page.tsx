@@ -270,7 +270,13 @@ export default async function CrmSeite() {
                               className={`rounded-full px-2.5 py-1 text-[11px] whitespace-nowrap ${
                                 antrag.status === "neu"
                                   ? "border border-accent/40 bg-accent/10 text-accent"
-                                  : "border border-border bg-surface-2 text-muted"
+                                  : // Abbrecher sind kein abgeschlossener
+                                    // Antrag, aber ein Kontakt, der auf einen
+                                    // Anruf wartet — sie duerfen nicht wie
+                                    // Erledigtes aussehen.
+                                    antrag.status === "abbrecher"
+                                    ? "border border-amber-400/40 bg-amber-400/10 text-amber-200"
+                                    : "border border-border bg-surface-2 text-muted"
                               }`}
                             >
                               {findeStation(antrag.status)?.name ??

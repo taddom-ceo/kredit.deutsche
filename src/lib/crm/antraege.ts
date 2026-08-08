@@ -147,8 +147,17 @@ export type Pruefergebnis =
  * Endpunkt ist offen, und was dort ankommt, muss unabhaengig davon Hand und
  * Fuss haben. Geprueft wird nur, was einen Fall unbrauchbar machen wuerde —
  * ohne Namen, Kontakt oder Betrag kann niemand zurueckrufen.
+ *
+ * `abgeschlossen` unterscheidet die beiden Wege in die Ablage. Ein wirklich
+ * abgeschickter Antrag muss vollstaendig sein. Ein Zwischenstand — jemand hat
+ * die persoenlichen Daten ausgefuellt und die Strecke danach verlassen —
+ * braucht nur eines: einen Weg, ihn zu erreichen. Alles andere darf fehlen,
+ * sonst faellt genau der Fall durch das Raster, den man zurueckholen wollte.
  */
-export function pruefeAntrag(roh: unknown): Pruefergebnis {
+export function pruefeAntrag(
+  roh: unknown,
+  abgeschlossen = true
+): Pruefergebnis {
   const d = (roh ?? {}) as Record<string, unknown>;
 
   const antrag: AntragEingang = {
@@ -183,13 +192,28 @@ export function pruefeAntrag(roh: unknown): Pruefergebnis {
     kontoinhaber: text(d.kontoinhaber, 120),
   };
 
-  const fehlend: string[] = [];
-  if (!antrag.vorname) fehlend.push("vorname");
-  if (!antrag.nachname) fehlend.push("nachname");
   // Bewusst grob: Eine Adresse mit @ und einem Punkt dahinter. Strengere
   // Muster weisen regelmaessig gueltige Adressen ab, und ob die Adresse
   // wirklich jemandem gehoert, sagt ohnehin erst die erste Mail.
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(antrag.email)) fehlend.push("email");
+  const emailBrauchbar = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(antrag.email);
+  // Vier Ziffern sind noch keine Rufnummer, aber alles darueber koennte eine
+  // sein. Genauer zu pruefen lohnt nicht: Ob jemand rangeht, sagt erst der
+  // Anruf.
+  const telefonBrauchbar =
+    antrag.telefon.replace(/\D/g, "").length >= 5;
+
+  const fehlend: string[] = [];
+
+  if (!abgeschlossen) {
+    // Zwischenstand: Es genuegt ein Weg, den Menschen zu erreichen.
+    if (!emailBrauchbar && !telefonBrauchbar) fehlend.push("kontakt");
+    if (fehlend.length > 0) return { ok: false, fehlend };
+    return { ok: true, antrag };
+  }
+
+  if (!antrag.vorname) fehlend.push("vorname");
+  if (!antrag.nachname) fehlend.push("nachname");
+  if (!emailBrauchbar) fehlend.push("email");
   if (antrag.amount < BETRAG_MIN || antrag.amount > BETRAG_MAX) {
     fehlend.push("amount");
   }
@@ -294,12 +318,15 @@ function ausZeile(zeile: AntragZeile): Antrag {
 const SPALTEN = `id, eingang, status, wiedervorlage, rohdaten`;
 
 /** Antrag aufnehmen. Neueste stehen vorn. */
-export async function nimmAntragAn(eingang: AntragEingang): Promise<Antrag> {
+export async function nimmAntragAn(
+  eingang: AntragEingang,
+  status: StatusId = "neu"
+): Promise<Antrag> {
   const antrag: Antrag = {
     ...eingang,
     id: randomUUID(),
     eingang: new Date().toISOString(),
-    status: "neu",
+    status,
     wiedervorlage: null,
   };
 
@@ -335,6 +362,77 @@ export async function nimmAntragAn(eingang: AntragEingang): Promise<Antrag> {
   // Zurueck geht der Klartext: Der Endpunkt antwortet damit dem Kunden, der
   // seine eigene Bankverbindung gerade selbst eingetippt hat.
   return antrag;
+}
+
+/**
+ * Einen bereits angelegten Fall mit neueren Angaben ueberschreiben.
+ *
+ * Der Weg dahin: Wer die Strecke bei den persoenlichen Daten verlaesst, steht
+ * als Abbrecher im CRM. Kommt er zurueck und macht weiter, soll daraus
+ * derselbe Fall werden und kein zweiter — deshalb bringt der Browser die
+ * Kennung mit und wir schreiben darauf.
+ *
+ * Der Status folgt einer Regel, die den Vorrang des Teams sichert: Von
+ * "Abbrecher" auf "Neu" wird gehoben, sobald der Antrag wirklich abgeschickt
+ * ist. Hat aber schon jemand den Fall angefasst und weitergeschoben, bleibt
+ * seine Station stehen — die spaete Nachreichung des Kunden darf die Arbeit
+ * des Beraters nicht zurueckdrehen.
+ *
+ * Gibt es die Kennung nicht, kommt null zurueck; der Aufrufer legt dann neu
+ * an, statt die Angaben zu verlieren.
+ */
+export async function aktualisiereAntrag(
+  id: string,
+  eingang: AntragEingang,
+  abgeschlossen: boolean
+): Promise<Antrag | null> {
+  const vorher = await findeAntrag(id);
+  if (!vorher) return null;
+
+  const warAbbrecher = vorher.status === "abbrecher";
+  const status: StatusId =
+    abgeschlossen && warAbbrecher ? "neu" : vorher.status;
+
+  if (ablageart() === "speicher") {
+    const treffer = (ablage.__crmAntraege ?? []).find((a) => a.id === id);
+    if (treffer) Object.assign(treffer, eingang, { status });
+  } else {
+    const abgelegt = mitBankverbindung(eingang, verschluessele);
+    await abfrage(
+      `UPDATE antrag
+          SET status = $2, kreditart = $3, betrag = $4, laufzeit = $5,
+              vorname = $6, nachname = $7, email = $8, ort = $9,
+              iban = $10, rohdaten = $11
+        WHERE id = $1`,
+      [
+        id,
+        status,
+        eingang.kreditart,
+        Math.round(eingang.amount),
+        Math.round(eingang.months),
+        eingang.vorname,
+        eingang.nachname,
+        eingang.email,
+        eingang.ort,
+        abgelegt.iban,
+        JSON.stringify(abgelegt),
+      ]
+    );
+  }
+
+  // Der Uebergang gehoert in den Verlauf: Sonst stuende ein Fall auf "Neu",
+  // und niemand wuesste mehr, dass er als Abbrecher angefangen hat.
+  if (abgeschlossen && warAbbrecher) {
+    await haltFest(id, {
+      benutzer: "Antragsstrecke",
+      art: "status",
+      vonStatus: "abbrecher",
+      nachStatus: "neu",
+      text: null,
+    });
+  }
+
+  return { ...vorher, ...eingang, status };
 }
 
 export async function alleAntraege(): Promise<Antrag[]> {
