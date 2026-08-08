@@ -1,9 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { findeAntrag, vollerName } from "@/lib/crm/antraege";
-import { findeStation } from "@/lib/crm/pipeline";
+import {
+  aktivitaeten,
+  findeAntrag,
+  vollerName,
+  type Aktivitaet,
+} from "@/lib/crm/antraege";
+import { findeStation, STATIONEN } from "@/lib/crm/pipeline";
 import { verlangeAnmeldung } from "@/lib/crm/zugang";
+import {
+  notizSchreiben,
+  statusAendern,
+  wiedervorlageSetzen,
+} from "../../aktionen";
 import { findeKreditartNachId } from "@/lib/kreditarten";
 import { formatEuro, monthlyPayment } from "@/lib/loan-calc";
 
@@ -52,13 +62,30 @@ function datum(wert: string): string {
   return wert;
 }
 
+/** Ein Eintrag des Verlaufs in einem Satz. */
+function beschreibe(eintrag: Aktivitaet): string {
+  if (eintrag.art === "notiz") return eintrag.text ?? "";
+  if (eintrag.art === "wiedervorlage") {
+    return eintrag.text
+      ? `Wiedervorlage am ${datum(eintrag.text)}`
+      : "Wiedervorlage entfernt";
+  }
+  const von = eintrag.vonStatus
+    ? (findeStation(eintrag.vonStatus)?.name ?? eintrag.vonStatus)
+    : "—";
+  const nach = eintrag.nachStatus
+    ? (findeStation(eintrag.nachStatus)?.name ?? eintrag.nachStatus)
+    : "—";
+  return `Station: ${von} → ${nach}`;
+}
+
 export default async function AntragSeite({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  await verlangeAnmeldung(`/crm/antrag/${id}`);
+  const benutzer = await verlangeAnmeldung(`/crm/antrag/${id}`);
 
   const antrag = await findeAntrag(id);
   // Auch ein Fall, der es nie gab, und einer, der mit der Instanz
@@ -66,11 +93,14 @@ export default async function AntragSeite({
   // unterscheiden.
   if (!antrag) notFound();
 
+  const verlauf = await aktivitaeten(id);
+  const darfBearbeiten = benutzer.rolle !== "lesen";
   const art = antrag.kreditart
     ? findeKreditartNachId(antrag.kreditart)?.de.name
     : undefined;
   const station = findeStation(antrag.status);
   const rate = monthlyPayment(antrag.amount, antrag.months);
+  const heute = new Date().toISOString().slice(0, 10);
 
   return (
     <main className="min-h-screen bg-background">
@@ -104,6 +134,101 @@ export default async function AntragSeite({
             })}
           </p>
         </div>
+
+        {darfBearbeiten ? (
+          <section className="rounded-[20px] border border-border bg-surface p-5 flex flex-col gap-5">
+            <h2 className="text-xs font-semibold text-muted tracking-wide">
+              Bearbeitung
+            </h2>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <form action={statusAendern} className="flex flex-col gap-2">
+                <input type="hidden" name="id" value={antrag.id} />
+                <label htmlFor="status" className="text-xs text-muted">
+                  Station
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    id="status"
+                    name="status"
+                    // Der Schluessel wechselt mit dem Status und zwingt React,
+                    // das Feld neu aufzubauen. Ohne ihn behaelt die Auswahl
+                    // nach einer Aenderung ihren alten Eintrag — `defaultValue`
+                    // wirkt nur beim ersten Rendern. Wer dann "Setzen" drueckt,
+                    // ohne hinzusehen, wuerde den Fall auf die alte Station
+                    // zurueckwerfen.
+                    key={antrag.status}
+                    defaultValue={antrag.status}
+                    className="flex-1 rounded-[14px] border border-border bg-surface-2 px-3 py-2.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                  >
+                    {STATIONEN.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="submit"
+                    className="shrink-0 rounded-[14px] bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground transition-colors duration-200 hover:bg-accent-strong"
+                  >
+                    Setzen
+                  </button>
+                </div>
+              </form>
+
+              <form action={wiedervorlageSetzen} className="flex flex-col gap-2">
+                <input type="hidden" name="id" value={antrag.id} />
+                <label htmlFor="tag" className="text-xs text-muted">
+                  Wiedervorlage
+                  {antrag.wiedervorlage && antrag.wiedervorlage < heute && (
+                    <span className="ml-2 text-amber-300">überfällig</span>
+                  )}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    id="tag"
+                    name="tag"
+                    type="date"
+                    // Aus demselben Grund wie bei der Station daneben.
+                    key={antrag.wiedervorlage ?? "ohne"}
+                    defaultValue={antrag.wiedervorlage ?? ""}
+                    className="flex-1 rounded-[14px] border border-border bg-surface-2 px-3 py-2.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                  />
+                  <button
+                    type="submit"
+                    className="shrink-0 rounded-[14px] border border-border-strong bg-surface-2 px-4 py-2.5 text-sm font-semibold text-foreground transition-colors duration-200 hover:bg-surface"
+                  >
+                    Merken
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <form action={notizSchreiben} className="flex flex-col gap-2">
+              <input type="hidden" name="id" value={antrag.id} />
+              <label htmlFor="text" className="text-xs text-muted">
+                Notiz
+              </label>
+              <textarea
+                id="text"
+                name="text"
+                rows={3}
+                placeholder="Was besprochen wurde, was fehlt, was als Nächstes ansteht."
+                className="rounded-[14px] border border-border bg-surface-2 px-3 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+              />
+              <button
+                type="submit"
+                className="self-start rounded-[14px] border border-border-strong bg-surface-2 px-4 py-2.5 text-sm font-semibold text-foreground transition-colors duration-200 hover:bg-surface"
+              >
+                Notiz speichern
+              </button>
+            </form>
+          </section>
+        ) : (
+          <p className="rounded-[20px] border border-border bg-surface px-5 py-4 text-xs text-muted">
+            Dieses Konto darf Fälle ansehen, aber nicht bearbeiten.
+          </p>
+        )}
 
         <div className="grid gap-4 md:grid-cols-2">
           <Block titel="Kreditwunsch">
@@ -223,10 +348,41 @@ export default async function AntragSeite({
           )}
         </section>
 
-        <p className="text-xs text-muted leading-relaxed">
-          Statuswechsel, Notiz und Wiedervorlage kommen mit der Datenbank —
-          ohne sie überlebt keine Änderung den nächsten Neustart des Servers.
-        </p>
+        <section className="rounded-[20px] border border-border bg-surface p-5 flex flex-col gap-3">
+          <h2 className="text-xs font-semibold text-muted tracking-wide">
+            Verlauf
+          </h2>
+          {verlauf.length === 0 ? (
+            <p className="text-sm text-muted">
+              Noch nichts geschehen. Jeder Statuswechsel, jede Notiz und jede
+              Wiedervorlage steht ab jetzt hier — mit Zeitpunkt und Namen.
+            </p>
+          ) : (
+            <ol className="flex flex-col">
+              {verlauf.map((eintrag) => (
+                <li
+                  key={eintrag.id}
+                  className="flex flex-col gap-1 border-b border-border/60 py-3 first:pt-0 last:border-0 last:pb-0"
+                >
+                  <div className="flex items-baseline justify-between gap-4">
+                    <span className="text-sm">{beschreibe(eintrag)}</span>
+                    <span className="shrink-0 text-[11px] text-muted tabular-nums">
+                      {new Date(eintrag.zeit).toLocaleString("de-DE", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-muted">
+                    {eintrag.benutzer}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
       </div>
     </main>
   );

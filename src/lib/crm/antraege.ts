@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { abfrage, datenbankVorhanden, stelleSchemaSicher } from "./db";
 import type { StatusId } from "./pipeline";
+import { entschluessele, verschluessele } from "./verschluesselung";
 
 /**
  * Die Ablage der eingegangenen Antraege.
@@ -70,6 +71,22 @@ export type Antrag = AntragEingang & {
   /** Zeitpunkt des Eingangs als ISO-Zeichenkette. */
   eingang: string;
   status: StatusId;
+  /** Tag der Wiedervorlage als JJJJ-MM-TT, oder null. */
+  wiedervorlage: string | null;
+};
+
+/** Was im Verlauf eines Falls steht. */
+export type AktivitaetArt = "status" | "notiz" | "wiedervorlage";
+
+export type Aktivitaet = {
+  id: string;
+  zeit: string;
+  /** Anzeigename dessen, der es getan hat. */
+  benutzer: string;
+  art: AktivitaetArt;
+  vonStatus: StatusId | null;
+  nachStatus: StatusId | null;
+  text: string | null;
 };
 
 /* ------------------------------------------------------------------ */
@@ -220,26 +237,56 @@ type AntragZeile = {
   id: string;
   eingang: Date | string;
   status: string;
+  wiedervorlage: Date | string | null;
   rohdaten: AntragEingang;
 };
 
+/** Ein Tag als JJJJ-MM-TT, egal ob er als Datum oder als Text ankommt. */
+function alsTag(wert: Date | string | null): string | null {
+  if (!wert) return null;
+  const text = wert instanceof Date ? wert.toISOString() : String(wert);
+  return text.slice(0, 10);
+}
+
+/**
+ * Bankverbindungen verschluesseln beziehungsweise wieder lesbar machen —
+ * die des Antrags und die der laufenden Kredite.
+ *
+ * Nur auf dem Weg in die Datenbank und zurueck. Im Arbeitsspeicher brauchte
+ * es das nicht: Dort liegt der Schluessel im selben Prozess wie die Daten,
+ * die Verschluesselung schuetzte also vor niemandem.
+ */
+function mitBankverbindung(
+  daten: AntragEingang,
+  wandle: (wert: string) => string
+): AntragEingang {
+  return {
+    ...daten,
+    iban: wandle(daten.iban),
+    kredite: daten.kredite.map((k) => ({ ...k, iban: wandle(k.iban) })),
+  };
+}
+
 /**
  * Aus der Zeile wird der Antrag: Die Angaben kommen aus `rohdaten`, Kennung,
- * Eingang und Status aus den eigenen Spalten. Die uebrigen Spalten sind
- * Kopien fuer Sortierung und Suche und werden hier bewusst nicht gelesen —
- * so gibt es nur eine Quelle fuer den Inhalt.
+ * Eingang, Status und Wiedervorlage aus den eigenen Spalten. Die uebrigen
+ * Spalten sind Kopien fuer Sortierung und Suche und werden hier bewusst nicht
+ * gelesen — so gibt es nur eine Quelle fuer den Inhalt.
  */
 function ausZeile(zeile: AntragZeile): Antrag {
   return {
-    ...zeile.rohdaten,
+    ...mitBankverbindung(zeile.rohdaten, entschluessele),
     id: zeile.id,
     eingang:
       zeile.eingang instanceof Date
         ? zeile.eingang.toISOString()
         : new Date(zeile.eingang).toISOString(),
     status: zeile.status as StatusId,
+    wiedervorlage: alsTag(zeile.wiedervorlage),
   };
 }
+
+const SPALTEN = `id, eingang, status, wiedervorlage, rohdaten`;
 
 /** Antrag aufnehmen. Neueste stehen vorn. */
 export async function nimmAntragAn(eingang: AntragEingang): Promise<Antrag> {
@@ -248,6 +295,7 @@ export async function nimmAntragAn(eingang: AntragEingang): Promise<Antrag> {
     id: randomUUID(),
     eingang: new Date().toISOString(),
     status: "neu",
+    wiedervorlage: null,
   };
 
   if (ablageart() === "speicher") {
@@ -255,6 +303,8 @@ export async function nimmAntragAn(eingang: AntragEingang): Promise<Antrag> {
     ablage.__crmAntraege!.splice(HOECHSTENS);
     return antrag;
   }
+
+  const abgelegt = mitBankverbindung(eingang, verschluessele);
 
   await stelleSchemaSicher();
   await abfrage(
@@ -273,10 +323,12 @@ export async function nimmAntragAn(eingang: AntragEingang): Promise<Antrag> {
       antrag.nachname,
       antrag.email,
       antrag.ort,
-      antrag.iban,
-      JSON.stringify(eingang),
+      abgelegt.iban,
+      JSON.stringify(abgelegt),
     ]
   );
+  // Zurueck geht der Klartext: Der Endpunkt antwortet damit dem Kunden, der
+  // seine eigene Bankverbindung gerade selbst eingetippt hat.
   return antrag;
 }
 
@@ -285,7 +337,7 @@ export async function alleAntraege(): Promise<Antrag[]> {
 
   await stelleSchemaSicher();
   const zeilen = await abfrage<AntragZeile>(
-    `SELECT id, eingang, status, rohdaten
+    `SELECT ${SPALTEN}
        FROM antrag
       ORDER BY eingang DESC
       LIMIT 500`
@@ -295,7 +347,14 @@ export async function alleAntraege(): Promise<Antrag[]> {
 
 export async function findeAntrag(id: string): Promise<Antrag | undefined> {
   if (ablageart() === "speicher") {
-    return (ablage.__crmAntraege ?? []).find((a) => a.id === id);
+    const treffer = (ablage.__crmAntraege ?? []).find((a) => a.id === id);
+    // Ein Abbild, nicht der Eintrag selbst. Sonst zeigt der Rueckgabewert auf
+    // dasselbe Objekt wie die Liste, und wer ihn liest, waehrend nebenan
+    // geschrieben wird, sieht den neuen Stand statt des alten. Aus der
+    // Datenbank kommt ohnehin jedes Mal ein frisches Objekt — der Notbehelf
+    // muss sich genauso verhalten, sonst haengt das Verhalten davon ab, wo
+    // die Daten gerade liegen.
+    return treffer ? { ...treffer } : undefined;
   }
 
   // Eine erfundene Kennung ist keine gueltige UUID, und Postgres wirft dann
@@ -309,7 +368,7 @@ export async function findeAntrag(id: string): Promise<Antrag | undefined> {
 
   await stelleSchemaSicher();
   const zeilen = await abfrage<AntragZeile>(
-    `SELECT id, eingang, status, rohdaten FROM antrag WHERE id = $1`,
+    `SELECT ${SPALTEN} FROM antrag WHERE id = $1`,
     [id]
   );
   return zeilen[0] ? ausZeile(zeilen[0]) : undefined;
@@ -344,6 +403,175 @@ export async function zaehleAntraege(): Promise<number> {
     `SELECT count(*)::text AS anzahl FROM antrag`
   );
   return Number(zeilen[0]?.anzahl ?? 0);
+}
+
+/* ------------------------------------------------------------------ */
+/* Bearbeitung                                                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Der Verlauf im Arbeitsspeicher — dasselbe wie die Tabelle `aktivitaet`,
+ * nur fluechtig. Ohne ihn liesse sich die Bearbeitung ohne Datenbank gar
+ * nicht ausprobieren.
+ */
+const verlauf = globalThis as unknown as {
+  __crmAktivitaeten?: (Aktivitaet & { antragId: string })[];
+};
+verlauf.__crmAktivitaeten ??= [];
+
+type AktivitaetZeile = {
+  id: string | number;
+  zeit: Date | string;
+  benutzer: string;
+  art: string;
+  von_status: string | null;
+  nach_status: string | null;
+  text: string | null;
+};
+
+async function haltFest(
+  antragId: string,
+  eintrag: Omit<Aktivitaet, "id" | "zeit">
+): Promise<void> {
+  if (ablageart() === "speicher") {
+    verlauf.__crmAktivitaeten!.unshift({
+      ...eintrag,
+      antragId,
+      id: randomUUID(),
+      zeit: new Date().toISOString(),
+    });
+    return;
+  }
+  await abfrage(
+    `INSERT INTO aktivitaet (antrag_id, benutzer, art, von_status, nach_status, text)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [
+      antragId,
+      eintrag.benutzer,
+      eintrag.art,
+      eintrag.vonStatus,
+      eintrag.nachStatus,
+      eintrag.text,
+    ]
+  );
+}
+
+/** Der Verlauf eines Falls, neueste zuerst. */
+export async function aktivitaeten(antragId: string): Promise<Aktivitaet[]> {
+  if (ablageart() === "speicher") {
+    return (verlauf.__crmAktivitaeten ?? []).filter(
+      (a) => a.antragId === antragId
+    );
+  }
+
+  await stelleSchemaSicher();
+  const zeilen = await abfrage<AktivitaetZeile>(
+    `SELECT id, zeit, benutzer, art, von_status, nach_status, text
+       FROM aktivitaet
+      WHERE antrag_id = $1
+      ORDER BY zeit DESC, id DESC
+      LIMIT 200`,
+    [antragId]
+  );
+  return zeilen.map((z) => ({
+    id: String(z.id),
+    zeit: z.zeit instanceof Date ? z.zeit.toISOString() : String(z.zeit),
+    benutzer: z.benutzer,
+    art: z.art as AktivitaetArt,
+    vonStatus: (z.von_status as StatusId | null) ?? null,
+    nachStatus: (z.nach_status as StatusId | null) ?? null,
+    text: z.text,
+  }));
+}
+
+/**
+ * Status setzen und den Wechsel festhalten.
+ *
+ * Steht der Fall schon auf dem gewuenschten Status, passiert nichts — sonst
+ * fuellte ein versehentlich zweimal abgeschicktes Formular den Verlauf mit
+ * Wechseln, bei denen sich nichts geaendert hat.
+ */
+export async function setzeStatus(
+  id: string,
+  status: StatusId,
+  benutzer: string
+): Promise<void> {
+  const vorher = await findeAntrag(id);
+  if (!vorher || vorher.status === status) return;
+
+  // Den alten Stand festhalten, bevor geschrieben wird — nicht erst danach
+  // aus `vorher` lesen. Sonst haengt der Verlauf daran, ob der gelesene Satz
+  // zufaellig dasselbe Objekt ist wie der gespeicherte.
+  const vonStatus = vorher.status;
+
+  if (ablageart() === "speicher") {
+    const treffer = (ablage.__crmAntraege ?? []).find((a) => a.id === id);
+    if (treffer) treffer.status = status;
+  } else {
+    await abfrage(`UPDATE antrag SET status = $1 WHERE id = $2`, [status, id]);
+  }
+
+  await haltFest(id, {
+    benutzer,
+    art: "status",
+    vonStatus,
+    nachStatus: status,
+    text: null,
+  });
+}
+
+/** Notiz an den Fall schreiben. Leere Notizen werden verworfen. */
+export async function schreibeNotiz(
+  id: string,
+  text: string,
+  benutzer: string
+): Promise<void> {
+  const sauber = text.trim().slice(0, 2000);
+  if (!sauber) return;
+  const vorhanden = await findeAntrag(id);
+  if (!vorhanden) return;
+
+  await haltFest(id, {
+    benutzer,
+    art: "notiz",
+    vonStatus: null,
+    nachStatus: null,
+    text: sauber,
+  });
+}
+
+/**
+ * Wiedervorlage setzen oder abraeumen. `null` loescht sie.
+ *
+ * Auch das Abraeumen steht im Verlauf: Eine verschwundene Wiedervorlage ohne
+ * Spur waere genau die Art Aenderung, die spaeter niemand mehr erklaeren kann.
+ */
+export async function setzeWiedervorlage(
+  id: string,
+  tag: string | null,
+  benutzer: string
+): Promise<void> {
+  if (tag !== null && !/^\d{4}-\d{2}-\d{2}$/.test(tag)) return;
+  const vorhanden = await findeAntrag(id);
+  if (!vorhanden || vorhanden.wiedervorlage === tag) return;
+
+  if (ablageart() === "speicher") {
+    const treffer = (ablage.__crmAntraege ?? []).find((a) => a.id === id);
+    if (treffer) treffer.wiedervorlage = tag;
+  } else {
+    await abfrage(`UPDATE antrag SET wiedervorlage = $1 WHERE id = $2`, [
+      tag,
+      id,
+    ]);
+  }
+
+  await haltFest(id, {
+    benutzer,
+    art: "wiedervorlage",
+    vonStatus: null,
+    nachStatus: null,
+    text: tag,
+  });
 }
 
 /* ------------------------------------------------------------------ */

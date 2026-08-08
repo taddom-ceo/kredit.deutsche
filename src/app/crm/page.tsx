@@ -10,8 +10,9 @@ import {
   type Antrag,
 } from "@/lib/crm/antraege";
 import { adressName } from "@/lib/crm/db";
+import { schluesselVorhanden } from "@/lib/crm/verschluesselung";
 import { ROLLEN_NAMEN } from "@/lib/crm/benutzer";
-import { ENDSTATIONEN, PIPELINE } from "@/lib/crm/pipeline";
+import { ENDSTATIONEN, PIPELINE, findeStation } from "@/lib/crm/pipeline";
 import { verlangeAnmeldung } from "@/lib/crm/zugang";
 import { findeKreditartNachId } from "@/lib/kreditarten";
 import { formatEuro } from "@/lib/loan-calc";
@@ -43,6 +44,8 @@ export default async function CrmSeite() {
   }
 
   const art = ablageart();
+  // Fuer die Frage, ob eine Wiedervorlage schon faellig ist.
+  const heute = new Date().toISOString().slice(0, 10);
 
   return (
     <main className="min-h-screen bg-background">
@@ -87,7 +90,15 @@ export default async function CrmSeite() {
             <span className="text-xs text-muted">
               Postgres verbunden über{" "}
               <code className="text-foreground">{adressName()}</code> — Anträge
-              bleiben gespeichert.
+              bleiben gespeichert.{" "}
+              {schluesselVorhanden() ? (
+                <>Bankverbindungen liegen verschlüsselt.</>
+              ) : (
+                <span className="text-amber-200/80">
+                  Bankverbindungen liegen im Klartext — dafür fehlt{" "}
+                  <code>CRM_DATEN_SCHLUESSEL</code>.
+                </span>
+              )}
             </span>
           </section>
         )}
@@ -188,7 +199,10 @@ export default async function CrmSeite() {
                       </th>
                       <th className="text-left font-semibold px-5 py-3">IBAN</th>
                       <th className="text-left font-semibold px-5 py-3">
-                        Status
+                        Wiedervorlage
+                      </th>
+                      <th className="text-left font-semibold px-5 py-3">
+                        Station
                       </th>
                     </tr>
                   </thead>
@@ -233,9 +247,34 @@ export default async function CrmSeite() {
                           <td className="px-5 py-3 text-xs text-muted tabular-nums">
                             {ibanVerkuerzt(antrag.iban)}
                           </td>
+                          <td className="px-5 py-3 text-xs tabular-nums whitespace-nowrap">
+                            {antrag.wiedervorlage ? (
+                              <span
+                                className={
+                                  antrag.wiedervorlage < heute
+                                    ? "text-amber-300"
+                                    : "text-muted"
+                                }
+                              >
+                                {antrag.wiedervorlage
+                                  .split("-")
+                                  .reverse()
+                                  .join(".")}
+                              </span>
+                            ) : (
+                              <span className="text-muted">—</span>
+                            )}
+                          </td>
                           <td className="px-5 py-3">
-                            <span className="rounded-full border border-accent/40 bg-accent/10 px-2.5 py-1 text-[11px] text-accent">
-                              Neu
+                            <span
+                              className={`rounded-full px-2.5 py-1 text-[11px] whitespace-nowrap ${
+                                antrag.status === "neu"
+                                  ? "border border-accent/40 bg-accent/10 text-accent"
+                                  : "border border-border bg-surface-2 text-muted"
+                              }`}
+                            >
+                              {findeStation(antrag.status)?.name ??
+                                antrag.status}
                             </span>
                           </td>
                         </tr>
@@ -253,16 +292,14 @@ export default async function CrmSeite() {
           <h2 className="text-sm font-semibold">Was als Nächstes kommt</h2>
           <ol className="flex flex-col gap-3 text-sm text-muted leading-relaxed list-decimal pl-5">
             <li>
-              Statuswechsel, Notiz, Wiedervorlage und Zuweisung, damit aus dem
-              Eingang eine Bearbeitung wird. Dafür kommen die Tabellen
-              <code> aktivitaet</code> und <code>aufgabe</code> dazu.
-            </li>
-            <li>
-              IBAN verschlüsselt ablegen. Neon verschlüsselt die Festplatte,
-              aber ein Auszug der Tabelle liest sich heute im Klartext — dafür
-              braucht es einen eigenen Schlüssel in der Umgebung.
+              Zuweisung an einen Berater — heute steht am Verlauf, wer etwas
+              getan hat, aber nicht, wer zuständig ist.
             </li>
             <li>Benachrichtigung ans Team bei Eingang, Excel-Export.</li>
+            <li>
+              Eigene Konten statt der Umgebungsvariable, damit sich eine
+              Sitzung auch vorzeitig beenden lässt.
+            </li>
           </ol>
         </section>
 

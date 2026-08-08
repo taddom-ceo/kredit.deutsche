@@ -116,6 +116,29 @@ const SCHEMA = [
    )`,
   `CREATE INDEX IF NOT EXISTS antrag_eingang_idx ON antrag (eingang DESC)`,
   `CREATE INDEX IF NOT EXISTS antrag_status_idx ON antrag (status)`,
+  // Nachtraeglich hinzugekommen. ADD COLUMN IF NOT EXISTS holt auch Tabellen
+  // ein, die schon vor dieser Zeile entstanden sind.
+  `ALTER TABLE antrag ADD COLUMN IF NOT EXISTS wiedervorlage date`,
+  /**
+   * Der Verlauf eines Falls: jeder Statuswechsel, jede Notiz, jede
+   * Wiedervorlage mit Zeitpunkt und Urheber.
+   *
+   * Eigene Tabelle statt Spalten am Antrag, weil ein Fall beliebig viele
+   * Eintraege hat und weil nichts davon ueberschrieben werden darf: Wer wann
+   * was entschieden hat, ist bei einer Kreditvermittlung die eine Frage, die
+   * man spaeter wirklich beantworten koennen muss.
+   */
+  `CREATE TABLE IF NOT EXISTS aktivitaet (
+     id          bigserial PRIMARY KEY,
+     antrag_id   uuid NOT NULL REFERENCES antrag(id) ON DELETE CASCADE,
+     zeit        timestamptz NOT NULL DEFAULT now(),
+     benutzer    text NOT NULL,
+     art         text NOT NULL,
+     von_status  text,
+     nach_status text,
+     text        text
+   )`,
+  `CREATE INDEX IF NOT EXISTS aktivitaet_antrag_idx ON aktivitaet (antrag_id, zeit DESC)`,
 ];
 
 /**

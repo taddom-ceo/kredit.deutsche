@@ -131,4 +131,17 @@ if (!process.env.CRM_SESSION_SECRET) {
   console.log(`CRM_SESSION_SECRET=${randomBytes(32).toString("base64url")}`);
 }
 
+if (!process.env.CRM_DATEN_SCHLUESSEL) {
+  console.log("");
+  console.log(
+    "Und ein Schluessel fuer die Bankverbindungen. Fehlt er, liegen IBANs im"
+  );
+  console.log(
+    "Klartext in der Datenbank. Einmal gesetzt, darf er nicht mehr wechseln —"
+  );
+  console.log("sonst sind die bereits gespeicherten IBANs nicht mehr lesbar:");
+  console.log("");
+  console.log(`CRM_DATEN_SCHLUESSEL=${randomBytes(32).toString("base64url")}`);
+}
+
 console.log("");
