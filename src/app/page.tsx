@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import CreditCalculator from "@/components/CreditCalculator";
+import Fussbereich from "@/components/Fussbereich";
 import KreditartenRaster from "@/components/KreditartenRaster";
 import MitlaufenderCta from "@/components/MitlaufenderCta";
 import Reveal from "@/components/Reveal";
@@ -477,11 +478,7 @@ export default function Home() {
         hinweis={l.mitlaufNote}
       />
 
-      <footer className="border-t border-border">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 text-xs text-muted tracking-wide">
-          © {new Date().getFullYear()} cresolu.de
-        </div>
-      </footer>
+      <Fussbereich />
     </>
   );
 }

@@ -8,6 +8,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
+import Fussbereich from "@/components/Fussbereich";
 import Header from "@/components/Header";
 import { useLanguage } from "@/lib/language-context";
 import { angeboteTexte, type AngeboteTexte } from "@/lib/angebote-i18n";
@@ -904,6 +905,7 @@ export default function AngeboteClient({
           </Link>
         </div>
       </main>
+      <Fussbereich />
     </>
   );
 }

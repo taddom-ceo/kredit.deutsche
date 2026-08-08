@@ -1,5 +1,6 @@
 "use client";
 
+import Fussbereich from "@/components/Fussbereich";
 import Header from "@/components/Header";
 import StepProgress from "@/components/wizard/StepProgress";
 import { WizardProvider, useWizard, TOTAL_STEPS } from "@/lib/wizard-context";
@@ -50,6 +51,11 @@ function AntragShell() {
       <main className="flex-1">
         <ActiveStep />
       </main>
+      {/* Gerade hier gehoert der Weg zur Datenschutzerklaerung hin: Auf
+          dieser Strecke werden Einkommen, Arbeitgeber und Bankverbindung
+          erhoben. Wer wissen will, was damit geschieht, soll nicht erst zur
+          Startseite zurueck muessen. */}
+      <Fussbereich />
     </>
   );
 }

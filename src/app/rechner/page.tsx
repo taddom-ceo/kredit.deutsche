@@ -1,6 +1,7 @@
 "use client";
 
 import CreditCalculator from "@/components/CreditCalculator";
+import Fussbereich from "@/components/Fussbereich";
 import Header from "@/components/Header";
 import BankMarquee from "@/components/BankMarquee";
 import Reveal from "@/components/Reveal";
@@ -50,11 +51,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-border">
-        <div className="mx-auto max-w-6xl px-6 py-8 text-xs text-muted tracking-wide">
-          © {new Date().getFullYear()} kredit.deutsche
-        </div>
-      </footer>
+      <Fussbereich />
     </>
   );
 }

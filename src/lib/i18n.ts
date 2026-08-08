@@ -72,6 +72,17 @@ export interface Translations {
     schlussText: string;
     schlussCta: string;
   };
+  // Der Fussbereich steht auf jeder Seite. Impressum und Datenschutz gibt es
+  // nur auf Deutsch — das Recht, dem sie folgen, gibt es auch nur dort —,
+  // aber der Weg dorthin soll in beiden Sprachen beschriftet sein.
+  fuss: {
+    rechtliches: string;
+    startseite: string;
+    kreditarten: string;
+    impressum: string;
+    datenschutz: string;
+    hinweis: string;
+  };
 }
 
 export const translations: Record<Language, Translations> = {
@@ -257,6 +268,15 @@ export const translations: Record<Language, Translations> = {
         "Unverbindlich, kostenlos und ohne Wirkung auf Ihre Bonität.",
       schlussCta: "Jetzt Rate berechnen",
     },
+    fuss: {
+      rechtliches: "Rechtliches",
+      startseite: "Startseite",
+      kreditarten: "Kreditarten",
+      impressum: "Impressum",
+      datenschutz: "Datenschutz",
+      hinweis:
+        "cresolu.de vermittelt Kredite und vergibt selbst keine Darlehen. Die Anfrage ist kostenlos und unverbindlich; ein Vertrag kommt erst mit der finanzierenden Bank zustande.",
+    },
   },
   en: {
     hero: {
@@ -438,6 +458,17 @@ export const translations: Record<Language, Translations> = {
       schlussTitle: "See in two minutes what is possible",
       schlussText: "Non-binding, free, and with no effect on your credit score.",
       schlussCta: "Calculate my instalment",
+    },
+    fuss: {
+      rechtliches: "Legal",
+      startseite: "Home",
+      kreditarten: "Loan types",
+      // Beide Seiten sind auf Deutsch, weil sie deutschem Recht folgen. Der
+      // Zusatz sagt das vorher, statt den Leser darauf auflaufen zu lassen.
+      impressum: "Legal notice (German)",
+      datenschutz: "Privacy policy (German)",
+      hinweis:
+        "cresolu.de brokers loans and does not lend money itself. Enquiries are free and non-binding; a contract is only concluded with the financing bank.",
     },
   },
 };

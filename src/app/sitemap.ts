@@ -38,5 +38,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.6,
     },
+    // Pflichtseiten. Sie stehen weit unten in der Gewichtung, gehoeren aber
+    // ins Verzeichnis: Eine Suchmaschine, die Impressum und
+    // Datenschutzerklaerung findet, wertet das als Zeichen fuer einen
+    // ernsthaften Anbieter.
+    {
+      url: absolut("/impressum"),
+      lastModified: stand,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: absolut("/datenschutz"),
+      lastModified: stand,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
   ];
 }

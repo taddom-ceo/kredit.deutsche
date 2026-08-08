@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Fussbereich from "@/components/Fussbereich";
 import Header from "@/components/Header";
 import KreditartenRaster from "@/components/KreditartenRaster";
 import MitlaufenderCta from "@/components/MitlaufenderCta";
@@ -111,17 +112,7 @@ export default function KreditUebersichtClient() {
         hinweis={l.mitlaufNote}
       />
 
-      <footer className="border-t border-border">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 flex flex-wrap items-center justify-between gap-4 text-xs text-muted tracking-wide">
-          <span>© {new Date().getFullYear()} cresolu.de</span>
-          <Link
-            href="/"
-            className="transition-colors duration-200 hover:text-foreground"
-          >
-            {x.zurStartseite}
-          </Link>
-        </div>
-      </footer>
+      <Fussbereich />
     </>
   );
 }
