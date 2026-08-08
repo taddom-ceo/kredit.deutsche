@@ -12,6 +12,7 @@ import { verlangeAnmeldung } from "@/lib/crm/zugang";
 import { schluesselVorhanden } from "@/lib/crm/verschluesselung";
 import IbanKopieren from "@/components/crm/IbanKopieren";
 import {
+  fallLoeschen,
   notizSchreiben,
   statusAendern,
   wiedervorlageSetzen,
@@ -84,11 +85,19 @@ function beschreibe(eintrag: Aktivitaet): string {
 
 export default async function AntragSeite({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
   const benutzer = await verlangeAnmeldung(`/crm/antrag/${id}`);
+  const parameter = await searchParams;
+  // Die Rueckfrage vor dem Loeschen steht in der Adresse statt im Zustand
+  // einer Client-Komponente: Ein Klick auf "Löschen" fuehrt auf dieselbe
+  // Seite mit einem Parameter, und dort steht die Frage. Kein Skript noetig,
+  // und ein versehentliches Neuladen loescht nichts.
+  const loeschenGefragt = parameter.loeschen === "1";
 
   const antrag = await findeAntrag(id);
   // Auch ein Fall, der es nie gab, und einer, der mit der Instanz
@@ -393,6 +402,51 @@ export default async function AntragSeite({
             </div>
           )}
         </section>
+
+        {benutzer.rolle === "admin" && (
+          <section className="rounded-[20px] border border-border bg-surface p-5 flex flex-col gap-3">
+            <h2 className="text-xs font-semibold text-muted tracking-wide">
+              Löschen
+            </h2>
+            {loeschenGefragt ? (
+              <form
+                action={fallLoeschen}
+                className="flex flex-wrap items-center gap-3"
+              >
+                <input type="hidden" name="id" value={antrag.id} />
+                <span className="text-sm">
+                  Fall und Verlauf endgültig löschen? Das lässt sich nicht
+                  rückgängig machen.
+                </span>
+                <button
+                  type="submit"
+                  className="rounded-[12px] border border-red-400/50 bg-red-400/10 px-4 py-2 text-xs font-semibold text-red-300 transition-colors duration-150 hover:bg-red-400/20"
+                >
+                  Ja, endgültig löschen
+                </button>
+                <Link
+                  href={`/crm/antrag/${antrag.id}`}
+                  className="text-xs text-muted transition-colors duration-150 hover:text-foreground"
+                >
+                  Abbrechen
+                </Link>
+              </form>
+            ) : (
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-xs text-muted leading-relaxed">
+                  Für ein Löschbegehren nach Art. 17 DSGVO oder den Widerspruch
+                  eines Abbrechers. Der Verlauf verschwindet mit.
+                </p>
+                <Link
+                  href={`/crm/antrag/${antrag.id}?loeschen=1`}
+                  className="ml-auto rounded-[12px] border border-border px-3 py-2 text-xs text-muted transition-colors duration-150 hover:border-red-400/50 hover:text-red-300"
+                >
+                  Fall löschen
+                </Link>
+              </div>
+            )}
+          </section>
+        )}
 
         <section className="rounded-[20px] border border-border bg-surface p-5 flex flex-col gap-3">
           <h2 className="text-xs font-semibold text-muted tracking-wide">

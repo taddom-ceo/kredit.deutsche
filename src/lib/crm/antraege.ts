@@ -435,17 +435,102 @@ export async function aktualisiereAntrag(
   return { ...vorher, ...eingang, status };
 }
 
-export async function alleAntraege(): Promise<Antrag[]> {
-  if (ablageart() === "speicher") return ablage.__crmAntraege ?? [];
+/**
+ * Wonach der Eingang eingeschraenkt wird.
+ *
+ * Ohne das ist die Liste ab dem ersten ernsthaften Betrieb unbenutzbar: Wer
+ * einen Kunden am Telefon hat, sucht ihn und will nicht scrollen, und wer den
+ * Tag beginnt, will die faelligen Wiedervorlagen sehen und sonst nichts.
+ */
+export type AntragFilter = {
+  /** Freitext ueber Name, E-Mail, Telefon und Ort. */
+  suche?: string;
+  /** Nur diese Station. */
+  station?: StatusId | null;
+  /** Nur Faelle, deren Wiedervorlage heute oder frueher faellig ist. */
+  nurFaellig?: boolean;
+};
+
+/**
+ * Sonderzeichen im Suchbegriff entschaerfen. Ohne das waere ein eingetipptes
+ * "%" ein Platzhalter fuer alles und "_" fuer ein beliebiges Zeichen — die
+ * Suche faende dann Dinge, nach denen niemand gefragt hat.
+ */
+function fuerLike(suche: string): string {
+  return suche.replace(/[\\%_]/g, (zeichen) => `\\${zeichen}`);
+}
+
+function passtImSpeicher(antrag: Antrag, filter: AntragFilter): boolean {
+  if (filter.station && antrag.status !== filter.station) return false;
+  if (filter.nurFaellig) {
+    const heute = new Date().toISOString().slice(0, 10);
+    if (!antrag.wiedervorlage || antrag.wiedervorlage > heute) return false;
+  }
+  const suche = filter.suche?.trim().toLowerCase();
+  if (suche) {
+    const heuhaufen = [
+      antrag.vorname,
+      antrag.nachname,
+      antrag.email,
+      antrag.telefon,
+      antrag.ort,
+    ]
+      .join(" ")
+      .toLowerCase();
+    if (!heuhaufen.includes(suche)) return false;
+  }
+  return true;
+}
+
+export async function alleAntraege(
+  filter: AntragFilter = {}
+): Promise<Antrag[]> {
+  if (ablageart() === "speicher") {
+    return (ablage.__crmAntraege ?? []).filter((a) =>
+      passtImSpeicher(a, filter)
+    );
+  }
 
   await stelleSchemaSicher();
   const zeilen = await abfrage<AntragZeile>(
     `SELECT ${SPALTEN}
        FROM antrag
+      WHERE ${WO}
       ORDER BY eingang DESC
-      LIMIT 500`
+      LIMIT 500`,
+    filterWerte(filter)
   );
   return zeilen.map(ausZeile);
+}
+
+/**
+ * Die Bedingung, die Suche, Station und Faelligkeit zusammen ergeben.
+ *
+ * Als eine Zeichenkette mit drei Platzhaltern statt zusammengesetzt: So
+ * benutzen Liste, Zaehlung und Export dieselbe Bedingung, und keine kann
+ * abweichen. Ein nicht gesetzter Filter kommt als NULL an und faellt damit
+ * von selbst weg.
+ */
+const WO = `
+  ($1::text IS NULL OR (
+     vorname ILIKE '%' || $1 || '%' ESCAPE '\\' OR
+     nachname ILIKE '%' || $1 || '%' ESCAPE '\\' OR
+     email ILIKE '%' || $1 || '%' ESCAPE '\\' OR
+     coalesce(ort, '') ILIKE '%' || $1 || '%' ESCAPE '\\' OR
+     coalesce(rohdaten->>'telefon', '') ILIKE '%' || $1 || '%' ESCAPE '\\'
+   ))
+  AND ($2::text IS NULL OR status = $2)
+  AND ($3::boolean IS NOT TRUE OR
+       (wiedervorlage IS NOT NULL AND wiedervorlage <= CURRENT_DATE))
+`;
+
+function filterWerte(filter: AntragFilter): unknown[] {
+  const suche = filter.suche?.trim();
+  return [
+    suche ? fuerLike(suche) : null,
+    filter.station ?? null,
+    filter.nurFaellig === true,
+  ];
 }
 
 export async function findeAntrag(id: string): Promise<Antrag | undefined> {
@@ -498,14 +583,57 @@ export async function zaehleNachStatus(): Promise<Record<string, number>> {
   return zaehler;
 }
 
-/** Zahl aller Faelle — unabhaengig von der Grenze der geladenen Liste. */
-export async function zaehleAntraege(): Promise<number> {
-  if (ablageart() === "speicher") return (ablage.__crmAntraege ?? []).length;
+/**
+ * Zahl der Faelle, die dem Filter entsprechen — unabhaengig von der Grenze
+ * der geladenen Liste.
+ */
+export async function zaehleAntraege(
+  filter: AntragFilter = {}
+): Promise<number> {
+  if (ablageart() === "speicher") {
+    return (ablage.__crmAntraege ?? []).filter((a) =>
+      passtImSpeicher(a, filter)
+    ).length;
+  }
   await stelleSchemaSicher();
   const zeilen = await abfrage<{ anzahl: string }>(
-    `SELECT count(*)::text AS anzahl FROM antrag`
+    `SELECT count(*)::text AS anzahl FROM antrag WHERE ${WO}`,
+    filterWerte(filter)
   );
   return Number(zeilen[0]?.anzahl ?? 0);
+}
+
+/** Wie viele Wiedervorlagen heute oder frueher faellig sind. */
+export async function zaehleFaellige(): Promise<number> {
+  return zaehleAntraege({ nurFaellig: true });
+}
+
+/**
+ * Einen Fall samt Verlauf loeschen.
+ *
+ * Ohne diese Moeglichkeit liesse sich ein Loeschbegehren nach Art. 17 DSGVO
+ * nur ueber die Datenbank erfuellen — und bei Abbrechern, die nie etwas
+ * abgeschickt haben, ist ein Widerspruch der Normalfall und nicht die
+ * Ausnahme. Der Verlauf verschwindet mit: Er haengt am Fall und traegt
+ * dessen Notizen.
+ */
+export async function loescheAntrag(id: string): Promise<boolean> {
+  const vorhanden = await findeAntrag(id);
+  if (!vorhanden) return false;
+
+  if (ablageart() === "speicher") {
+    const liste = ablage.__crmAntraege ?? [];
+    const stelle = liste.findIndex((a) => a.id === id);
+    if (stelle >= 0) liste.splice(stelle, 1);
+    verlauf.__crmAktivitaeten = (verlauf.__crmAktivitaeten ?? []).filter(
+      (a) => a.antragId !== id
+    );
+    return true;
+  }
+
+  // Der Verlauf haengt per ON DELETE CASCADE am Fall und geht mit.
+  await abfrage(`DELETE FROM antrag WHERE id = $1`, [id]);
+  return true;
 }
 
 /* ------------------------------------------------------------------ */

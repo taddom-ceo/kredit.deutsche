@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import {
   haltEinsichtFest,
+  loescheAntrag,
   schreibeNotiz,
   setzeStatus,
   setzeWiedervorlage,
@@ -85,4 +87,28 @@ export async function wiedervorlageSetzen(formular: FormData) {
   const tag = String(formular.get("tag") ?? "").trim();
   await setzeWiedervorlage(id, tag === "" ? null : tag, benutzer.anzeigename);
   aktualisiere(id);
+}
+
+/**
+ * Einen Fall endgueltig loeschen.
+ *
+ * Nur fuer Administratoren, und ohne Netz darunter: Es gibt keinen
+ * Papierkorb. Das ist Absicht — der Grund fuer diese Funktion ist ein
+ * Loeschbegehren nach Art. 17 DSGVO oder der Widerspruch eines Abbrechers,
+ * der nie etwas abgeschickt hat. Ein Papierkorb waere dabei keine
+ * Sicherheit, sondern eine Luecke: geloescht heisst geloescht.
+ *
+ * Die Rueckfrage steht deshalb in der Oberflaeche, nicht hier.
+ */
+export async function fallLoeschen(formular: FormData) {
+  const benutzer = await verlangeAnmeldung();
+  if (benutzer.rolle !== "admin") {
+    throw new Error("Nur Administratoren duerfen Faelle loeschen.");
+  }
+  const id = fallKennung(formular);
+  await loescheAntrag(id);
+  revalidatePath("/crm");
+  // Die Fallakte gibt es nicht mehr; wer darauf stehen bliebe, saehe eine
+  // 404. Also zurueck in den Eingang.
+  redirect("/crm");
 }

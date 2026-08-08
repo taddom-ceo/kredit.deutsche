@@ -6,13 +6,20 @@ import {
   ibanVerkuerzt,
   vollerName,
   zaehleAntraege,
+  zaehleFaellige,
   zaehleNachStatus,
   type Antrag,
+  type AntragFilter,
 } from "@/lib/crm/antraege";
 import { adressName } from "@/lib/crm/db";
 import { schluesselVorhanden } from "@/lib/crm/verschluesselung";
 import { ROLLEN_NAMEN } from "@/lib/crm/benutzer";
-import { ENDSTATIONEN, PIPELINE, findeStation } from "@/lib/crm/pipeline";
+import {
+  ENDSTATIONEN,
+  PIPELINE,
+  findeStation,
+  type StatusId,
+} from "@/lib/crm/pipeline";
 import { verlangeAnmeldung } from "@/lib/crm/zugang";
 import { findeKreditartNachId } from "@/lib/kreditarten";
 import { formatEuro } from "@/lib/loan-calc";
@@ -23,20 +30,61 @@ import { formatEuro } from "@/lib/loan-calc";
  * Die Zahlen an den Stationen sind gezaehlt, nicht gesetzt — steht dort eine
  * Null, ist die Station wirklich leer.
  */
-export default async function CrmSeite() {
+function einzeln(wert: string | string[] | undefined): string {
+  return (Array.isArray(wert) ? wert[0] : wert) ?? "";
+}
+
+/** Adresse mit geaenderten Suchparametern, ohne die uebrigen zu verlieren. */
+function mitParametern(
+  jetzige: AntragFilter,
+  aenderung: Partial<AntragFilter>
+): string {
+  const zusammen = { ...jetzige, ...aenderung };
+  const p = new URLSearchParams();
+  if (zusammen.suche) p.set("q", zusammen.suche);
+  if (zusammen.station) p.set("station", zusammen.station);
+  if (zusammen.nurFaellig) p.set("faellig", "1");
+  const text = p.toString();
+  return text ? `/crm?${text}` : "/crm";
+}
+
+export default async function CrmSeite({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const benutzer = await verlangeAnmeldung("/crm");
+  const parameter = await searchParams;
+
+  const gewaehlteStation = einzeln(parameter.station);
+  const filter: AntragFilter = {
+    suche: einzeln(parameter.q).trim(),
+    // Nur Stationen, die es gibt — sonst zeigte eine erfundene Adresse eine
+    // leere Liste, als waere wirklich nichts da.
+    station: findeStation(gewaehlteStation)
+      ? (gewaehlteStation as StatusId)
+      : null,
+    nurFaellig: einzeln(parameter.faellig) === "1",
+  };
+  const filterAktiv = Boolean(
+    filter.suche || filter.station || filter.nurFaellig
+  );
 
   // Faellt die Datenbank aus, soll hier nicht eine leere Liste stehen — die
   // saehe aus wie "keine Antraege" und ist etwas ganz anderes.
   let antraege: Antrag[] = [];
   let gesamt = 0;
+  let getroffen = 0;
+  let faellige = 0;
   let zaehler: Record<string, number> = {};
   let fehler: string | null = null;
 
   try {
-    [antraege, gesamt, zaehler] = await Promise.all([
-      alleAntraege(),
+    [antraege, gesamt, getroffen, faellige, zaehler] = await Promise.all([
+      alleAntraege(filter),
       zaehleAntraege(),
+      zaehleAntraege(filter),
+      zaehleFaellige(),
       zaehleNachStatus(),
     ]);
   } catch (ausnahme) {
@@ -137,51 +185,144 @@ export default async function CrmSeite() {
             </span>
           </div>
 
+          {/* Jede Station ist ein Filter. Das ist der kuerzeste Weg von "dort
+              liegen drei Faelle" zu "zeig sie mir" — und er kostet nichts
+              ausser einem Link. */}
           <div className="flex gap-4 overflow-x-auto pb-2">
-            {PIPELINE.map((station) => (
-              <div
-                key={station.id}
-                className="shrink-0 w-56 rounded-[20px] border border-border bg-surface p-4 flex flex-col gap-3"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold">{station.name}</span>
-                  <span className="text-xs text-muted tabular-nums">
-                    {zaehler[station.id] ?? 0}
-                  </span>
-                </div>
-                <p className="text-[11px] text-muted leading-relaxed">
-                  {station.beschreibung}
-                </p>
-              </div>
-            ))}
+            {PIPELINE.map((station) => {
+              const aktiv = filter.station === station.id;
+              return (
+                <Link
+                  key={station.id}
+                  href={mitParametern(filter, {
+                    station: aktiv ? null : station.id,
+                  })}
+                  className={`shrink-0 w-56 rounded-[20px] border p-4 flex flex-col gap-3 transition-colors duration-150 ${
+                    aktiv
+                      ? "border-accent/50 bg-accent/[0.07]"
+                      : "border-border bg-surface hover:border-border-strong"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold">{station.name}</span>
+                    <span className="text-xs text-muted tabular-nums">
+                      {zaehler[station.id] ?? 0}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted leading-relaxed">
+                    {station.beschreibung}
+                  </p>
+                </Link>
+              );
+            })}
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {ENDSTATIONEN.map((station) => (
-              <span
-                key={station.id}
-                className="rounded-[12px] border border-border bg-surface-2 px-3 py-2 text-[11px] text-muted"
-              >
-                {station.name}{" "}
-                <span className="tabular-nums">{zaehler[station.id] ?? 0}</span>
-              </span>
-            ))}
+            {ENDSTATIONEN.map((station) => {
+              const aktiv = filter.station === station.id;
+              return (
+                <Link
+                  key={station.id}
+                  href={mitParametern(filter, {
+                    station: aktiv ? null : station.id,
+                  })}
+                  className={`rounded-[12px] border px-3 py-2 text-[11px] transition-colors duration-150 ${
+                    aktiv
+                      ? "border-accent/50 bg-accent/[0.07] text-foreground"
+                      : "border-border bg-surface-2 text-muted hover:text-foreground"
+                  }`}
+                >
+                  {station.name}{" "}
+                  <span className="tabular-nums">
+                    {zaehler[station.id] ?? 0}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </section>
         )}
 
         {!fehler && (
         <section className="flex flex-col gap-4">
-          <h2 className="text-sm font-semibold">Eingang</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold">
+              Eingang
+              {filterAktiv && (
+                <span className="ml-2 font-normal text-muted">
+                  {getroffen} von {gesamt}
+                </span>
+              )}
+            </h2>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Ein gewoehnliches Formular ohne Skript: Die Suche steht danach
+                  in der Adresse und laesst sich als Lesezeichen ablegen oder
+                  weitergeben. */}
+              <form method="get" action="/crm" className="flex gap-2">
+                {filter.station && (
+                  <input type="hidden" name="station" value={filter.station} />
+                )}
+                {filter.nurFaellig && (
+                  <input type="hidden" name="faellig" value="1" />
+                )}
+                <input
+                  type="search"
+                  name="q"
+                  defaultValue={filter.suche}
+                  placeholder="Name, E-Mail, Telefon, Ort"
+                  className="w-64 rounded-[12px] border border-border bg-surface-2 px-3 py-2 text-xs text-foreground placeholder:text-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                />
+                <button
+                  type="submit"
+                  className="rounded-[12px] border border-border-strong bg-surface-2 px-3 py-2 text-xs font-semibold text-foreground transition-colors duration-150 hover:bg-surface"
+                >
+                  Suchen
+                </button>
+              </form>
+
+              <Link
+                href={mitParametern(filter, { nurFaellig: !filter.nurFaellig })}
+                className={`rounded-[12px] border px-3 py-2 text-xs transition-colors duration-150 ${
+                  filter.nurFaellig
+                    ? "border-amber-400/50 bg-amber-400/10 text-amber-200"
+                    : "border-border bg-surface-2 text-muted hover:text-foreground"
+                }`}
+              >
+                Fällig <span className="tabular-nums">{faellige}</span>
+              </Link>
+
+              {filterAktiv && (
+                <Link
+                  href="/crm"
+                  className="rounded-[12px] border border-border px-3 py-2 text-xs text-muted transition-colors duration-150 hover:text-foreground"
+                >
+                  Filter zurücksetzen
+                </Link>
+              )}
+
+              {/* Kein Link auf eine Seite, sondern auf den Endpunkt: Der
+                  liefert die Datei mit demselben Filter, der gerade gilt. */}
+              <a
+                href={`/api/crm-export${mitParametern(filter, {}).slice("/crm".length)}`}
+                className="rounded-[12px] border border-border px-3 py-2 text-xs text-muted transition-colors duration-150 hover:text-foreground"
+              >
+                Export
+              </a>
+            </div>
+          </div>
 
           {antraege.length === 0 ? (
             <div className="rounded-[24px] border border-border bg-surface p-8 flex flex-col gap-2 text-center">
               <span className="text-sm font-semibold">
-                Noch kein Antrag eingegangen
+                {filterAktiv
+                  ? "Kein Fall passt zu dieser Suche"
+                  : "Noch kein Antrag eingegangen"}
               </span>
               <p className="text-xs text-muted leading-relaxed">
-                Sobald jemand die Antragsstrecke abschließt, steht der Fall
-                hier — mit allen Angaben aus den acht Schritten.
+                {filterAktiv
+                  ? `Insgesamt liegen ${gesamt} Fälle vor.`
+                  : "Sobald jemand die Antragsstrecke abschließt, steht der Fall hier — mit allen Angaben aus den acht Schritten."}
               </p>
             </div>
           ) : (
