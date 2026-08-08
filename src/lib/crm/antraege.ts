@@ -76,7 +76,12 @@ export type Antrag = AntragEingang & {
 };
 
 /** Was im Verlauf eines Falls steht. */
-export type AktivitaetArt = "status" | "notiz" | "wiedervorlage";
+export type AktivitaetArt =
+  | "status"
+  | "notiz"
+  | "wiedervorlage"
+  /** Die Bankverbindung wurde kopiert und hat damit das CRM verlassen. */
+  | "einsicht";
 
 export type Aktivitaet = {
   id: string;
@@ -516,6 +521,27 @@ export async function setzeStatus(
     art: "status",
     vonStatus,
     nachStatus: status,
+    text: null,
+  });
+}
+
+/**
+ * Vermerkt, dass die Bankverbindung kopiert wurde.
+ *
+ * Kein Text, kein Statuswechsel — nur der Umstand, wer wann. Mehr braucht es
+ * nicht: Was kopiert wurde, steht ohnehin im Fall.
+ */
+export async function haltEinsichtFest(
+  id: string,
+  benutzer: string
+): Promise<void> {
+  const vorhanden = await findeAntrag(id);
+  if (!vorhanden) return;
+  await haltFest(id, {
+    benutzer,
+    art: "einsicht",
+    vonStatus: null,
+    nachStatus: null,
     text: null,
   });
 }

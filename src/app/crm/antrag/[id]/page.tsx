@@ -9,6 +9,8 @@ import {
 } from "@/lib/crm/antraege";
 import { findeStation, STATIONEN } from "@/lib/crm/pipeline";
 import { verlangeAnmeldung } from "@/lib/crm/zugang";
+import { schluesselVorhanden } from "@/lib/crm/verschluesselung";
+import IbanKopieren from "@/components/crm/IbanKopieren";
 import {
   notizSchreiben,
   statusAendern,
@@ -70,6 +72,7 @@ function beschreibe(eintrag: Aktivitaet): string {
       ? `Wiedervorlage am ${datum(eintrag.text)}`
       : "Wiedervorlage entfernt";
   }
+  if (eintrag.art === "einsicht") return "Bankverbindung kopiert";
   const von = eintrag.vonStatus
     ? (findeStation(eintrag.vonStatus)?.name ?? eintrag.vonStatus)
     : "—";
@@ -291,9 +294,37 @@ export default async function AntragSeite({
           </Block>
 
           <Block titel="Bankverbindung">
-            <Feld name="IBAN" wert={antrag.iban} />
+            <div className="flex items-baseline justify-between gap-3 border-b border-border/60 py-2">
+              <dt className="text-xs text-muted shrink-0">IBAN</dt>
+              <dd className="flex items-center gap-2">
+                <span className="text-sm text-right tabular-nums break-all">
+                  {antrag.iban || "—"}
+                </span>
+                {antrag.iban && (
+                  <IbanKopieren antragId={antrag.id} iban={antrag.iban} />
+                )}
+              </dd>
+            </div>
             <Feld name="Bank" wert={antrag.bankname} />
             <Feld name="Kontoinhaber" wert={antrag.kontoinhaber} />
+            {/* Der Zustand steht am Feld selbst und nicht nur in der
+                Uebersicht: Hier sieht man die Bankverbindung, hier gehoert
+                die Auskunft hin, wie sie abgelegt ist. */}
+            <p className="pt-3 text-[11px] leading-relaxed text-muted">
+              {schluesselVorhanden() ? (
+                <>
+                  Verschlüsselt gespeichert. In der Übersicht stehen nur die
+                  letzten vier Stellen; jedes Kopieren wird im Verlauf
+                  vermerkt.
+                </>
+              ) : (
+                <span className="text-amber-200/80">
+                  Unverschlüsselt gespeichert — es fehlt{" "}
+                  <code>CRM_DATEN_SCHLUESSEL</code>. Ein Auszug der Tabelle
+                  liest sich im Klartext.
+                </span>
+              )}
+            </p>
           </Block>
         </div>
 

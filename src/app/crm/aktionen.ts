@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import {
+  haltEinsichtFest,
   schreibeNotiz,
   setzeStatus,
   setzeWiedervorlage,
@@ -61,6 +62,20 @@ export async function notizSchreiben(formular: FormData) {
 
   await schreibeNotiz(id, String(formular.get("text") ?? ""), benutzer.anzeigename);
   aktualisiere(id);
+}
+
+/**
+ * Vermerkt, dass jemand die Bankverbindung kopiert hat.
+ *
+ * Bewusst ohne Rollenpruefung ueber `verlangeBearbeiter`: Auch ein Konto, das
+ * nur lesen darf, darf die IBAN sehen und mitnehmen — und gerade dann soll
+ * der Vermerk entstehen. Angemeldet sein muss man trotzdem.
+ */
+export async function bankverbindungKopiert(formular: FormData) {
+  const benutzer = await verlangeAnmeldung();
+  const id = fallKennung(formular);
+  await haltEinsichtFest(id, benutzer.anzeigename);
+  revalidatePath(`/crm/antrag/${id}`);
 }
 
 export async function wiedervorlageSetzen(formular: FormData) {
