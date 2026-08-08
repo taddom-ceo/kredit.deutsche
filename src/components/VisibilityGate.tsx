@@ -26,6 +26,14 @@ export default function VisibilityGate({
     const el = ref.current;
     if (!el) return;
 
+    // Wer Bewegung reduziert haben will, bekommt kein `im-blick` — und damit
+    // bleibt die Dauerschleife angehalten. Das ist Absicht und sieht nicht
+    // nach Fehler aus: Angehalten zeigt das Handy das Endbild mit den drei
+    // Angeboten, also gerade das aussagekraeftigste Standbild.
+    //
+    // Anders als bei Reveal darf hier deshalb keine Klasse nachgereicht
+    // werden. Wer das "repariert", startet die Schleife genau bei den Leuten,
+    // die sie abbestellt haben — manche aus medizinischen Gruenden.
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       return;
     }

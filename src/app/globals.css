@@ -1105,6 +1105,16 @@ input[type="range"]:active::-moz-range-thumb {
   animation: marquee-vertical 32s linear infinite;
 }
 
+/* Wie beim waagerechten Band auf der Startseite: Wer Bewegung reduziert
+   haben will, bekommt hier ein Standbild. Die Regel fehlte hier zuerst, und
+   das fiel auf — bei eingeschalteter Bewegungsreduzierung stand das Handy im
+   Aufmacher still, waehrend die Bankennamen daneben munter weiterliefen. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee-vertical {
+    animation: none;
+  }
+}
+
 /* ── Ergebnisliste ─────────────────────────────────────────────────────
    Solange keine Bank angebunden ist, laedt die Liste nichts — die Zeit
    dafuer ist gesetzt. Das Verhalten ist trotzdem schon das spaetere: Wer
