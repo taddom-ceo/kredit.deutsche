@@ -58,6 +58,49 @@ export async function statusAendern(formular: FormData) {
   aktualisiere(id);
 }
 
+/**
+ * Dasselbe fuer das Brett: einen Fall in einen anderen Ordner ziehen.
+ *
+ * Zwei Unterschiede zu `statusAendern`, und beide haben mit dem Ziehen zu tun.
+ * Erstens kommen Kennung und Ziel als gewoehnliche Werte statt als FormData —
+ * es gibt kein Formular, nur eine losgelassene Karte. Zweitens wird geantwortet
+ * statt geworfen: Die Karte liegt beim Loslassen schon in der neuen Spalte, und
+ * wenn der Server nein sagt, muss sie zurueckspringen. Eine Ausnahme wuerde
+ * stattdessen die ganze Seite in den Fehlerzustand kippen — mitten in einer
+ * Geste, die man gerade erst gemacht hat, ist das die schlechteste aller
+ * Antworten.
+ *
+ * Die Anmeldung wird bewusst vor dem try geholt: `verlangeAnmeldung` leitet
+ * ohne gueltige Sitzung zur Anmeldemaske um, und diese Umleitung ist selbst
+ * eine Ausnahme. Faengt man sie ein, wird aus "bitte neu anmelden" ein
+ * beliebiger Fehlertext.
+ */
+export async function fallVerschieben(
+  id: string,
+  station: string
+): Promise<{ ok: true } | { ok: false; fehler: string }> {
+  const benutzer = await verlangeAnmeldung();
+  if (benutzer.rolle === "lesen") {
+    return { ok: false, fehler: "Dieses Konto darf Fälle nur ansehen." };
+  }
+  if (!id) return { ok: false, fehler: "Kein Fall angegeben." };
+  if (!findeStation(station)) {
+    return { ok: false, fehler: "Unbekannte Station." };
+  }
+
+  try {
+    await setzeStatus(id, station as StatusId, benutzer.anzeigename);
+  } catch (ausnahme) {
+    return {
+      ok: false,
+      fehler: ausnahme instanceof Error ? ausnahme.message : String(ausnahme),
+    };
+  }
+
+  aktualisiere(id);
+  return { ok: true };
+}
+
 export async function notizSchreiben(formular: FormData) {
   const benutzer = await verlangeBearbeiter();
   const id = fallKennung(formular);

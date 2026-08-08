@@ -1,5 +1,9 @@
 import Link from "next/link";
 import AbmeldeKnopf from "@/components/crm/AbmeldeKnopf";
+import PipelineBrett, {
+  type BrettFall,
+  type BrettStation,
+} from "@/components/crm/PipelineBrett";
 import {
   ablageart,
   alleAntraege,
@@ -15,9 +19,10 @@ import { adressName } from "@/lib/crm/db";
 import { schluesselVorhanden } from "@/lib/crm/verschluesselung";
 import { ROLLEN_NAMEN } from "@/lib/crm/benutzer";
 import {
-  ENDSTATIONEN,
-  PIPELINE,
+  STATIONEN,
+  TON_KLASSEN,
   findeStation,
+  stationOderErsatz,
   type StatusId,
 } from "@/lib/crm/pipeline";
 import { verlangeAnmeldung } from "@/lib/crm/zugang";
@@ -27,8 +32,10 @@ import { formatEuro } from "@/lib/loan-calc";
 /**
  * Die Startseite des CRM: der Eingang.
  *
- * Die Zahlen an den Stationen sind gezaehlt, nicht gesetzt — steht dort eine
- * Null, ist die Station wirklich leer.
+ * Zwei Ansichten auf dieselben Faelle, und beide werden gebraucht. Oben das
+ * Brett — wo steht was, und wohin schiebe ich es. Unten die Liste — wer war
+ * das noch mal, und gib mir das als Datei. Die Zahlen an den Ordnern sind
+ * gezaehlt, nicht gesetzt: Steht dort eine Null, ist der Ordner wirklich leer.
  */
 function einzeln(wert: string | string[] | undefined): string {
   return (Array.isArray(wert) ? wert[0] : wert) ?? "";
@@ -46,6 +53,14 @@ function mitParametern(
   if (zusammen.nurFaellig) p.set("faellig", "1");
   const text = p.toString();
   return text ? `/crm?${text}` : "/crm";
+}
+
+/** TT.MM. — mehr traegt eine Karte nicht, ohne unruhig zu werden. */
+function kurzerTag(wert: string): string {
+  return new Date(wert).toLocaleDateString("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+  });
 }
 
 export default async function CrmSeite({
@@ -70,23 +85,41 @@ export default async function CrmSeite({
     filter.suche || filter.station || filter.nurFaellig
   );
 
+  /**
+   * Das Brett kennt den Ordner-Filter nicht. Es ist die Uebersicht ueber alle
+   * Ordner — auf einen einzigen eingeschraenkt waeren dreizehn Spalten leer,
+   * und der Sinn des Bretts, naemlich zu sehen wo etwas liegt und es
+   * woandershin zu ziehen, waere weg. Suche und Faelligkeit gelten dagegen
+   * auch dort: Wer nach "Müller" sucht, will Müller im Brett sehen.
+   */
+  const brettFilter: AntragFilter = {
+    suche: filter.suche,
+    nurFaellig: filter.nurFaellig,
+  };
+
   // Faellt die Datenbank aus, soll hier nicht eine leere Liste stehen — die
   // saehe aus wie "keine Antraege" und ist etwas ganz anderes.
   let antraege: Antrag[] = [];
+  let fuersBrett: Antrag[] = [];
   let gesamt = 0;
   let getroffen = 0;
   let faellige = 0;
   let zaehler: Record<string, number> = {};
   let fehler: string | null = null;
+  let eigenesBrett: Antrag[] | null = null;
 
   try {
-    [antraege, gesamt, getroffen, faellige, zaehler] = await Promise.all([
-      alleAntraege(filter),
-      zaehleAntraege(),
-      zaehleAntraege(filter),
-      zaehleFaellige(),
-      zaehleNachStatus(),
-    ]);
+    [antraege, eigenesBrett, gesamt, getroffen, faellige, zaehler] =
+      await Promise.all([
+        alleAntraege(filter),
+        // Ohne Ordner-Filter ist es dieselbe Abfrage — dann keine zweite.
+        filter.station ? alleAntraege(brettFilter) : Promise.resolve(null),
+        zaehleAntraege(),
+        zaehleAntraege(filter),
+        zaehleFaellige(),
+        zaehleNachStatus(),
+      ]);
+    fuersBrett = eigenesBrett ?? antraege;
   } catch (ausnahme) {
     fehler = ausnahme instanceof Error ? ausnahme.message : String(ausnahme);
   }
@@ -94,6 +127,63 @@ export default async function CrmSeite({
   const art = ablageart();
   // Fuer die Frage, ob eine Wiedervorlage schon faellig ist.
   const heute = new Date().toISOString().slice(0, 10);
+
+  /**
+   * Die Spalten: die vierzehn Ordner der Pipeline, und dahinter jeder weitere
+   * Status, auf dem noch Faelle stehen.
+   *
+   * Der zweite Teil ist die Versicherung gegen lautlosen Verlust. Wird die
+   * Pipeline spaeter wieder umgebaut, faellt kein Fall aus dem Brett, nur weil
+   * sein Ordner gestrichen wurde — er bekommt eine eigene, gestrichelte Spalte,
+   * bis ihn jemand herauszieht. Danach verschwindet sie von selbst.
+   */
+  const bekannt = new Set(STATIONEN.map((s) => s.id));
+  const uebrige = new Set<string>();
+  for (const [status, anzahl] of Object.entries(zaehler)) {
+    if (anzahl > 0 && !bekannt.has(status as StatusId)) uebrige.add(status);
+  }
+  for (const antrag of fuersBrett) {
+    if (!bekannt.has(antrag.status)) uebrige.add(antrag.status);
+  }
+
+  const spalten: BrettStation[] = [
+    ...STATIONEN.map((s) => ({
+      id: s.id,
+      name: s.name,
+      beschreibung: s.beschreibung,
+      ton: s.ton,
+    })),
+    ...[...uebrige].map((status) => {
+      const s = stationOderErsatz(status);
+      return {
+        id: s.id,
+        name: s.name,
+        beschreibung: s.beschreibung,
+        ton: s.ton,
+        stillgelegt: true,
+      };
+    }),
+  ];
+
+  const karten: BrettFall[] = fuersBrett.map((antrag) => ({
+    id: antrag.id,
+    status: antrag.status,
+    name: vollerName(antrag),
+    ort: antrag.ort,
+    betrag: formatEuro(antrag.amount),
+    laufzeit: `${antrag.months} Mon.`,
+    eingang: kurzerTag(antrag.eingang),
+    wiedervorlage: antrag.wiedervorlage
+      ? antrag.wiedervorlage.slice(8, 10) +
+        "." +
+        antrag.wiedervorlage.slice(5, 7) +
+        "."
+      : null,
+    faellig: Boolean(antrag.wiedervorlage && antrag.wiedervorlage <= heute),
+    art: antrag.kreditart
+      ? (findeKreditartNachId(antrag.kreditart)?.de.name ?? null)
+      : null,
+  }));
 
   return (
     <main className="min-h-screen bg-background">
@@ -104,7 +194,7 @@ export default async function CrmSeite({
           <div className="flex items-baseline gap-3">
             <span className="text-lg font-bold tracking-[-0.02em]">CRM</span>
             <span className="hidden sm:inline text-xs text-muted">
-              kredit.deutsche
+              cresolu.de
             </span>
           </div>
           <div className="flex min-w-0 items-center gap-4">
@@ -172,75 +262,28 @@ export default async function CrmSeite({
           </section>
         )}
 
-        {/* Bei einem Ausfall bleiben Pipeline und Liste ganz weg. Sonst stuenden
+        {/* Bei einem Ausfall bleiben Brett und Liste ganz weg. Sonst stuenden
             dort lauter Nullen und "Noch kein Antrag eingegangen" — eine
             Aussage ueber die Faelle, die niemand treffen kann, solange die
             Datenbank schweigt. Die Meldung darueber sagt, was Sache ist. */}
         {!fehler && (
-        <section className="flex flex-col gap-4">
-          <div className="flex items-baseline justify-between gap-4">
-            <h2 className="text-sm font-semibold">Pipeline</h2>
-            <span className="text-xs text-muted">
-              {gesamt} {gesamt === 1 ? "Fall" : "Fälle"} insgesamt
-            </span>
-          </div>
+          <section className="flex flex-col gap-4">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <h2 className="text-sm font-semibold">Pipeline</h2>
+              <span className="text-xs text-muted">
+                {benutzer.rolle === "lesen"
+                  ? "Dieses Konto darf Fälle nur ansehen."
+                  : "Karte am Griff links greifen und in einen anderen Ordner ziehen."}{" "}
+                {gesamt} {gesamt === 1 ? "Fall" : "Fälle"} insgesamt
+              </span>
+            </div>
 
-          {/* Jede Station ist ein Filter. Das ist der kuerzeste Weg von "dort
-              liegen drei Faelle" zu "zeig sie mir" — und er kostet nichts
-              ausser einem Link. */}
-          <div className="flex gap-4 overflow-x-auto pb-2">
-            {PIPELINE.map((station) => {
-              const aktiv = filter.station === station.id;
-              return (
-                <Link
-                  key={station.id}
-                  href={mitParametern(filter, {
-                    station: aktiv ? null : station.id,
-                  })}
-                  className={`shrink-0 w-56 rounded-[20px] border p-4 flex flex-col gap-3 transition-colors duration-150 ${
-                    aktiv
-                      ? "border-accent/50 bg-accent/[0.07]"
-                      : "border-border bg-surface hover:border-border-strong"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold">{station.name}</span>
-                    <span className="text-xs text-muted tabular-nums">
-                      {zaehler[station.id] ?? 0}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-muted leading-relaxed">
-                    {station.beschreibung}
-                  </p>
-                </Link>
-              );
-            })}
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {ENDSTATIONEN.map((station) => {
-              const aktiv = filter.station === station.id;
-              return (
-                <Link
-                  key={station.id}
-                  href={mitParametern(filter, {
-                    station: aktiv ? null : station.id,
-                  })}
-                  className={`rounded-[12px] border px-3 py-2 text-[11px] transition-colors duration-150 ${
-                    aktiv
-                      ? "border-accent/50 bg-accent/[0.07] text-foreground"
-                      : "border-border bg-surface-2 text-muted hover:text-foreground"
-                  }`}
-                >
-                  {station.name}{" "}
-                  <span className="tabular-nums">
-                    {zaehler[station.id] ?? 0}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
+            <PipelineBrett
+              stationen={spalten}
+              faelle={karten}
+              darfSchieben={benutzer.rolle !== "lesen"}
+            />
+          </section>
         )}
 
         {!fehler && (
@@ -259,10 +302,7 @@ export default async function CrmSeite({
               {/* Ein gewoehnliches Formular ohne Skript: Die Suche steht danach
                   in der Adresse und laesst sich als Lesezeichen ablegen oder
                   weitergeben. */}
-              <form method="get" action="/crm" className="flex gap-2">
-                {filter.station && (
-                  <input type="hidden" name="station" value={filter.station} />
-                )}
+              <form method="get" action="/crm" className="flex flex-wrap gap-2">
                 {filter.nurFaellig && (
                   <input type="hidden" name="faellig" value="1" />
                 )}
@@ -273,6 +313,22 @@ export default async function CrmSeite({
                   placeholder="Name, E-Mail, Telefon, Ort"
                   className="w-64 rounded-[12px] border border-border bg-surface-2 px-3 py-2 text-xs text-foreground placeholder:text-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                 />
+                {/* Das Brett zeigt alle Ordner; hier wird auf einen
+                    eingeschraenkt — fuer die Liste und fuer den Export, der
+                    denselben Filter mitnimmt. */}
+                <select
+                  name="station"
+                  defaultValue={filter.station ?? ""}
+                  aria-label="Ordner"
+                  className="rounded-[12px] border border-border bg-surface-2 px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                >
+                  <option value="">Alle Ordner</option>
+                  {spalten.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
                 <button
                   type="submit"
                   className="rounded-[12px] border border-border-strong bg-surface-2 px-3 py-2 text-xs font-semibold text-foreground transition-colors duration-150 hover:bg-surface"
@@ -349,7 +405,7 @@ export default async function CrmSeite({
                         Wiedervorlage
                       </th>
                       <th className="text-left font-semibold px-5 py-3">
-                        Station
+                        Ordner
                       </th>
                     </tr>
                   </thead>
@@ -358,6 +414,7 @@ export default async function CrmSeite({
                       const art = antrag.kreditart
                         ? findeKreditartNachId(antrag.kreditart)?.de.name
                         : undefined;
+                      const station = stationOderErsatz(antrag.status);
                       return (
                         <tr
                           key={antrag.id}
@@ -413,21 +470,15 @@ export default async function CrmSeite({
                             )}
                           </td>
                           <td className="px-5 py-3">
+                            {/* Dieselbe Farbe wie der Punkt am Ordner im
+                                Brett — sonst muesste man zwischen zwei
+                                Ansichten Namen vergleichen. */}
                             <span
-                              className={`rounded-full px-2.5 py-1 text-[11px] whitespace-nowrap ${
-                                antrag.status === "neu"
-                                  ? "border border-accent/40 bg-accent/10 text-accent"
-                                  : // Abbrecher sind kein abgeschlossener
-                                    // Antrag, aber ein Kontakt, der auf einen
-                                    // Anruf wartet — sie duerfen nicht wie
-                                    // Erledigtes aussehen.
-                                    antrag.status === "abbrecher"
-                                    ? "border border-amber-400/40 bg-amber-400/10 text-amber-200"
-                                    : "border border-border bg-surface-2 text-muted"
+                              className={`rounded-full border px-2.5 py-1 text-[11px] whitespace-nowrap ${
+                                TON_KLASSEN[station.ton].schild
                               }`}
                             >
-                              {findeStation(antrag.status)?.name ??
-                                antrag.status}
+                              {station.name}
                             </span>
                           </td>
                         </tr>

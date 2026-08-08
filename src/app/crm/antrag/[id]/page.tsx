@@ -4,10 +4,16 @@ import { notFound } from "next/navigation";
 import {
   aktivitaeten,
   findeAntrag,
+  unvollstaendig,
   vollerName,
   type Aktivitaet,
 } from "@/lib/crm/antraege";
-import { findeStation, STATIONEN } from "@/lib/crm/pipeline";
+import {
+  findeStation,
+  stationOderErsatz,
+  STATIONEN,
+  TON_KLASSEN,
+} from "@/lib/crm/pipeline";
 import { verlangeAnmeldung } from "@/lib/crm/zugang";
 import { schluesselVorhanden } from "@/lib/crm/verschluesselung";
 import IbanKopieren from "@/components/crm/IbanKopieren";
@@ -80,7 +86,7 @@ function beschreibe(eintrag: Aktivitaet): string {
   const nach = eintrag.nachStatus
     ? (findeStation(eintrag.nachStatus)?.name ?? eintrag.nachStatus)
     : "—";
-  return `Station: ${von} → ${nach}`;
+  return `Ordner: ${von} → ${nach}`;
 }
 
 export default async function AntragSeite({
@@ -110,7 +116,8 @@ export default async function AntragSeite({
   const art = antrag.kreditart
     ? findeKreditartNachId(antrag.kreditart)?.de.name
     : undefined;
-  const station = findeStation(antrag.status);
+  const station = stationOderErsatz(antrag.status);
+  const abgebrochen = unvollstaendig(antrag);
   const rate = monthlyPayment(antrag.amount, antrag.months);
   const heute = new Date().toISOString().slice(0, 10);
 
@@ -128,15 +135,15 @@ export default async function AntragSeite({
               Geraeten aber umbrechen statt ueber den Rand zu draengen. */}
           <span className="ml-auto" />
           <span
-            className={`rounded-full px-2.5 py-1 text-[11px] ${
-              antrag.status === "abbrecher"
-                ? "border border-amber-400/40 bg-amber-400/10 text-amber-200"
-                : "border border-accent/40 bg-accent/10 text-accent"
+            className={`rounded-full border px-2.5 py-1 text-[11px] ${
+              TON_KLASSEN[station.ton].schild
             }`}
           >
-            {station?.name ?? antrag.status}
+            {station.name}
           </span>
-          {antrag.status === "abbrecher" && (
+          {/* Haengt an den Daten, nicht am Ordner: Ein vollstaendiger Antrag,
+              den jemand nach "Abgebrochen" zieht, hat seine Angaben ja. */}
+          {abgebrochen && (
             <span className="text-[11px] text-muted">
               Strecke nicht abgeschlossen — Angaben ab Schritt 5 fehlen
               möglicherweise.
@@ -172,7 +179,7 @@ export default async function AntragSeite({
               <form action={statusAendern} className="flex flex-col gap-2">
                 <input type="hidden" name="id" value={antrag.id} />
                 <label htmlFor="status" className="text-xs text-muted">
-                  Station
+                  Ordner
                 </label>
                 <div className="flex gap-2">
                   <select
@@ -188,7 +195,16 @@ export default async function AntragSeite({
                     defaultValue={antrag.status}
                     className="flex-1 rounded-[14px] border border-border bg-surface-2 px-3 py-2.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                   >
-                    {STATIONEN.map((s) => (
+                    {/* Steht der Fall noch auf einem stillgelegten Ordner,
+                        kommt der als erster Eintrag dazu. Ohne ihn faende
+                        `defaultValue` keine Entsprechung, das Feld zeigte
+                        stumm "Neu" — und wer dann "Setzen" drueckt, ohne
+                        hinzusehen, verschoebe den Fall, statt ihn zu
+                        bestaetigen. */}
+                    {(STATIONEN.some((s) => s.id === antrag.status)
+                      ? STATIONEN
+                      : [station, ...STATIONEN]
+                    ).map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name}
                       </option>

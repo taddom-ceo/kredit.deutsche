@@ -139,6 +139,23 @@ const SCHEMA = [
      text        text
    )`,
   `CREATE INDEX IF NOT EXISTS aktivitaet_antrag_idx ON aktivitaet (antrag_id, zeit DESC)`,
+  /**
+   * Schritt 1: Die frueheren Stationen "Abbrecher" und "Abgebrochen" sind ein
+   * Ordner geworden.
+   *
+   * Sie meinten von Anfang an dasselbe — der Kunde ist weg —, und die neue
+   * Pipeline hat dafuer genau eine Spalte. Bleibt `abgebrochen` stehen, liegen
+   * dieselben Faelle in zwei Ordnern, von denen einer nicht mehr angefahren
+   * wird. Behalten wird `abbrecher`, weil die Antragsstrecke diese Kennung
+   * schreibt, wenn jemand mittendrin aussteigt.
+   *
+   * Laeuft bei jedem Start einer Instanz mit und trifft nach dem ersten Mal
+   * nichts mehr — der Index auf `status` macht das billig. Der Verlauf bleibt
+   * unberuehrt: Dort steht weiterhin, wer den Fall wann nach "Abgebrochen"
+   * geschoben hat, und die Liste der stillgelegten Stationen kann den alten
+   * Namen dafuer weiterhin nachschlagen.
+   */
+  `UPDATE antrag SET status = 'abbrecher' WHERE status = 'abgebrochen'`,
 ];
 
 /**

@@ -844,3 +844,21 @@ export function ibanVerkuerzt(iban: string): string {
 export function vollerName(antrag: Antrag): string {
   return [antrag.vorname, antrag.nachname].filter(Boolean).join(" ") || "—";
 }
+
+/**
+ * Ob der Fall die Antragsstrecke nie zu Ende gegangen ist.
+ *
+ * Frueher hing dieser Hinweis am Status: Wer auf "Abbrecher" stand, hatte
+ * abgebrochen. Seit "Abgebrochen" ein Ordner ist, in den sich jede Karte
+ * ziehen laesst, traegt der Status diese Auskunft nicht mehr — ein
+ * vollstaendiger Antrag, den jemand dorthin schiebt, stuende sonst mit dem
+ * Vermerk da, seine Angaben fehlten.
+ *
+ * Gefragt wird deshalb die einzige Stelle, die es wirklich weiss: die Daten.
+ * Beschaeftigung und Bankverbindung kommen erst nach den persoenlichen Daten;
+ * fehlt beides, ist die Strecke dort geendet. Beides zusammen und nicht eines
+ * davon, weil eine einzelne Luecke auch schlicht eine Luecke sein kann.
+ */
+export function unvollstaendig(antrag: Antrag): boolean {
+  return !antrag.iban.trim() && !antrag.nettoeinkommen.trim();
+}
