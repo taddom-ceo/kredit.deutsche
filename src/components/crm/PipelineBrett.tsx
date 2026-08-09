@@ -10,11 +10,20 @@ import {
   type PointerEvent as ZeigerEreignis,
 } from "react";
 import { fallVerschieben } from "@/app/crm/aktionen";
+import { stationIcon } from "@/components/crm/StationIcons";
 import { TON_KLASSEN, type StatusId, type Ton } from "@/lib/crm/pipeline";
 
 /**
  * Die Pipeline als Brett: vierzehn Ordner nebeneinander, die Faelle als Karten
  * darin, und jede Karte laesst sich von Ordner zu Ordner ziehen.
+ *
+ * Die Spalten tragen nur ein Zeichen und die Anzahl. Mit ausgeschriebenem
+ * Namen und Beschreibung brauchte jede rund 270 Pixel; vierzehn davon sind
+ * knapp vier Meter Brett, von dem immer nur ein Drittel zu sehen war. Wer eine
+ * Karte von "Neu" nach "Watch" ziehen wollte, zog blind ueber neun Spalten,
+ * die er nicht sah. Jetzt passen alle nebeneinander, und der Name steht beim
+ * Zeigen darueber — als eingeblendete Fahne, nicht als Text in der Spalte,
+ * denn Text in der Spalte ist genau das, was die Breite gekostet hat.
  *
  * Warum Zeigerereignisse und nicht das eingebaute Ziehen des Browsers
  * (`draggable`): Letzteres kennt nur die Maus. Auf einem Tablet oder Telefon
@@ -118,6 +127,24 @@ export default function PipelineBrett({
    */
   const [ziel, setZiel] = useState<StatusId | null>(null);
   const zielRef = useRef<StatusId | null>(null);
+
+  /**
+   * Die Fahne mit Name und Zweck des Ordners, auf den gerade gezeigt wird.
+   *
+   * Warum `fixed` und eigener Zustand statt eines aufklappenden Kastens in der
+   * Spalte: Das Brett rollt seitlich, traegt also `overflow-x`, und das
+   * beschneidet alles, was ueber seinen Rand hinausragt — auch nach oben und
+   * unten. Eine Fahne in der Spalte waere an der ersten und letzten Spalte
+   * abgeschnitten, also genau dort, wo man sie am ehesten braucht. Fest am
+   * Fenster haengt sie ausserhalb dieses Rahmens und bleibt ganz.
+   */
+  const [fahne, setFahne] = useState<{
+    name: string;
+    beschreibung: string;
+    stillgelegt: boolean;
+    x: number;
+    y: number;
+  } | null>(null);
 
   const brett = useRef<HTMLDivElement>(null);
   const start = useRef<{
@@ -261,6 +288,31 @@ export default function PipelineBrett({
 
   const nachOrdner = (id: StatusId) => ansicht.filter((f) => f.status === id);
 
+  /* ---------------------------------------------------------------- */
+  /* Die Fahne ueber der Spalte                                        */
+  /* ---------------------------------------------------------------- */
+
+  /** Halbe Breite der Fahne — fuer das Ausrichten und das Anstossen am Rand. */
+  const FAHNE_HALB = 112;
+
+  function zeigeFahne(el: HTMLElement, station: BrettStation) {
+    const rand = el.getBoundingClientRect();
+    // Ohne Anstossen haengt die Fahne der ersten Spalte halb links neben dem
+    // Fenster und die der letzten halb rechts daneben.
+    const mitte = rand.left + rand.width / 2;
+    const x = Math.min(
+      Math.max(mitte, FAHNE_HALB + 10),
+      window.innerWidth - FAHNE_HALB - 10
+    );
+    setFahne({
+      name: station.name,
+      beschreibung: station.beschreibung,
+      stillgelegt: Boolean(station.stillgelegt),
+      x,
+      y: rand.bottom + 6,
+    });
+  }
+
   return (
     <div className="flex flex-col gap-3">
       {fehler && (
@@ -274,7 +326,22 @@ export default function PipelineBrett({
 
       <div
         ref={brett}
-        className="flex gap-3 overflow-x-auto pb-3"
+        className="grid gap-2 overflow-x-auto pb-3"
+        /**
+         * Gitter statt Reihe, und die Spalten nicht fest, sondern
+         * `minmax(120px, 1fr)`.
+         *
+         * Feste Breiten koennen nur eins von beidem: Auf einem breiten Schirm
+         * lassen sie rechts Platz liegen, auf einem schmalen laufen sie
+         * hinaus. `1fr` verteilt die vorhandene Breite gleichmaessig auf alle
+         * Ordner — auf einem 24-Zoll-Schirm werden daraus rund 160 Pixel je
+         * Spalte, auf einem Notebook rund 120. Die Untergrenze ist der Punkt,
+         * an dem eine Karte noch lesbar ist; darunter faengt das Brett wieder
+         * an zu rollen, statt die Karten zu zerdruecken.
+         */
+        style={{
+          gridTemplateColumns: `repeat(${stationen.length}, minmax(120px, 1fr))`,
+        }}
         // Beim Ziehen bewegt sich der Zeiger auch ueber Zwischenraeume. Die
         // Ereignisse landen dank Zeigerfang trotzdem am Griff — hier stehen
         // sie nur, damit ein Loslassen ausserhalb einer Karte sauber endet.
@@ -285,11 +352,12 @@ export default function PipelineBrett({
           const karten = nachOrdner(station.id);
           const ton = TON_KLASSEN[station.ton];
           const aktiv = ziel === station.id && zug !== null;
+          const Zeichen = stationIcon(station.id);
           return (
             <section
               key={station.id}
               data-station={station.id}
-              className={`flex w-64 shrink-0 flex-col rounded-[20px] border transition-colors duration-150 ${
+              className={`flex min-w-0 flex-col rounded-[16px] border transition-colors duration-150 ${
                 aktiv
                   ? "border-accent/60 bg-accent/[0.06]"
                   : station.stillgelegt
@@ -297,42 +365,83 @@ export default function PipelineBrett({
                     : "border-border bg-surface"
               }`}
             >
-              <header className="flex items-center gap-2 px-4 py-3">
-                <span className={`size-2 shrink-0 rounded-full ${ton.punkt}`} />
-                <h3 className="min-w-0 flex-1 truncate text-xs font-semibold">
-                  {station.name}
-                </h3>
-                <span className="shrink-0 text-xs text-muted tabular-nums">
+              {/**
+               * Der Kopf traegt nur noch Zeichen und Anzahl.
+               *
+               * `tabIndex` und die Fokus-Ereignisse sind kein Beiwerk: Ein
+               * Hinweis, den es nur beim Zeigen mit der Maus gibt, gibt es
+               * fuer die Tastatur gar nicht. So laesst sich das Brett
+               * durchtabben und jeder Ordner sagt seinen Namen — sichtbar in
+               * der Fahne, vorgelesen ueber `aria-label`.
+               */}
+              <header
+                tabIndex={0}
+                aria-label={`${station.name}: ${karten.length} ${
+                  karten.length === 1 ? "Fall" : "Fälle"
+                }. ${station.beschreibung}`}
+                className="flex cursor-default items-center justify-center gap-1.5 rounded-t-[15px] px-2 py-2.5 transition-colors duration-150 hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40"
+                onPointerEnter={(e) => zeigeFahne(e.currentTarget, station)}
+                onPointerLeave={() => setFahne(null)}
+                onFocus={(e) => zeigeFahne(e.currentTarget, station)}
+                onBlur={() => setFahne(null)}
+              >
+                {/* 22 statt 20 Pixel: Die drei Kalenderblaetter unterscheiden
+                    sich nur durch die Ziffer darin, und die faellt bei 20
+                    Pixeln unter die Groesse, bei der sie noch sicher zu lesen
+                    ist. */}
+                <Zeichen className={`size-[22px] shrink-0 ${ton.zeichen}`} />
+                <span
+                  className={`shrink-0 text-[11px] font-semibold tabular-nums ${
+                    karten.length === 0 ? "text-muted/50" : "text-foreground"
+                  }`}
+                >
                   {karten.length}
                 </span>
               </header>
 
-              <ul className="flex max-h-[60vh] flex-col gap-2 overflow-y-auto px-2 pb-2">
-                {karten.length === 0 ? (
-                  <li className="px-2 py-3 text-[11px] leading-relaxed text-muted/70">
-                    {station.beschreibung}
-                  </li>
-                ) : (
-                  karten.map((fall) => (
-                    <Karte
-                      key={fall.id}
-                      fall={fall}
-                      stationen={stationen}
-                      darfSchieben={darfSchieben}
-                      inDerLuft={zug?.id === fall.id}
-                      onGreifen={greifen}
-                      onBewegen={bewegen}
-                      onLoslassen={loslassen}
-                      onAbbrechen={abbrechen}
-                      onWaehlen={verschiebe}
-                    />
-                  ))
-                )}
+              {/* Die Mindesthoehe haelt leere Ordner als Ziel offen: Eine
+                  Spalte ohne Karten waere sonst nur der Kopf hoch, und dorthin
+                  zu treffen waere Zielschiessen. */}
+              <ul className="flex min-h-16 max-h-[62vh] flex-col gap-1.5 overflow-y-auto px-1.5 pb-1.5">
+                {karten.map((fall) => (
+                  <Karte
+                    key={fall.id}
+                    fall={fall}
+                    stationen={stationen}
+                    darfSchieben={darfSchieben}
+                    inDerLuft={zug?.id === fall.id}
+                    onGreifen={greifen}
+                    onBewegen={bewegen}
+                    onLoslassen={loslassen}
+                    onAbbrechen={abbrechen}
+                    onWaehlen={verschiebe}
+                  />
+                ))}
               </ul>
             </section>
           );
         })}
       </div>
+
+      {/* Die Fahne. Waehrend eines Zugs bleibt sie weg — dann zaehlt, welche
+          Spalte aufleuchtet, und ein Kasten ueber dem Ziel stuende im Weg. */}
+      {fahne && !zug && (
+        <div
+          aria-hidden
+          className="pointer-events-none fixed z-40 w-max max-w-[224px] -translate-x-1/2 rounded-[12px] border border-border bg-surface-2 px-3 py-2 shadow-[0_12px_30px_-10px_rgba(0,0,0,0.7)]"
+          style={{ left: fahne.x, top: fahne.y }}
+        >
+          <p className="text-xs font-semibold">
+            {fahne.name}
+            {fahne.stillgelegt && (
+              <span className="ml-1.5 font-normal text-muted">(stillgelegt)</span>
+            )}
+          </p>
+          <p className="mt-0.5 text-[11px] leading-snug text-muted">
+            {fahne.beschreibung}
+          </p>
+        </div>
+      )}
 
       {/* Das Schattenbild am Zeiger. Ohne es zieht man beim Finger unter der
           eigenen Hand und sieht nicht, was man gerade traegt. */}
@@ -373,19 +482,19 @@ function Karte({
   onWaehlen: (id: string, nach: StatusId) => void;
 }) {
   return (
-    // `relative` ist hier kein Schmuck, sondern noetig: Die Beschriftung des
-    // Auswahlfelds steht als `sr-only` da, und das heisst in Tailwind
-    // `position: absolute`. Ohne einen positionierten Vorfahren haengt sie
-    // nicht an der Karte, sondern am Dokument — an der Stelle, an der die
-    // Karte laege, wenn das Brett nicht seitlich gerollt waere. Bei vierzehn
-    // Spalten sind das ein paar tausend Pixel weit rechts, und weil ein
-    // absolut positioniertes Element nicht vom `overflow` eines beliebigen
-    // Vorfahren beschnitten wird, sondern nur innerhalb seines
-    // Enthaeltnisblocks, zog es die ganze Seite in die Breite: Das CRM liess
-    // sich am Telefon seitlich wegschieben, obwohl das Brett fuer sich
-    // sauber rollte.
+    // `relative` ist hier kein Schmuck, sondern noetig — und das gilt genauso
+    // fuer das `relative` am Auswahlfeld weiter unten: Dessen Beschriftung
+    // steht als `sr-only` da, und das heisst in Tailwind `position: absolute`.
+    // Ohne einen positionierten Vorfahren haengt sie nicht an der Karte,
+    // sondern am Dokument — an der Stelle, an der die Karte laege, wenn das
+    // Brett nicht seitlich gerollt waere. Bei vierzehn Spalten sind das ein
+    // paar tausend Pixel weit rechts, und weil ein absolut positioniertes
+    // Element nicht vom `overflow` eines beliebigen Vorfahren beschnitten
+    // wird, sondern nur innerhalb seines Enthaeltnisblocks, zog es die ganze
+    // Seite in die Breite: Das CRM liess sich am Telefon seitlich
+    // wegschieben, obwohl das Brett fuer sich sauber rollte.
     <li
-      className={`relative flex gap-1 rounded-[14px] border border-border bg-surface-2 transition-opacity duration-150 ${
+      className={`relative flex gap-0.5 rounded-[14px] border border-border bg-surface-2 transition-opacity duration-150 ${
         inDerLuft ? "opacity-40" : ""
       }`}
     >
@@ -393,7 +502,12 @@ function Karte({
         <span
           // `touch-action: none` nur hier: Der Browser soll diese Geste nicht
           // als Blaettern an sich ziehen. Die Karte daneben bleibt scrollbar.
-          className="flex w-6 shrink-0 cursor-grab touch-none select-none items-center justify-center rounded-l-[14px] text-muted/50 hover:bg-surface hover:text-muted active:cursor-grabbing"
+          // Die Breite bleibt bei 24 Pixeln, obwohl der Platz in einer
+          // schmalen Spalte knapp ist: Das ist das Mindestmass fuer eine
+          // Flaeche, die man treffen soll (WCAG 2.5.8). Schmaler getestet
+          // liess sich zwar noch ziehen, aber nur mit ruhiger Hand — und der
+          // Griff ist der einzige Weg, eine Karte mit der Maus zu bewegen.
+          className="flex w-6 shrink-0 cursor-grab touch-none select-none items-center justify-center rounded-l-[13px] text-muted/50 hover:bg-surface hover:text-muted active:cursor-grabbing"
           onPointerDown={(e) => onGreifen(e, fall)}
           onPointerMove={onBewegen}
           onPointerUp={onLoslassen}
@@ -401,7 +515,7 @@ function Karte({
           aria-hidden
         >
           {/* Sechs Punkte — das uebliche Zeichen fuer "hier anfassen". */}
-          <svg viewBox="0 0 10 16" className="size-3 fill-current">
+          <svg viewBox="0 0 10 16" className="h-3.5 w-2 fill-current">
             <circle cx="3" cy="3" r="1.2" />
             <circle cx="7" cy="3" r="1.2" />
             <circle cx="3" cy="8" r="1.2" />
@@ -412,81 +526,99 @@ function Karte({
         </span>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col gap-1 py-2 pr-7">
+      {/**
+       * Vier Zeilen statt drei, und das Auswahlfeld unten statt oben rechts.
+       *
+       * In einer 120 Pixel breiten Spalte bleiben nach Griff und Rand rund
+       * neunzig fuer den Inhalt. Sass das Feld oben in der Ecke, nahm es davon
+       * ein Viertel weg — und zwar in der einen Zeile, in der es am meisten
+       * weh tut, naemlich beim Namen. Unten teilt es sich die Zeile mit der
+       * Wiedervorlage, die ohnehin nur selten da ist.
+       */}
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5 py-1.5 pr-1.5">
         <Link
           href={`/crm/antrag/${fall.id}`}
-          className="truncate text-xs font-semibold hover:text-accent"
+          title={fall.name}
+          className="truncate text-[11px] font-semibold leading-snug hover:text-accent"
         >
           {fall.name}
         </Link>
-        <div className="flex items-baseline justify-between gap-2 text-[11px] text-muted">
+        <div className="flex items-baseline justify-between gap-1.5 text-[10px] text-muted">
           <span className="truncate">{fall.ort || "—"}</span>
           <span className="shrink-0 tabular-nums">{fall.betrag}</span>
         </div>
-        <div className="flex items-center justify-between gap-2 text-[11px] text-muted/70">
-          <span className="truncate">{fall.art ?? fall.laufzeit}</span>
+        <div className="flex items-baseline justify-between gap-1.5 text-[10px] text-muted/70">
+          <span className="truncate" title={fall.art ?? undefined}>
+            {fall.art ?? fall.laufzeit}
+          </span>
           <span className="shrink-0 tabular-nums">{fall.eingang}</span>
         </div>
 
-        {fall.wiedervorlage && (
-          <span
-            className={`self-start rounded-full border px-2 py-0.5 text-[10px] tabular-nums ${
-              fall.faellig
-                ? "border-amber-400/40 bg-amber-400/10 text-amber-200"
-                : "border-border text-muted"
-            }`}
-          >
-            {fall.faellig ? "fällig " : "WV "}
-            {fall.wiedervorlage}
-          </span>
-        )}
+        <div className="mt-0.5 flex min-h-6 items-center justify-between gap-1.5">
+          {fall.wiedervorlage ? (
+            <span
+              className={`truncate rounded-full border px-1.5 py-0.5 text-[10px] tabular-nums ${
+                fall.faellig
+                  ? "border-amber-400/40 bg-amber-400/10 text-amber-200"
+                  : "border-border text-muted"
+              }`}
+            >
+              {fall.faellig ? "fällig " : "WV "}
+              {fall.wiedervorlage}
+            </span>
+          ) : (
+            <span />
+          )}
 
+          {darfSchieben && (
+            /**
+             * Der Weg ohne Ziehen — fuer die Tastatur, fuer Vorleseprogramme
+             * und fuer alle, denen eine Geste ueber vierzehn Spalten zu
+             * fummelig ist.
+             *
+             * Klein und ohne sichtbaren Text: Welcher Ordner das ist, sagt
+             * schon die Spalte, und ein Feld, das ihn auf jeder Karte
+             * wiederholt, macht aus einem Brett eine Formularwand. Die Auswahl
+             * selbst klappt vom Betriebssystem mit voller Beschriftung auf.
+             */
+            <label className="relative shrink-0">
+              <span className="sr-only">
+                {fall.name} in anderen Ordner legen
+              </span>
+              {/* `key` haengt am Status: Nach einem Zug baut React das Feld neu
+                  auf, sonst behielte es seinen alten Eintrag — `defaultValue`
+                  wirkt nur beim ersten Rendern. */}
+              <select
+                key={fall.status}
+                defaultValue={fall.status}
+                title="In anderen Ordner legen"
+                onChange={(e) => onWaehlen(fall.id, e.target.value as StatusId)}
+                className="size-6 cursor-pointer appearance-none rounded-[6px] border border-border bg-surface text-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+              >
+                {/* Stillgelegte Ordner stehen nicht zur Wahl — man soll da
+                    heraus und nicht hinein. Der eigene bleibt drin, sonst
+                    zeigte das Feld einen fremden Ordner an. */}
+                {stationen
+                  .filter((s) => !s.stillgelegt || s.id === fall.status)
+                  .map((s) => (
+                    <option key={s.id} value={s.id} className="text-foreground">
+                      {s.name}
+                    </option>
+                  ))}
+              </select>
+              {/* Zwei Pfeile hinter dem Feld. `pointer-events-none`, damit der
+                  Klick beim Auswahlfeld darunter ankommt. */}
+              <svg
+                viewBox="0 0 10 10"
+                aria-hidden
+                className="pointer-events-none absolute inset-0 m-auto size-3 fill-muted"
+              >
+                <path d="M5 0.6 7.2 3.4H2.8zM5 9.4 2.8 6.6h4.4z" />
+              </svg>
+            </label>
+          )}
+        </div>
       </div>
-
-      {darfSchieben && (
-        /**
-         * Der Weg ohne Ziehen — fuer die Tastatur, fuer Vorleseprogramme und
-         * fuer alle, denen eine Geste ueber vierzehn Spalten zu fummelig ist.
-         *
-         * Klein in der Ecke und ohne sichtbaren Text: Der aktuelle Ordner
-         * steht schon ueber der Spalte, und ein Feld, das ihn auf jeder Karte
-         * wiederholt, macht aus einem Brett eine Formularwand. Die Auswahl
-         * selbst klappt vom Betriebssystem mit voller Beschriftung auf.
-         */
-        <label className="absolute right-1.5 top-1.5">
-          <span className="sr-only">{fall.name} in anderen Ordner legen</span>
-          {/* `key` haengt am Status: Nach einem Zug baut React das Feld neu
-              auf, sonst behielte es seinen alten Eintrag — `defaultValue`
-              wirkt nur beim ersten Rendern. */}
-          <select
-            key={fall.status}
-            defaultValue={fall.status}
-            title="In anderen Ordner legen"
-            onChange={(e) => onWaehlen(fall.id, e.target.value as StatusId)}
-            className="size-5 cursor-pointer appearance-none rounded-[6px] border border-border bg-surface text-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-          >
-            {/* Stillgelegte Ordner stehen nicht zur Wahl — man soll da
-                heraus und nicht hinein. Der eigene bleibt drin, sonst
-                zeigte das Feld einen fremden Ordner an. */}
-            {stationen
-              .filter((s) => !s.stillgelegt || s.id === fall.status)
-              .map((s) => (
-                <option key={s.id} value={s.id} className="text-foreground">
-                  {s.name}
-                </option>
-              ))}
-          </select>
-          {/* Zwei Pfeile hinter dem Feld. `pointer-events-none`, damit der
-              Klick beim Auswahlfeld darunter ankommt. */}
-          <svg
-            viewBox="0 0 10 10"
-            aria-hidden
-            className="pointer-events-none absolute inset-0 m-auto size-3 fill-muted"
-          >
-            <path d="M5 0.6 7.2 3.4H2.8zM5 9.4 2.8 6.6h4.4z" />
-          </svg>
-        </label>
-      )}
     </li>
   );
 }
