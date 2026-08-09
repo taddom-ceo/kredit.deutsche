@@ -270,7 +270,12 @@ export default async function CrmSeite({
           <section className="flex flex-col gap-4">
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
               <h2 className="text-sm font-semibold">Pipeline</h2>
+              {/* Seit die Spalten nur noch ein Zeichen tragen, gehoert der
+                  Hinweis auf die Fahne hierher: Wer das Brett zum ersten Mal
+                  sieht, kaeme sonst nicht darauf, dass die Namen ueberhaupt
+                  noch irgendwo stehen. */}
               <span className="text-xs text-muted">
+                Auf ein Symbol zeigen zeigt den Namen des Ordners.{" "}
                 {benutzer.rolle === "lesen"
                   ? "Dieses Konto darf Fälle nur ansehen."
                   : "Karte am Griff links greifen und in einen anderen Ordner ziehen."}{" "}

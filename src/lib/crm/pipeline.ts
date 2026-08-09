@@ -50,30 +50,36 @@ export type Ton = "neu" | "arbeit" | "warten" | "erfolg" | "weg" | "alt";
  * Die Klassen je Ton, ausgeschrieben. Tailwind liest den Quelltext nach
  * fertigen Klassennamen ab — zusammengesetzte wie `bg-${farbe}-400` faende es
  * nicht und liesse sie beim Bauen einfach weg.
+ *
+ * `zeichen` faerbt das Symbol ueber der Spalte, `schild` die Plakette im
+ * Fall selbst. Seit die Spalten nur noch Symbole tragen, ist die Farbe kein
+ * Beiwerk mehr, sondern die zweite Unterscheidung neben der Form: Wer die
+ * vierzehn Zeichen noch nicht auswendig kennt, sieht wenigstens sofort, ob
+ * ein Ordner Arbeit, Warten oder Ende bedeutet.
  */
-export const TON_KLASSEN: Record<Ton, { punkt: string; schild: string }> = {
+export const TON_KLASSEN: Record<Ton, { zeichen: string; schild: string }> = {
   neu: {
-    punkt: "bg-accent",
+    zeichen: "text-accent",
     schild: "border-accent/40 bg-accent/10 text-accent",
   },
   arbeit: {
-    punkt: "bg-sky-400",
+    zeichen: "text-sky-300",
     schild: "border-sky-400/40 bg-sky-400/10 text-sky-200",
   },
   warten: {
-    punkt: "bg-amber-400",
+    zeichen: "text-amber-300",
     schild: "border-amber-400/40 bg-amber-400/10 text-amber-200",
   },
   erfolg: {
-    punkt: "bg-emerald-400",
+    zeichen: "text-emerald-300",
     schild: "border-emerald-400/40 bg-emerald-400/10 text-emerald-200",
   },
   weg: {
-    punkt: "bg-red-400",
+    zeichen: "text-red-300",
     schild: "border-red-400/40 bg-red-400/10 text-red-300",
   },
   alt: {
-    punkt: "bg-muted",
+    zeichen: "text-muted",
     schild: "border-border bg-surface-2 text-muted",
   },
 };
