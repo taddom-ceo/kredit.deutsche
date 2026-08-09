@@ -15,6 +15,7 @@ import {
   STATIONEN,
   TON_KLASSEN,
 } from "@/lib/crm/pipeline";
+import { LOESCHGRUENDE } from "@/lib/crm/loeschprotokoll";
 import { verlangeAnmeldung } from "@/lib/crm/zugang";
 import { schluesselVorhanden } from "@/lib/crm/verschluesselung";
 import IbanKopieren from "@/components/crm/IbanKopieren";
@@ -488,31 +489,66 @@ export default async function AntragSeite({
               (loeschenGefragt ? (
                 <form
                   action={fallLoeschen}
-                  className="flex flex-wrap items-center gap-3 border-t border-red-400/20 pt-4"
+                  className="flex flex-col gap-3 border-t border-red-400/20 pt-4"
                 >
                   <input type="hidden" name="id" value={antrag.id} />
                   <span className="text-sm">
                     Fall und Verlauf endgültig löschen? Das lässt sich nicht
                     rückgängig machen.
                   </span>
-                  <button
-                    type="submit"
-                    className="rounded-[12px] border border-red-400/50 bg-red-400/10 px-4 py-2 text-xs font-semibold text-red-300 transition-colors duration-150 hover:bg-red-400/20"
-                  >
-                    Ja, endgültig löschen
-                  </button>
-                  <Link
-                    href={`/crm/antrag/${antrag.id}`}
-                    className="text-xs text-muted transition-colors duration-150 hover:text-foreground"
-                  >
-                    Abbrechen
-                  </Link>
+
+                  {/* Der Grund ist Pflicht und eine Auswahl, kein Freitext.
+                      In ein Textfeld tippt früher oder später jemand
+                      "Löschbegehren Frau Müller vom 3.8." — und damit stünde
+                      der Name wieder in der Datenbank, an einer Stelle, an
+                      der ihn niemand vermutet und deshalb auch niemand
+                      mitlöscht. */}
+                  <div className="flex flex-wrap items-end gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label htmlFor="grund" className="text-xs text-muted">
+                        Grund — steht später im Löschprotokoll
+                      </label>
+                      <select
+                        id="grund"
+                        name="grund"
+                        required
+                        defaultValue="loeschbegehren"
+                        className="rounded-[12px] border border-border bg-surface-2 px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                      >
+                        {LOESCHGRUENDE.map((g) => (
+                          <option key={g.id} value={g.id}>
+                            {g.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      type="submit"
+                      className="rounded-[12px] border border-red-400/50 bg-red-400/10 px-4 py-2 text-xs font-semibold text-red-300 transition-colors duration-150 hover:bg-red-400/20"
+                    >
+                      Ja, endgültig löschen
+                    </button>
+                    <Link
+                      href={`/crm/antrag/${antrag.id}`}
+                      className="pb-2 text-xs text-muted transition-colors duration-150 hover:text-foreground"
+                    >
+                      Abbrechen
+                    </Link>
+                  </div>
                 </form>
               ) : (
                 <div className="flex flex-wrap items-center gap-3 border-t border-red-400/20 pt-4">
                   <p className="text-xs text-muted leading-relaxed">
                     Für ein Löschbegehren nach Art. 17 DSGVO oder den
-                    Widerspruch eines Abbrechers. Der Verlauf verschwindet mit.
+                    Widerspruch eines Abbrechers. Der Verlauf verschwindet mit;
+                    im{" "}
+                    <Link
+                      href="/crm/protokoll"
+                      className="underline underline-offset-2 hover:text-foreground"
+                    >
+                      Löschprotokoll
+                    </Link>{" "}
+                    bleibt der Nachweis.
                   </p>
                   <Link
                     href={`/crm/antrag/${antrag.id}?loeschen=1`}

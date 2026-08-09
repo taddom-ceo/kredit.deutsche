@@ -17,6 +17,10 @@ import {
   imPapierkorb,
   type StatusId,
 } from "@/lib/crm/pipeline";
+import {
+  haltLoeschungFest,
+  istLoeschgrund,
+} from "@/lib/crm/loeschprotokoll";
 import { verlangeAnmeldung } from "@/lib/crm/zugang";
 
 /**
@@ -206,6 +210,11 @@ export async function ausPapierkorb(formular: FormData) {
  * erfuellen, es kostet nur einen Klick mehr. Die Pruefung steht hier und
  * nicht bloss in der Oberflaeche: Server Functions sind per POST auch direkt
  * erreichbar.
+ *
+ * Festgehalten wird die Loeschung im Loeschprotokoll — ohne die Daten des
+ * Geloeschten, nur wann, durch wen, unter welcher Kennung und aus welchem
+ * Grund. Ohne diesen Eintrag verschwaende mit dem Fall auch der Umstand, dass
+ * er je geloescht wurde: Sein Verlauf haengt an ihm und geht mit.
  */
 export async function fallLoeschen(formular: FormData) {
   const benutzer = await verlangeAnmeldung();
@@ -221,6 +230,19 @@ export async function fallLoeschen(formular: FormData) {
       "Endgueltig geloescht wird nur aus dem Papierkorb. Den Fall zuerst dorthin legen."
     );
   }
+
+  const grund = String(formular.get("grund") ?? "");
+  if (!istLoeschgrund(grund)) throw new Error("Kein gueltiger Loeschgrund.");
+
+  // Erst der Nachweis, dann die Loeschung. Andersherum stuende im
+  // schlechtesten Fall ein geloeschter Fall ohne jeden Eintrag da — und das
+  // ist genau der Zustand, den das Protokoll verhindern soll.
+  await haltLoeschungFest({
+    antragId: antrag.id,
+    eingang: antrag.eingang,
+    benutzer: benutzer.anzeigename,
+    grund,
+  });
 
   await loescheAntrag(id);
   revalidatePath("/crm");

@@ -241,6 +241,17 @@ export default async function CrmSeite({
             </span>
           </div>
           <div className="flex min-w-0 items-center gap-4">
+            {/* Nur fuer Administratoren, weil nur sie loeschen duerfen — und
+                weil ein Verweis auf eine Seite, die dann "nicht fuer Sie"
+                sagt, schlechter ist als gar keiner. */}
+            {benutzer.rolle === "admin" && (
+              <Link
+                href="/crm/protokoll"
+                className="hidden sm:inline text-xs text-muted transition-colors duration-150 hover:text-foreground"
+              >
+                Löschprotokoll
+              </Link>
+            )}
             <div className="min-w-0 text-right leading-tight">
               <div className="truncate text-sm font-semibold">
                 {benutzer.anzeigename}

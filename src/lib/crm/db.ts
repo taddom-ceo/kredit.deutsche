@@ -156,6 +156,27 @@ const SCHEMA = [
    * Namen dafuer weiterhin nachschlagen.
    */
   `UPDATE antrag SET status = 'abbrecher' WHERE status = 'abgebrochen'`,
+  /**
+   * Der Nachweis, dass geloescht wurde.
+   *
+   * Bewusst ohne Fremdschluessel auf `antrag`: Der Eintrag soll den Fall
+   * ueberleben, den er beschreibt. Mit REFERENCES ginge er beim Loeschen
+   * mit — und das Protokoll waere immer leer, genau dann, wenn man es
+   * braucht.
+   *
+   * `antrag_id` bleibt als blosse Kennung stehen und zeigt nach der Loeschung
+   * auf nichts mehr. Personenbezogenes gehoert hier nicht hinein; die
+   * Begruendung dazu steht in loeschprotokoll.ts.
+   */
+  `CREATE TABLE IF NOT EXISTS loeschprotokoll (
+     id         bigserial PRIMARY KEY,
+     zeit       timestamptz NOT NULL DEFAULT now(),
+     antrag_id  uuid NOT NULL,
+     eingang    timestamptz,
+     benutzer   text NOT NULL,
+     grund      text NOT NULL
+   )`,
+  `CREATE INDEX IF NOT EXISTS loeschprotokoll_zeit_idx ON loeschprotokoll (zeit DESC)`,
 ];
 
 /**
