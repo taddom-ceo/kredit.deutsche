@@ -246,12 +246,26 @@ const SCHEMA = [
  * gleichzeitig los, warten beide auf denselben Durchlauf, statt die Tabellen
  * zweimal anzulegen. Schlaegt es fehl, wird das Versprechen wieder verworfen,
  * damit der naechste Versuch nicht ewig denselben Fehler wiederholt.
+ *
+ * Alles in einem Rutsch, nicht Anweisung fuer Anweisung.
+ *
+ * Der HTTP-Treiber macht aus jeder Abfrage eine eigene Anfrage ans Netz. Bei
+ * sechzehn Anweisungen nacheinander sind das sechzehn Hin und Her, bevor die
+ * erste Zeile gelesen ist — und weil auf Vercel staendig neue Instanzen
+ * anlaufen, zahlt das nicht einer, sondern viele. Als die Liste mit
+ * Kundennummer und Pruefspalte auf sechzehn Anweisungen wuchs, wurde daraus
+ * eine spuerbare Wartezeit.
+ *
+ * `transaction` schickt alle zusammen und bekommt eine Antwort. Die
+ * Reihenfolge bleibt garantiert — die Nummernvergabe haengt daran —, und ein
+ * Fehler in der Mitte laesst nichts halb Angelegtes zurueck.
  */
 export function stelleSchemaSicher(): Promise<void> {
   zwischenspeicher.__crmSchema ??= (async () => {
-    for (const anweisung of SCHEMA) {
-      await abfrage(anweisung);
-    }
+    const verbindung = sql();
+    await verbindung.transaction(
+      SCHEMA.map((anweisung) => verbindung.query(anweisung))
+    );
   })().catch((fehler) => {
     zwischenspeicher.__crmSchema = undefined;
     throw fehler;

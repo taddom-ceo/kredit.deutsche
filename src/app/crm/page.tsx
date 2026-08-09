@@ -11,8 +11,7 @@ import {
   kundennummer,
   vollerName,
   zaehleAntraege,
-  zaehleFaellige,
-  zaehleNachStatus,
+  zaehleUebersicht,
   type Antrag,
   type AntragFilter,
 } from "@/lib/crm/antraege";
@@ -24,7 +23,6 @@ import {
   STATIONEN,
   TON_KLASSEN,
   findeStation,
-  imPapierkorb,
   stationOderErsatz,
   type StatusId,
 } from "@/lib/crm/pipeline";
@@ -114,17 +112,23 @@ export default async function CrmSeite({
   let fehler: string | null = null;
 
   try {
-    [antraege, fuersBrett, gesamt, getroffen, faellige, zaehler] =
-      await Promise.all([
-        alleAntraege(filter),
-        // Immer eine eigene Abfrage: Das Brett zeigt alle Ordner und nimmt
-        // den Papierkorb mit, die Liste tut beides nicht.
-        alleAntraege(brettFilter),
-        zaehleAntraege(),
-        zaehleAntraege(filter),
-        zaehleFaellige(),
-        zaehleNachStatus(),
-      ]);
+    // Drei Abfragen statt sechs. Die Zahlen der Uebersicht — Gesamtzahl,
+    // Faelligkeiten, Zahl je Ordner — kommen aus einer einzigen Gruppierung;
+    // vorher waren es drei Anfragen ans Netz fuer dieselbe Tabelle.
+    const [liste, brett, zahlen, gefiltert] = await Promise.all([
+      alleAntraege(filter),
+      // Immer eine eigene Abfrage: Das Brett zeigt alle Ordner und nimmt
+      // den Papierkorb mit, die Liste tut beides nicht.
+      alleAntraege(brettFilter),
+      zaehleUebersicht(),
+      zaehleAntraege(filter),
+    ]);
+    antraege = liste;
+    fuersBrett = brett;
+    gesamt = zahlen.gesamt;
+    faellige = zahlen.faellig;
+    zaehler = zahlen.jeOrdner;
+    getroffen = gefiltert;
   } catch (ausnahme) {
     fehler = ausnahme instanceof Error ? ausnahme.message : String(ausnahme);
   }
