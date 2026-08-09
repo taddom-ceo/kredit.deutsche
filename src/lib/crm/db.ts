@@ -177,6 +177,66 @@ const SCHEMA = [
      grund      text NOT NULL
    )`,
   `CREATE INDEX IF NOT EXISTS loeschprotokoll_zeit_idx ON loeschprotokoll (zeit DESC)`,
+  /**
+   * Die Kundennummer.
+   *
+   * Die Kennung eines Falls ist eine UUID — sechsunddreissig Zeichen, die
+   * niemand am Telefon vorliest und niemand wiedererkennt. Fuer die Arbeit
+   * braucht es eine kurze Zahl, die man nennen, notieren und suchen kann.
+   *
+   * Vergeben wird sie von der Datenbank, nicht vom Anwendungscode: Zwei
+   * Antraege, die im selben Moment eingehen, bekaemen sonst dieselbe Nummer.
+   * Eine Sequenz kann das nicht passieren.
+   *
+   * Die vier Schritte gehoeren zusammen und muessen in dieser Reihenfolge
+   * laufen — Spalte, Sequenz, Bestand nachtragen, Sequenz hinter den Bestand
+   * setzen. Erst danach darf die Vorgabe greifen, sonst vergaebe sie Nummern,
+   * die der Nachtrag gleich darauf noch einmal benutzt.
+   */
+  `ALTER TABLE antrag ADD COLUMN IF NOT EXISTS nummer bigint`,
+  // Beginnt bei 1000, damit die erste Nummer 1001 lautet. Eine Kundennummer,
+  // die mit 1 anfaengt, sagt jedem Kunden, dass er der erste ist.
+  `CREATE SEQUENCE IF NOT EXISTS antrag_nummer_seq START 1001`,
+  /**
+   * Faelle, die es vor dieser Spalte schon gab, bekommen ihre Nummer
+   * nachtraeglich — in der Reihenfolge ihres Eingangs, damit die Nummern
+   * dieselbe Ordnung haben wie die Faelle selbst.
+   *
+   * `WHERE nummer IS NULL` macht den Schritt nach dem ersten Durchlauf zu
+   * einem Nichts. Er laeuft trotzdem bei jedem Start mit, und das ist
+   * Absicht: Sollte je eine Zeile ohne Nummer entstehen, holt er sie ein,
+   * statt sie fuer immer ohne zu lassen.
+   */
+  `UPDATE antrag a
+      SET nummer = z.neu
+     FROM (
+       SELECT id,
+              (SELECT COALESCE(MAX(nummer), 1000) FROM antrag)
+                + row_number() OVER (ORDER BY eingang) AS neu
+         FROM antrag
+        WHERE nummer IS NULL
+     ) z
+    WHERE a.id = z.id AND a.nummer IS NULL`,
+  // Die Sequenz hinter den hoechsten vergebenen Wert setzen, sonst begaenne
+  // sie bei 1001 und liefe in die nachgetragenen Nummern hinein.
+  `SELECT setval('antrag_nummer_seq',
+                 GREATEST((SELECT COALESCE(MAX(nummer), 1000) FROM antrag), 1000))`,
+  `ALTER TABLE antrag ALTER COLUMN nummer SET DEFAULT nextval('antrag_nummer_seq')`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS antrag_nummer_idx ON antrag (nummer)`,
+  /**
+   * Was am Telefon geprueft und richtiggestellt wurde.
+   *
+   * Bewusst eine eigene Spalte und nicht in `rohdaten` hinein: Dort steht,
+   * was der Kunde selbst abgeschickt hat, und das darf sich nachtraeglich
+   * nicht aendern. Sonst laesst sich spaeter nicht mehr sagen, ob eine
+   * Telefonnummer von Anfang an so lautete oder ob jemand sie korrigiert hat
+   * — und genau diese Frage stellt sich, wenn ein Anruf ins Leere geht.
+   *
+   * Form: { "telefon": { "wert": "0151 …", "ok": true }, … }. Ein Eintrag
+   * ohne `wert` ist eine blosse Bestaetigung, einer ohne `ok` eine
+   * Richtigstellung, die noch niemand abgehakt hat.
+   */
+  `ALTER TABLE antrag ADD COLUMN IF NOT EXISTS pruefung jsonb NOT NULL DEFAULT '{}'::jsonb`,
 ];
 
 /**

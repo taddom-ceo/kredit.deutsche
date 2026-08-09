@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import {
   aktivitaeten,
   findeAntrag,
+  geldbetrag,
+  kundennummer,
   unvollstaendig,
   vollerName,
   type Aktivitaet,
@@ -18,6 +20,7 @@ import {
 import { LOESCHGRUENDE } from "@/lib/crm/loeschprotokoll";
 import { verlangeAnmeldung } from "@/lib/crm/zugang";
 import { schluesselVorhanden } from "@/lib/crm/verschluesselung";
+import Datenblatt from "@/components/crm/Datenblatt";
 import IbanKopieren from "@/components/crm/IbanKopieren";
 import {
   ausPapierkorb,
@@ -43,21 +46,6 @@ function Feld({ name, wert }: { name: string; wert: string | undefined }) {
       <dt className="text-xs text-muted shrink-0">{name}</dt>
       <dd className="text-sm text-right break-words">{wert?.trim() || "—"}</dd>
     </div>
-  );
-}
-
-function Block({
-  titel,
-  children,
-}: {
-  titel: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-[20px] border border-border bg-surface p-5 flex flex-col gap-2">
-      <h2 className="text-xs font-semibold text-muted tracking-wide">{titel}</h2>
-      <dl className="flex flex-col">{children}</dl>
-    </section>
   );
 }
 
@@ -136,6 +124,12 @@ export default async function AntragSeite({
           >
             ← Eingang
           </Link>
+          {/* Die Kundennummer steht im Kopf und nicht zwischen den Feldern:
+              Sie ist das, was man am Telefon als Erstes nennt, und was man
+              sucht, wenn man die Akte offen hat und jemand danach fragt. */}
+          <span className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-[11px] font-semibold tabular-nums">
+            {kundennummer(antrag)}
+          </span>
           {/* Schiebt Station und Hinweis nach rechts, laesst sie auf schmalen
               Geraeten aber umbrechen statt ueber den Rand zu draengen. */}
           <span className="ml-auto" />
@@ -157,205 +151,241 @@ export default async function AntragSeite({
         </div>
       </header>
 
-      <div className="w-full px-6 lg:px-10 py-10 flex flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold tracking-[-0.02em]">
-            {vollerName(antrag)}
-          </h1>
-          <p className="text-xs text-muted">
-            Eingegangen am{" "}
-            {new Date(antrag.eingang).toLocaleString("de-DE", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </p>
-        </div>
+      {/**
+        * Zwei Spalten statt einer Kolonne aus Kästen.
+        *
+        * Vorher stand alles untereinander: Bearbeitung, sechs Datenblöcke,
+        * laufende Kredite, Löschen, Verlauf. Wer eine Telefonnummer suchte,
+        * scrollte daran vorbei; wer eine Notiz schreiben wollte, scrollte
+        * wieder hoch. Die beiden Dinge, die man am Telefon gleichzeitig
+        * braucht — die Angaben des Kunden und das, was zuletzt besprochen
+        * wurde — lagen am weitesten auseinander.
+        *
+        * Jetzt links die Akte, rechts das Journal. Die rechte Spalte bleibt
+        * beim Blättern stehen, damit das Notizfeld immer erreichbar ist. Auf
+        * schmalen Geräten fällt sie darunter; `lg:` schaltet die zweite Spalte
+        * erst ab der Breite frei, ab der beide nebeneinander lesbar sind.
+        */}
+      <div className="w-full px-6 lg:px-10 py-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_23rem] xl:grid-cols-[minmax(0,1fr)_26rem] items-start">
+        <div className="flex flex-col gap-5 min-w-0">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-bold tracking-[-0.02em]">
+              {vollerName(antrag)}
+            </h1>
+            <p className="text-xs text-muted">
+              Eingegangen am{" "}
+              {new Date(antrag.eingang).toLocaleString("de-DE", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+          </div>
 
-        {darfBearbeiten ? (
-          <section className="rounded-[20px] border border-border bg-surface p-5 flex flex-col gap-5">
-            <h2 className="text-xs font-semibold text-muted tracking-wide">
-              Bearbeitung
-            </h2>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <form action={statusAendern} className="flex flex-col gap-2">
-                <input type="hidden" name="id" value={antrag.id} />
-                <label htmlFor="status" className="text-xs text-muted">
-                  Ordner
-                </label>
-                <div className="flex gap-2">
-                  <select
-                    id="status"
-                    name="status"
-                    // Der Schluessel wechselt mit dem Status und zwingt React,
-                    // das Feld neu aufzubauen. Ohne ihn behaelt die Auswahl
-                    // nach einer Aenderung ihren alten Eintrag — `defaultValue`
-                    // wirkt nur beim ersten Rendern. Wer dann "Setzen" drueckt,
-                    // ohne hinzusehen, wuerde den Fall auf die alte Station
-                    // zurueckwerfen.
-                    key={antrag.status}
-                    defaultValue={antrag.status}
-                    className="flex-1 rounded-[14px] border border-border bg-surface-2 px-3 py-2.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-                  >
-                    {/* Steht der Fall noch auf einem stillgelegten Ordner,
-                        kommt der als erster Eintrag dazu. Ohne ihn faende
-                        `defaultValue` keine Entsprechung, das Feld zeigte
-                        stumm "Neu" — und wer dann "Setzen" drueckt, ohne
-                        hinzusehen, verschoebe den Fall, statt ihn zu
-                        bestaetigen. */}
-                    {(STATIONEN.some((s) => s.id === antrag.status)
-                      ? STATIONEN
-                      : [station, ...STATIONEN]
-                    ).map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="submit"
-                    className="shrink-0 rounded-[14px] bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground transition-colors duration-200 hover:bg-accent-strong"
-                  >
-                    Setzen
-                  </button>
-                </div>
-              </form>
-
-              <form action={wiedervorlageSetzen} className="flex flex-col gap-2">
-                <input type="hidden" name="id" value={antrag.id} />
-                <label htmlFor="tag" className="text-xs text-muted">
-                  Wiedervorlage
-                  {antrag.wiedervorlage && antrag.wiedervorlage < heute && (
-                    <span className="ml-2 text-amber-300">überfällig</span>
-                  )}
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    id="tag"
-                    name="tag"
-                    type="date"
-                    // Aus demselben Grund wie bei der Station daneben.
-                    key={antrag.wiedervorlage ?? "ohne"}
-                    defaultValue={antrag.wiedervorlage ?? ""}
-                    className="flex-1 rounded-[14px] border border-border bg-surface-2 px-3 py-2.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-                  />
-                  <button
-                    type="submit"
-                    className="shrink-0 rounded-[14px] border border-border-strong bg-surface-2 px-4 py-2.5 text-sm font-semibold text-foreground transition-colors duration-200 hover:bg-surface"
-                  >
-                    Merken
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            <form action={notizSchreiben} className="flex flex-col gap-2">
-              <input type="hidden" name="id" value={antrag.id} />
-              <label htmlFor="text" className="text-xs text-muted">
-                Notiz
-              </label>
-              <textarea
-                id="text"
-                name="text"
-                rows={3}
-                placeholder="Was besprochen wurde, was fehlt, was als Nächstes ansteht."
-                className="rounded-[14px] border border-border bg-surface-2 px-3 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-              />
-              <button
-                type="submit"
-                className="self-start rounded-[14px] border border-border-strong bg-surface-2 px-4 py-2.5 text-sm font-semibold text-foreground transition-colors duration-200 hover:bg-surface"
+          {/* Die vier Zahlen, um die es geht, als eigene Zeile. Sie standen
+              vorher als vier Zeilen in einem Kasten zwischen zwanzig anderen
+              Zeilen — richtig abgelegt, aber nicht zu sehen. */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { name: "Verwendung", wert: art ?? "—" },
+              { name: "Betrag", wert: formatEuro(antrag.amount) },
+              { name: "Laufzeit", wert: `${antrag.months} Mon.` },
+              { name: "Rate (Beispiel)", wert: formatEuro(rate) },
+            ].map((k) => (
+              <div
+                key={k.name}
+                className="rounded-[16px] border border-border bg-surface px-4 py-3 flex flex-col gap-0.5"
               >
-                Notiz speichern
-              </button>
-            </form>
-          </section>
-        ) : (
-          <p className="rounded-[20px] border border-border bg-surface px-5 py-4 text-xs text-muted">
-            Dieses Konto darf Fälle ansehen, aber nicht bearbeiten.
-          </p>
-        )}
-
-        <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-          <Block titel="Kreditwunsch">
-            <Feld name="Verwendung" wert={art} />
-            <Feld name="Betrag" wert={formatEuro(antrag.amount)} />
-            <Feld name="Laufzeit" wert={`${antrag.months} Monate`} />
-            <Feld name="Rate (Beispiel)" wert={formatEuro(rate)} />
-            <Feld
-              name="Antragsteller"
-              wert={antrag.personCount === 2 ? "Zwei Personen" : "Eine Person"}
-            />
-          </Block>
-
-          <Block titel="Person">
-            <Feld
-              name="Vorname"
-              wert={[antrag.vorname, antrag.zweiterVorname]
-                .filter(Boolean)
-                .join(" ")}
-            />
-            <Feld name="Nachname" wert={antrag.nachname} />
-            <Feld name="Geburtsdatum" wert={datum(antrag.geburtsdatum)} />
-            <Feld name="E-Mail" wert={antrag.email} />
-            <Feld
-              name="Telefon"
-              wert={[antrag.telefonVorwahl, antrag.telefon]
-                .filter(Boolean)
-                .join(" ")}
-            />
-          </Block>
-
-          <Block titel="Anschrift">
-            <Feld
-              name="Straße"
-              wert={[antrag.strasse, antrag.hausnummer].filter(Boolean).join(" ")}
-            />
-            <Feld name="PLZ" wert={antrag.plz} />
-            <Feld name="Ort" wert={antrag.ort} />
-          </Block>
-
-          <Block titel="Beschäftigung">
-            <Feld name="Art" wert={antrag.beschaeftigungsart} />
-            <Feld name="Arbeitgeber" wert={antrag.arbeitgeber} />
-            <Feld
-              name="Beschäftigt seit"
-              wert={datum(antrag.beschaeftigtSeit)}
-            />
-          </Block>
-
-          <Block titel="Einkommen und Ausgaben">
-            <Feld name="Nettoeinkommen" wert={antrag.nettoeinkommen} />
-            <Feld name="Mieteinnahmen" wert={jaNein(antrag.mieteinnahmen)} />
-            <Feld name="davon monatlich" wert={antrag.mieteinnahmenBetrag} />
-            <Feld name="Wohnnebenkosten" wert={antrag.wohnnebenkosten} />
-            <Feld
-              name="Krankenversicherung"
-              wert={antrag.krankenversicherung}
-            />
-            <Feld name="Unterhalt" wert={antrag.unterhalt} />
-          </Block>
-
-          <Block titel="Bankverbindung">
-            <div className="flex items-baseline justify-between gap-3 border-b border-border/60 py-2">
-              <dt className="text-xs text-muted shrink-0">IBAN</dt>
-              <dd className="flex items-center gap-2">
-                <span className="text-sm text-right tabular-nums break-all">
-                  {antrag.iban || "—"}
+                <span className="text-[11px] text-muted">{k.name}</span>
+                <span
+                  className={`font-semibold tracking-[-0.01em] ${
+                    k.name === "Verwendung"
+                      ? "text-sm leading-snug"
+                      : "text-lg tabular-nums"
+                  }`}
+                >
+                  {k.wert}
                 </span>
-                {antrag.iban && (
-                  <IbanKopieren antragId={antrag.id} iban={antrag.iban} />
-                )}
-              </dd>
-            </div>
-            <Feld name="Bank" wert={antrag.bankname} />
-            <Feld name="Kontoinhaber" wert={antrag.kontoinhaber} />
+              </div>
+            ))}
+          </div>
+          {/**
+            * Die Angaben des Kunden, Zeile für Zeile prüfbar.
+            *
+            * Aus den festen Kästen ist ein Datenblatt geworden: Jede Zeile
+            * trägt neben der Angabe des Kunden ein Feld für die
+            * Richtigstellung und einen Haken zum Bestätigen. Gedacht für das
+            * Telefonat — vorlesen, abhaken, bei Bedarf danebenschreiben.
+            *
+            * Was der Kunde abgeschickt hat, wird dabei nie überschrieben. Es
+            * steht in `rohdaten`, die Prüfung in einer eigenen Spalte; wer
+            * später fragt, ob eine Nummer von Anfang an so lautete, findet
+            * beides nebeneinander.
+            */}
+          <Datenblatt
+            antragId={antrag.id}
+            darfBearbeiten={darfBearbeiten}
+            bloecke={[
+              {
+                titel: "Person",
+                zeilen: [
+                  {
+                    schluessel: "vorname",
+                    name: "Vorname",
+                    wert: [antrag.vorname, antrag.zweiterVorname]
+                      .filter(Boolean)
+                      .join(" "),
+                  },
+                  { schluessel: "nachname", name: "Nachname", wert: antrag.nachname },
+                  {
+                    schluessel: "geburtsdatum",
+                    name: "Geburtsdatum",
+                    wert: datum(antrag.geburtsdatum),
+                  },
+                  { schluessel: "email", name: "E-Mail", wert: antrag.email },
+                  {
+                    schluessel: "telefon",
+                    name: "Telefon",
+                    wert: [antrag.telefonVorwahl, antrag.telefon]
+                      .filter(Boolean)
+                      .join(" "),
+                  },
+                  {
+                    schluessel: "personCount",
+                    name: "Antragsteller",
+                    wert:
+                      antrag.personCount === 2 ? "Zwei Personen" : "Eine Person",
+                  },
+                ],
+              },
+              {
+                titel: "Anschrift",
+                zeilen: [
+                  {
+                    schluessel: "strasse",
+                    name: "Straße",
+                    wert: [antrag.strasse, antrag.hausnummer]
+                      .filter(Boolean)
+                      .join(" "),
+                  },
+                  { schluessel: "plz", name: "PLZ", wert: antrag.plz },
+                  { schluessel: "ort", name: "Ort", wert: antrag.ort },
+                ],
+              },
+              {
+                titel: "Beschäftigung",
+                zeilen: [
+                  {
+                    schluessel: "beschaeftigungsart",
+                    name: "Art",
+                    wert: antrag.beschaeftigungsart,
+                  },
+                  {
+                    schluessel: "arbeitgeber",
+                    name: "Arbeitgeber",
+                    wert: antrag.arbeitgeber,
+                  },
+                  {
+                    schluessel: "beschaeftigtSeit",
+                    name: "Beschäftigt seit",
+                    wert: datum(antrag.beschaeftigtSeit),
+                  },
+                ],
+              },
+              {
+                titel: "Einkommen und Ausgaben",
+                zeilen: [
+                  {
+                    schluessel: "nettoeinkommen",
+                    name: "Nettoeinkommen",
+                    wert: geldbetrag(antrag.nettoeinkommen),
+                  },
+                  {
+                    schluessel: "mieteinnahmen",
+                    name: "Mieteinnahmen",
+                    wert: jaNein(antrag.mieteinnahmen),
+                  },
+                  {
+                    schluessel: "mieteinnahmenBetrag",
+                    name: "davon monatlich",
+                    wert: geldbetrag(antrag.mieteinnahmenBetrag),
+                  },
+                  {
+                    schluessel: "wohnnebenkosten",
+                    name: "Wohnnebenkosten",
+                    wert: geldbetrag(antrag.wohnnebenkosten),
+                  },
+                  {
+                    schluessel: "krankenversicherung",
+                    name: "Krankenversicherung",
+                    wert: geldbetrag(antrag.krankenversicherung),
+                  },
+                  {
+                    schluessel: "unterhalt",
+                    name: "Unterhalt",
+                    wert: geldbetrag(antrag.unterhalt),
+                  },
+                ],
+              },
+              {
+                titel: "Kreditwunsch",
+                zeilen: [
+                  {
+                    schluessel: "kreditart",
+                    name: "Verwendung",
+                    wert: art ?? "",
+                  },
+                  {
+                    schluessel: "amount",
+                    name: "Betrag",
+                    wert: formatEuro(antrag.amount),
+                  },
+                  {
+                    schluessel: "months",
+                    name: "Laufzeit",
+                    wert: `${antrag.months} Monate`,
+                  },
+                ],
+              },
+            ].map((block) => ({
+              ...block,
+              zeilen: block.zeilen.map((z) => ({
+                ...z,
+                korrektur: antrag.pruefung[z.schluessel]?.wert,
+                bestaetigt: antrag.pruefung[z.schluessel]?.ok,
+              })),
+            }))}
+          />
+
+          {/* Die Bankverbindung bleibt für sich: Sie hat einen eigenen
+              Kopierknopf, der jedes Mitnehmen im Verlauf vermerkt, und einen
+              Hinweis darauf, wie sie abgelegt ist. Beides passt in keine
+              Prüfzeile. */}
+          <section className="rounded-[20px] border border-border bg-surface px-5 py-4 flex flex-col gap-2">
+            <h2 className="text-xs font-semibold text-muted tracking-wide">
+              Bankverbindung
+            </h2>
+            <dl className="flex flex-col">
+              <div className="flex items-baseline justify-between gap-3 border-b border-border/60 py-2">
+                <dt className="text-xs text-muted shrink-0">IBAN</dt>
+                <dd className="flex items-center gap-2">
+                  <span className="text-sm text-right tabular-nums break-all">
+                    {antrag.iban || "—"}
+                  </span>
+                  {antrag.iban && (
+                    <IbanKopieren antragId={antrag.id} iban={antrag.iban} />
+                  )}
+                </dd>
+              </div>
+              <Feld name="Bank" wert={antrag.bankname} />
+              <Feld name="Kontoinhaber" wert={antrag.kontoinhaber} />
+            </dl>
             {/* Der Zustand steht am Feld selbst und nicht nur in der
                 Uebersicht: Hier sieht man die Bankverbindung, hier gehoert
                 die Auskunft hin, wie sie abgelegt ist. */}
-            <p className="pt-3 text-[11px] leading-relaxed text-muted">
+            <p className="pt-2 text-[11px] leading-relaxed text-muted">
               {schluesselVorhanden() ? (
                 <>
                   Verschlüsselt gespeichert. In der Übersicht stehen nur die
@@ -370,8 +400,7 @@ export default async function AntragSeite({
                 </span>
               )}
             </p>
-          </Block>
-        </div>
+          </section>
 
         <section className="rounded-[20px] border border-border bg-surface p-5 flex flex-col gap-3">
           <h2 className="text-xs font-semibold text-muted tracking-wide">
@@ -408,13 +437,13 @@ export default async function AntragSeite({
                         {kredit.bank || "—"}
                       </td>
                       <td className="py-2 pr-4 text-right tabular-nums">
-                        {kredit.rate || "—"}
+                        {geldbetrag(kredit.rate)}
                       </td>
                       <td className="py-2 pr-4 text-right tabular-nums">
-                        {kredit.restschuld || "—"}
+                        {geldbetrag(kredit.restschuld)}
                       </td>
                       <td className="py-2 text-right tabular-nums">
-                        {kredit.zins || "—"}
+                        {kredit.zins.trim() ? `${kredit.zins} %` : "—"}
                       </td>
                     </tr>
                   ))}
@@ -561,41 +590,190 @@ export default async function AntragSeite({
           </section>
         )}
 
-        <section className="rounded-[20px] border border-border bg-surface p-5 flex flex-col gap-3">
-          <h2 className="text-xs font-semibold text-muted tracking-wide">
-            Verlauf
-          </h2>
-          {verlauf.length === 0 ? (
-            <p className="text-sm text-muted">
-              Noch nichts geschehen. Jeder Statuswechsel, jede Notiz und jede
-              Wiedervorlage steht ab jetzt hier — mit Zeitpunkt und Namen.
-            </p>
-          ) : (
-            <ol className="flex flex-col">
-              {verlauf.map((eintrag) => (
-                <li
-                  key={eintrag.id}
-                  className="flex flex-col gap-1 border-b border-border/60 py-3 first:pt-0 last:border-0 last:pb-0"
-                >
-                  <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-sm">{beschreibe(eintrag)}</span>
-                    <span className="shrink-0 text-[11px] text-muted tabular-nums">
-                      {new Date(eintrag.zeit).toLocaleString("de-DE", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
+        </div>
+
+        {/**
+          * Das Journal: rechts, gestapelt, und beim Blättern stehenbleibend.
+          *
+          * Oben die zwei Entscheidungen, die man am Telefon trifft — in
+          * welchen Ordner der Fall gehört und wann er wieder auf den Tisch
+          * soll. Darunter das Feld für die Notiz und darunter, was bisher
+          * geschah. In dieser Reihenfolge, weil man schreibt, während man
+          * spricht, und erst danach nachliest.
+          *
+          * `sticky` mit `max-h` und eigenem Rollbereich: Ohne die Höhengrenze
+          * wächst die Spalte mit dem Journal, und ein Fall mit dreißig
+          * Einträgen schöbe die linke Spalte auseinander.
+          */}
+        <aside className="flex flex-col gap-4 lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] min-w-0">
+          {darfBearbeiten ? (
+            <>
+              <section className="rounded-[20px] border border-border bg-surface p-4 flex flex-col gap-4 shrink-0">
+                <form action={statusAendern} className="flex flex-col gap-2">
+                  <input type="hidden" name="id" value={antrag.id} />
+                  <label htmlFor="status" className="text-[11px] text-muted">
+                    Ordner
+                  </label>
+                  <div className="flex gap-2">
+                    <select
+                      id="status"
+                      name="status"
+                      // Der Schluessel wechselt mit dem Status und zwingt React,
+                      // das Feld neu aufzubauen. Ohne ihn behaelt die Auswahl
+                      // nach einer Aenderung ihren alten Eintrag — `defaultValue`
+                      // wirkt nur beim ersten Rendern. Wer dann "Setzen" drueckt,
+                      // ohne hinzusehen, wuerde den Fall auf die alte Station
+                      // zurueckwerfen.
+                      key={antrag.status}
+                      defaultValue={antrag.status}
+                      className="min-w-0 flex-1 rounded-[12px] border border-border bg-surface-2 px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                    >
+                      {/* Steht der Fall auf einem Ordner, der nicht in der
+                          Pipeline steht — stillgelegt oder im Papierkorb —,
+                          kommt der als erster Eintrag dazu. Ohne ihn faende
+                          `defaultValue` keine Entsprechung, das Feld zeigte
+                          stumm "Neu", und wer dann "Setzen" drueckt, ohne
+                          hinzusehen, verschoebe den Fall, statt ihn zu
+                          bestaetigen. */}
+                      {(STATIONEN.some((s) => s.id === antrag.status)
+                        ? STATIONEN
+                        : [station, ...STATIONEN]
+                      ).map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="submit"
+                      className="shrink-0 rounded-[12px] bg-accent px-3 py-2 text-sm font-semibold text-accent-foreground transition-colors duration-200 hover:bg-accent-strong"
+                    >
+                      Setzen
+                    </button>
                   </div>
-                  <span className="text-[11px] text-muted">
-                    {eintrag.benutzer}
-                  </span>
-                </li>
-              ))}
-            </ol>
+                </form>
+
+                <form action={wiedervorlageSetzen} className="flex flex-col gap-2">
+                  <input type="hidden" name="id" value={antrag.id} />
+                  <label htmlFor="tag" className="text-[11px] text-muted">
+                    Wiedervorlage
+                    {antrag.wiedervorlage && antrag.wiedervorlage < heute && (
+                      <span className="ml-2 text-amber-300">überfällig</span>
+                    )}
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      id="tag"
+                      name="tag"
+                      type="date"
+                      // Aus demselben Grund wie bei der Station daneben.
+                      key={antrag.wiedervorlage ?? "ohne"}
+                      defaultValue={antrag.wiedervorlage ?? ""}
+                      className="min-w-0 flex-1 rounded-[12px] border border-border bg-surface-2 px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                    />
+                    <button
+                      type="submit"
+                      className="shrink-0 rounded-[12px] border border-border-strong bg-surface-2 px-3 py-2 text-sm font-semibold text-foreground transition-colors duration-200 hover:bg-surface"
+                    >
+                      Merken
+                    </button>
+                  </div>
+                </form>
+              </section>
+            </>
+          ) : (
+            <p className="rounded-[20px] border border-border bg-surface px-4 py-3 text-xs text-muted shrink-0">
+              Dieses Konto darf Fälle ansehen, aber nicht bearbeiten.
+            </p>
           )}
-        </section>
+
+          <section className="rounded-[20px] border border-border bg-surface flex flex-col min-h-0 flex-1">
+            <div className="flex items-baseline justify-between gap-3 px-4 pt-4 pb-3 shrink-0">
+              <h2 className="text-xs font-semibold text-muted tracking-wide">
+                Journal
+              </h2>
+              <span className="text-[11px] text-muted tabular-nums">
+                {verlauf.length}{" "}
+                {verlauf.length === 1 ? "Eintrag" : "Einträge"}
+              </span>
+            </div>
+
+            {darfBearbeiten && (
+              <form
+                action={notizSchreiben}
+                className="flex flex-col gap-2 border-b border-border px-4 pb-4 shrink-0"
+              >
+                <input type="hidden" name="id" value={antrag.id} />
+                <label htmlFor="text" className="sr-only">
+                  Notiz
+                </label>
+                <textarea
+                  id="text"
+                  name="text"
+                  rows={3}
+                  placeholder="Was besprochen wurde, was fehlt, was als Nächstes ansteht."
+                  className="rounded-[12px] border border-border bg-surface-2 px-3 py-2 text-sm text-foreground placeholder:text-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                />
+                <button
+                  type="submit"
+                  className="self-start rounded-[12px] border border-border-strong bg-surface-2 px-3 py-2 text-xs font-semibold text-foreground transition-colors duration-200 hover:bg-surface"
+                >
+                  Notiz speichern
+                </button>
+              </form>
+            )}
+
+            {/* Eigener Rollbereich: Das Journal darf lang werden, ohne die
+                Spalte in die Länge zu ziehen. */}
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+              {verlauf.length === 0 ? (
+                <p className="text-xs text-muted leading-relaxed">
+                  Noch nichts geschehen. Jeder Statuswechsel, jede Notiz und
+                  jede Wiedervorlage steht ab jetzt hier — mit Zeitpunkt und
+                  Namen.
+                </p>
+              ) : (
+                <ol className="flex flex-col">
+                  {verlauf.map((eintrag) => (
+                    <li
+                      key={eintrag.id}
+                      className="flex flex-col gap-1 border-b border-border/60 py-3 first:pt-0 last:border-0 last:pb-0"
+                    >
+                      <div className="flex items-baseline justify-between gap-3">
+                        {/* Eine Notiz ist das, was jemand geschrieben hat, und
+                            steht deshalb als Text da. Alles andere ist ein
+                            Vorgang und darf blasser sein — sonst schreien
+                            fünfzehn Ordnerwechsel die eine Notiz nieder, um
+                            die es geht. */}
+                        <span
+                          className={`text-sm leading-snug break-words ${
+                            eintrag.art === "notiz"
+                              ? "text-foreground"
+                              : "text-muted"
+                          }`}
+                        >
+                          {beschreibe(eintrag)}
+                        </span>
+                        <span className="shrink-0 text-[11px] text-muted/70 tabular-nums">
+                          {new Date(eintrag.zeit).toLocaleString("de-DE", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-muted/70">
+                        {eintrag.benutzer}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          </section>
+        </aside>
+
       </div>
     </main>
   );

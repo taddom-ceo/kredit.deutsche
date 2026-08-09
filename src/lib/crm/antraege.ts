@@ -65,6 +65,17 @@ export type AntragEingang = {
   kontoinhaber: string;
 };
 
+/**
+ * Was am Telefon geprueft wurde, je Feld.
+ *
+ * `wert` ist die Richtigstellung — was der Kunde tatsaechlich gesagt hat,
+ * wenn seine urspruengliche Angabe nicht stimmte. `ok` heisst: vorgelesen und
+ * bestaetigt. Beides ist unabhaengig voneinander: Man kann bestaetigen, ohne
+ * zu aendern, und aendern, ohne schon bestaetigt zu haben.
+ */
+export type Pruefeintrag = { wert?: string; ok?: boolean };
+export type Pruefstand = Record<string, Pruefeintrag>;
+
 /** Ein Antrag, wie er im CRM steht. */
 export type Antrag = AntragEingang & {
   id: string;
@@ -73,6 +84,20 @@ export type Antrag = AntragEingang & {
   status: StatusId;
   /** Tag der Wiedervorlage als JJJJ-MM-TT, oder null. */
   wiedervorlage: string | null;
+  /**
+   * Die Kundennummer, fortlaufend ab 1001.
+   *
+   * Sie kommt aus der Datenbank und nicht von hier: Zwei Antraege, die im
+   * selben Moment eingehen, bekaemen sonst dieselbe. `null` steht fuer den
+   * Fall, dass ohne Datenbank gearbeitet wird — dann gibt es keine Reihe, in
+   * der sich fortlaufen liesse.
+   */
+  nummer: number | null;
+  /**
+   * Die Pruefung am Telefon. Steht neben den Angaben des Kunden, nicht
+   * anstelle von ihnen — beides bleibt nebeneinander lesbar.
+   */
+  pruefung: Pruefstand;
 };
 
 /** Was im Verlauf eines Falls steht. */
@@ -258,7 +283,11 @@ const HOECHSTENS = 200;
  * waere danach leer. So ueberlebt die Ablage wenigstens das Neuladen
  * waehrend der Arbeit.
  */
-const ablage = globalThis as unknown as { __crmAntraege?: Antrag[] };
+const ablage = globalThis as unknown as {
+  __crmAntraege?: Antrag[];
+  /** Ersatz fuer die Sequenz der Datenbank, wenn ohne sie gearbeitet wird. */
+  __crmNummer?: number;
+};
 ablage.__crmAntraege ??= [];
 
 /** Eine Zeile aus der Tabelle `antrag`. */
@@ -267,6 +296,10 @@ type AntragZeile = {
   eingang: Date | string;
   status: string;
   wiedervorlage: Date | string | null;
+  // Postgres liefert bigint als Zeichenkette, damit nichts an der Grenze von
+  // JavaScripts Zahlen verlorengeht.
+  nummer: string | number | null;
+  pruefung: Pruefstand | null;
   rohdaten: AntragEingang;
 };
 
@@ -312,10 +345,12 @@ function ausZeile(zeile: AntragZeile): Antrag {
         : new Date(zeile.eingang).toISOString(),
     status: zeile.status as StatusId,
     wiedervorlage: alsTag(zeile.wiedervorlage),
+    nummer: zeile.nummer === null ? null : Number(zeile.nummer),
+    pruefung: zeile.pruefung ?? {},
   };
 }
 
-const SPALTEN = `id, eingang, status, wiedervorlage, rohdaten`;
+const SPALTEN = `id, eingang, status, wiedervorlage, nummer, pruefung, rohdaten`;
 
 /** Antrag aufnehmen. Neueste stehen vorn. */
 export async function nimmAntragAn(
@@ -328,9 +363,15 @@ export async function nimmAntragAn(
     eingang: new Date().toISOString(),
     status,
     wiedervorlage: null,
+    nummer: null,
+    pruefung: {},
   };
 
   if (ablageart() === "speicher") {
+    // Ohne Datenbank gibt es keine Sequenz. Der Zaehler hier ist ein Ersatz,
+    // der nur so lange haelt wie die Instanz — genau wie die Faelle selbst.
+    ablage.__crmNummer = (ablage.__crmNummer ?? 1000) + 1;
+    antrag.nummer = ablage.__crmNummer;
     ablage.__crmAntraege!.unshift(antrag);
     ablage.__crmAntraege!.splice(HOECHSTENS);
     return antrag;
@@ -343,7 +384,8 @@ export async function nimmAntragAn(
     `INSERT INTO antrag
        (id, eingang, status, kreditart, betrag, laufzeit,
         vorname, nachname, email, ort, iban, rohdaten)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+     RETURNING nummer`,
     [
       antrag.id,
       antrag.eingang,
@@ -358,7 +400,13 @@ export async function nimmAntragAn(
       abgelegt.iban,
       JSON.stringify(abgelegt),
     ]
-  );
+  ).then((zeilen) => {
+    // Die Nummer vergibt die Vorgabe der Spalte. Sie zurueckzulesen kostet
+    // nichts und erspart eine zweite Abfrage, sobald sie jemand gleich nach
+    // dem Anlegen anzeigen will.
+    const neu = (zeilen[0] as { nummer?: string | number } | undefined)?.nummer;
+    if (neu !== undefined && neu !== null) antrag.nummer = Number(neu);
+  });
   // Zurueck geht der Klartext: Der Endpunkt antwortet damit dem Kunden, der
   // seine eigene Bankverbindung gerade selbst eingetippt hat.
   return antrag;
@@ -778,6 +826,61 @@ export async function setzeStatus(
 }
 
 /**
+ * Ein Feld richtigstellen oder bestaetigen.
+ *
+ * Geschrieben wird in `pruefung`, nie in `rohdaten`: Dort steht, was der Kunde
+ * selbst abgeschickt hat, und das bleibt, wie es war. Wer spaeter fragt, ob
+ * eine Telefonnummer von Anfang an so lautete, findet beides nebeneinander.
+ *
+ * `wert` und `ok` werden getrennt uebergeben und getrennt geschrieben:
+ * `undefined` heisst "nicht angefasst", nicht "leeren". Sonst loeschte ein
+ * Haken die Richtigstellung, die kurz davor jemand eingetippt hat.
+ *
+ * Eine Richtigstellung, die dem Original entspricht, wird wieder entfernt.
+ * Sonst stuende im Datensatz eine Korrektur, die nichts korrigiert, und die
+ * Anzeige zeigte eine Aenderung an, wo keine ist.
+ */
+export async function setzePruefung(
+  id: string,
+  schluessel: string,
+  aenderung: { wert?: string; ok?: boolean },
+  original: string
+): Promise<void> {
+  const vorher = await findeAntrag(id);
+  if (!vorher) return;
+
+  const alt = vorher.pruefung[schluessel] ?? {};
+  const neu: Pruefeintrag = { ...alt };
+
+  if (aenderung.wert !== undefined) {
+    const sauber = aenderung.wert.trim().slice(0, 200);
+    if (!sauber || sauber === original.trim()) delete neu.wert;
+    else neu.wert = sauber;
+  }
+  if (aenderung.ok !== undefined) {
+    if (aenderung.ok) neu.ok = true;
+    else delete neu.ok;
+  }
+
+  const stand: Pruefstand = { ...vorher.pruefung };
+  // Ein Feld ohne Richtigstellung und ohne Haken gehoert nicht in die Ablage.
+  // Sonst waechst `pruefung` mit jedem Klick, der nichts hinterlaesst.
+  if (neu.wert === undefined && neu.ok === undefined) delete stand[schluessel];
+  else stand[schluessel] = neu;
+
+  if (ablageart() === "speicher") {
+    const treffer = (ablage.__crmAntraege ?? []).find((a) => a.id === id);
+    if (treffer) treffer.pruefung = stand;
+    return;
+  }
+
+  await abfrage(`UPDATE antrag SET pruefung = $2 WHERE id = $1`, [
+    id,
+    JSON.stringify(stand),
+  ]);
+}
+
+/**
  * Vermerkt, dass die Bankverbindung kopiert wurde.
  *
  * Kein Text, kein Statuswechsel — nur der Umstand, wer wann. Mehr braucht es
@@ -869,6 +972,48 @@ export function ibanVerkuerzt(iban: string): string {
 
 export function vollerName(antrag: Antrag): string {
   return [antrag.vorname, antrag.nachname].filter(Boolean).join(" ") || "—";
+}
+
+/**
+ * Die Kundennummer, wie sie gelesen und vorgelesen wird.
+ *
+ * Das Praefix ist kein Schmuck: "K-1042" ist am Telefon eindeutig eine
+ * Kundennummer, "1042" koennte alles sein — ein Betrag, eine Hausnummer, eine
+ * Vorwahl. Fehlt die Nummer, steht ein Gedankenstrich da statt einer
+ * erfundenen.
+ */
+export function kundennummer(antrag: Antrag): string {
+  return antrag.nummer === null ? "—" : `K-${antrag.nummer}`;
+}
+
+/**
+ * Ein Geldbetrag aus der Antragsstrecke, lesbar gemacht.
+ *
+ * Die Strecke legt diese Angaben als Zeichenketten ab, so wie der Kunde sie
+ * getippt hat — "5100", manchmal "5.100", manchmal "5100,50". In der Fallakte
+ * standen sie deshalb roh da: Der Kreditwunsch als "41.000 €", das
+ * Nettoeinkommen daneben als "5100". Zwei Betraege untereinander, zwei
+ * Schreibweisen.
+ *
+ * Was sich nicht als Zahl lesen laesst, kommt unveraendert zurueck statt als
+ * "0 €". Steht dort etwas, das niemand vorhergesehen hat, soll man es sehen
+ * und nicht eine Null, die es nie gab.
+ */
+export function geldbetrag(wert: string): string {
+  const sauber = wert.trim();
+  if (!sauber) return "—";
+
+  // Punkte als Tausendertrenner weg, Komma zum Dezimalpunkt — die deutsche
+  // Schreibweise, in der die Strecke die Angaben entgegennimmt.
+  const zahl = Number(sauber.replace(/\./g, "").replace(",", "."));
+  if (!Number.isFinite(zahl)) return sauber;
+
+  return zahl.toLocaleString("de-DE", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: Number.isInteger(zahl) ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 /**

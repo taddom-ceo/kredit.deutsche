@@ -348,7 +348,15 @@ export default function PipelineBrett({
 
       <div
         ref={brett}
-        className="grid gap-2 overflow-x-auto pb-3"
+        /**
+         * `items-start`: Jede Spalte ist so hoch wie ihr Inhalt.
+         *
+         * Ohne das zieht die vollste Spalte alle uebrigen auf ihre Hoehe —
+         * bei zwoelf Karten in "Neu" standen dreizehn leere Spalten tausend
+         * Pixel hoch daneben. Das Brett sah aus wie eine Wand und die Liste
+         * darunter war zwei Bildschirme entfernt.
+         */
+        className="grid items-start gap-2 overflow-x-auto pb-3"
         /**
          * Gitter statt Reihe, und die Spalten nicht fest, sondern
          * `minmax(120px, 1fr)`.
@@ -380,7 +388,9 @@ export default function PipelineBrett({
             <section
               key={station.id}
               data-station={station.id}
-              className={`flex min-w-0 flex-col rounded-[16px] border transition-colors duration-150 ${
+              // Die Mindesthoehe haelt die Unterkante der leeren Spalten auf
+              // einer Linie — ohne sie franst das Brett unten aus.
+              className={`flex min-h-36 min-w-0 flex-col rounded-[16px] border transition-colors duration-150 ${
                 aktiv
                   ? "border-accent/60 bg-accent/[0.06]"
                   : offen
@@ -445,8 +455,10 @@ export default function PipelineBrett({
 
               {/* Die Mindesthoehe haelt leere Ordner als Ziel offen: Eine
                   Spalte ohne Karten waere sonst nur der Kopf hoch, und dorthin
-                  zu treffen waere Zielschiessen. */}
-              <ul className="flex min-h-16 max-h-[62vh] flex-col gap-1.5 overflow-y-auto px-1.5 pb-1.5">
+                  zu treffen waere Zielschiessen. Die Hoechsthoehe deckelt die
+                  vollste Spalte — sie rollt dann in sich, statt die Liste
+                  darunter einen Bildschirm weit wegzuschieben. */}
+              <ul className="flex min-h-16 max-h-[46vh] flex-col gap-1.5 overflow-y-auto px-1.5 pb-1.5">
                 {karten.map((fall) => (
                   <Karte
                     key={fall.id}
