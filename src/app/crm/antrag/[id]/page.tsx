@@ -20,6 +20,7 @@ import {
 import { LOESCHGRUENDE } from "@/lib/crm/loeschprotokoll";
 import { verlangeAnmeldung } from "@/lib/crm/zugang";
 import { schluesselVorhanden } from "@/lib/crm/verschluesselung";
+import Datenblatt from "@/components/crm/Datenblatt";
 import IbanKopieren from "@/components/crm/IbanKopieren";
 import {
   ausPapierkorb,
@@ -45,21 +46,6 @@ function Feld({ name, wert }: { name: string; wert: string | undefined }) {
       <dt className="text-xs text-muted shrink-0">{name}</dt>
       <dd className="text-sm text-right break-words">{wert?.trim() || "—"}</dd>
     </div>
-  );
-}
-
-function Block({
-  titel,
-  children,
-}: {
-  titel: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-[20px] border border-border bg-surface p-5 flex flex-col gap-2">
-      <h2 className="text-xs font-semibold text-muted tracking-wide">{titel}</h2>
-      <dl className="flex flex-col">{children}</dl>
-    </section>
   );
 }
 
@@ -225,91 +211,181 @@ export default async function AntragSeite({
               </div>
             ))}
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-          <Block titel="Person">
-            <Feld
-              name="Vorname"
-              wert={[antrag.vorname, antrag.zweiterVorname]
-                .filter(Boolean)
-                .join(" ")}
-            />
-            <Feld name="Nachname" wert={antrag.nachname} />
-            <Feld name="Geburtsdatum" wert={datum(antrag.geburtsdatum)} />
-            <Feld name="E-Mail" wert={antrag.email} />
-            <Feld
-              name="Telefon"
-              wert={[antrag.telefonVorwahl, antrag.telefon]
-                .filter(Boolean)
-                .join(" ")}
-            />
-            <Feld
-              name="Antragsteller"
-              wert={antrag.personCount === 2 ? "Zwei Personen" : "Eine Person"}
-            />
-          </Block>
+          {/**
+            * Die Angaben des Kunden, Zeile für Zeile prüfbar.
+            *
+            * Aus den festen Kästen ist ein Datenblatt geworden: Jede Zeile
+            * trägt neben der Angabe des Kunden ein Feld für die
+            * Richtigstellung und einen Haken zum Bestätigen. Gedacht für das
+            * Telefonat — vorlesen, abhaken, bei Bedarf danebenschreiben.
+            *
+            * Was der Kunde abgeschickt hat, wird dabei nie überschrieben. Es
+            * steht in `rohdaten`, die Prüfung in einer eigenen Spalte; wer
+            * später fragt, ob eine Nummer von Anfang an so lautete, findet
+            * beides nebeneinander.
+            */}
+          <Datenblatt
+            antragId={antrag.id}
+            darfBearbeiten={darfBearbeiten}
+            bloecke={[
+              {
+                titel: "Person",
+                zeilen: [
+                  {
+                    schluessel: "vorname",
+                    name: "Vorname",
+                    wert: [antrag.vorname, antrag.zweiterVorname]
+                      .filter(Boolean)
+                      .join(" "),
+                  },
+                  { schluessel: "nachname", name: "Nachname", wert: antrag.nachname },
+                  {
+                    schluessel: "geburtsdatum",
+                    name: "Geburtsdatum",
+                    wert: datum(antrag.geburtsdatum),
+                  },
+                  { schluessel: "email", name: "E-Mail", wert: antrag.email },
+                  {
+                    schluessel: "telefon",
+                    name: "Telefon",
+                    wert: [antrag.telefonVorwahl, antrag.telefon]
+                      .filter(Boolean)
+                      .join(" "),
+                  },
+                  {
+                    schluessel: "personCount",
+                    name: "Antragsteller",
+                    wert:
+                      antrag.personCount === 2 ? "Zwei Personen" : "Eine Person",
+                  },
+                ],
+              },
+              {
+                titel: "Anschrift",
+                zeilen: [
+                  {
+                    schluessel: "strasse",
+                    name: "Straße",
+                    wert: [antrag.strasse, antrag.hausnummer]
+                      .filter(Boolean)
+                      .join(" "),
+                  },
+                  { schluessel: "plz", name: "PLZ", wert: antrag.plz },
+                  { schluessel: "ort", name: "Ort", wert: antrag.ort },
+                ],
+              },
+              {
+                titel: "Beschäftigung",
+                zeilen: [
+                  {
+                    schluessel: "beschaeftigungsart",
+                    name: "Art",
+                    wert: antrag.beschaeftigungsart,
+                  },
+                  {
+                    schluessel: "arbeitgeber",
+                    name: "Arbeitgeber",
+                    wert: antrag.arbeitgeber,
+                  },
+                  {
+                    schluessel: "beschaeftigtSeit",
+                    name: "Beschäftigt seit",
+                    wert: datum(antrag.beschaeftigtSeit),
+                  },
+                ],
+              },
+              {
+                titel: "Einkommen und Ausgaben",
+                zeilen: [
+                  {
+                    schluessel: "nettoeinkommen",
+                    name: "Nettoeinkommen",
+                    wert: geldbetrag(antrag.nettoeinkommen),
+                  },
+                  {
+                    schluessel: "mieteinnahmen",
+                    name: "Mieteinnahmen",
+                    wert: jaNein(antrag.mieteinnahmen),
+                  },
+                  {
+                    schluessel: "mieteinnahmenBetrag",
+                    name: "davon monatlich",
+                    wert: geldbetrag(antrag.mieteinnahmenBetrag),
+                  },
+                  {
+                    schluessel: "wohnnebenkosten",
+                    name: "Wohnnebenkosten",
+                    wert: geldbetrag(antrag.wohnnebenkosten),
+                  },
+                  {
+                    schluessel: "krankenversicherung",
+                    name: "Krankenversicherung",
+                    wert: geldbetrag(antrag.krankenversicherung),
+                  },
+                  {
+                    schluessel: "unterhalt",
+                    name: "Unterhalt",
+                    wert: geldbetrag(antrag.unterhalt),
+                  },
+                ],
+              },
+              {
+                titel: "Kreditwunsch",
+                zeilen: [
+                  {
+                    schluessel: "kreditart",
+                    name: "Verwendung",
+                    wert: art ?? "",
+                  },
+                  {
+                    schluessel: "amount",
+                    name: "Betrag",
+                    wert: formatEuro(antrag.amount),
+                  },
+                  {
+                    schluessel: "months",
+                    name: "Laufzeit",
+                    wert: `${antrag.months} Monate`,
+                  },
+                ],
+              },
+            ].map((block) => ({
+              ...block,
+              zeilen: block.zeilen.map((z) => ({
+                ...z,
+                korrektur: antrag.pruefung[z.schluessel]?.wert,
+                bestaetigt: antrag.pruefung[z.schluessel]?.ok,
+              })),
+            }))}
+          />
 
-          <Block titel="Anschrift">
-            <Feld
-              name="Straße"
-              wert={[antrag.strasse, antrag.hausnummer].filter(Boolean).join(" ")}
-            />
-            <Feld name="PLZ" wert={antrag.plz} />
-            <Feld name="Ort" wert={antrag.ort} />
-          </Block>
-
-          <Block titel="Beschäftigung">
-            <Feld name="Art" wert={antrag.beschaeftigungsart} />
-            <Feld name="Arbeitgeber" wert={antrag.arbeitgeber} />
-            <Feld
-              name="Beschäftigt seit"
-              wert={datum(antrag.beschaeftigtSeit)}
-            />
-          </Block>
-
-          <Block titel="Einkommen und Ausgaben">
-            {/* Durch `geldbetrag`, nicht roh: Die Strecke legt diese Angaben
-                als Zeichenketten ab, so wie der Kunde sie getippt hat. Ohne
-                die Aufbereitung stand der Kreditwunsch oben als "41.000 €"
-                und das Nettoeinkommen hier als "5100" — zwei Betraege
-                untereinander in zwei Schreibweisen. */}
-            <Feld
-              name="Nettoeinkommen"
-              wert={geldbetrag(antrag.nettoeinkommen)}
-            />
-            <Feld name="Mieteinnahmen" wert={jaNein(antrag.mieteinnahmen)} />
-            <Feld
-              name="davon monatlich"
-              wert={geldbetrag(antrag.mieteinnahmenBetrag)}
-            />
-            <Feld
-              name="Wohnnebenkosten"
-              wert={geldbetrag(antrag.wohnnebenkosten)}
-            />
-            <Feld
-              name="Krankenversicherung"
-              wert={geldbetrag(antrag.krankenversicherung)}
-            />
-            <Feld name="Unterhalt" wert={geldbetrag(antrag.unterhalt)} />
-          </Block>
-
-          <Block titel="Bankverbindung">
-            <div className="flex items-baseline justify-between gap-3 border-b border-border/60 py-2">
-              <dt className="text-xs text-muted shrink-0">IBAN</dt>
-              <dd className="flex items-center gap-2">
-                <span className="text-sm text-right tabular-nums break-all">
-                  {antrag.iban || "—"}
-                </span>
-                {antrag.iban && (
-                  <IbanKopieren antragId={antrag.id} iban={antrag.iban} />
-                )}
-              </dd>
-            </div>
-            <Feld name="Bank" wert={antrag.bankname} />
-            <Feld name="Kontoinhaber" wert={antrag.kontoinhaber} />
+          {/* Die Bankverbindung bleibt für sich: Sie hat einen eigenen
+              Kopierknopf, der jedes Mitnehmen im Verlauf vermerkt, und einen
+              Hinweis darauf, wie sie abgelegt ist. Beides passt in keine
+              Prüfzeile. */}
+          <section className="rounded-[20px] border border-border bg-surface px-5 py-4 flex flex-col gap-2">
+            <h2 className="text-xs font-semibold text-muted tracking-wide">
+              Bankverbindung
+            </h2>
+            <dl className="flex flex-col">
+              <div className="flex items-baseline justify-between gap-3 border-b border-border/60 py-2">
+                <dt className="text-xs text-muted shrink-0">IBAN</dt>
+                <dd className="flex items-center gap-2">
+                  <span className="text-sm text-right tabular-nums break-all">
+                    {antrag.iban || "—"}
+                  </span>
+                  {antrag.iban && (
+                    <IbanKopieren antragId={antrag.id} iban={antrag.iban} />
+                  )}
+                </dd>
+              </div>
+              <Feld name="Bank" wert={antrag.bankname} />
+              <Feld name="Kontoinhaber" wert={antrag.kontoinhaber} />
+            </dl>
             {/* Der Zustand steht am Feld selbst und nicht nur in der
                 Uebersicht: Hier sieht man die Bankverbindung, hier gehoert
                 die Auskunft hin, wie sie abgelegt ist. */}
-            <p className="pt-3 text-[11px] leading-relaxed text-muted">
+            <p className="pt-2 text-[11px] leading-relaxed text-muted">
               {schluesselVorhanden() ? (
                 <>
                   Verschlüsselt gespeichert. In der Übersicht stehen nur die
@@ -324,8 +400,7 @@ export default async function AntragSeite({
                 </span>
               )}
             </p>
-          </Block>
-        </div>
+          </section>
 
         <section className="rounded-[20px] border border-border bg-surface p-5 flex flex-col gap-3">
           <h2 className="text-xs font-semibold text-muted tracking-wide">

@@ -8,6 +8,7 @@ import {
   haltEinsichtFest,
   loescheAntrag,
   schreibeNotiz,
+  setzePruefung,
   setzeStatus,
   setzeWiedervorlage,
 } from "@/lib/crm/antraege";
@@ -109,6 +110,44 @@ export async function fallVerschieben(
   }
 
   aktualisiere(id);
+  return { ok: true };
+}
+
+/**
+ * Ein Feld am Telefon richtigstellen oder abhaken.
+ *
+ * Wie `fallVerschieben` mit gewoehnlichen Werten statt FormData und mit einer
+ * Antwort statt einer Ausnahme: Beides passiert waehrend eines Gespraechs, und
+ * ein Fehler darf die Seite nicht in den Fehlerzustand kippen, waehrend jemand
+ * am Hoerer ist. Die Anzeige nimmt die Aenderung sofort vorweg und macht sie
+ * zurueck, wenn der Server nein sagt.
+ *
+ * `original` kommt mit, damit der Server eine Richtigstellung, die dem
+ * Original entspricht, wieder verwerfen kann — ohne den ganzen Antrag noch
+ * einmal durch die Formatierung schicken zu muessen, die zu ihr gefuehrt hat.
+ */
+export async function feldPruefen(
+  id: string,
+  schluessel: string,
+  aenderung: { wert?: string; ok?: boolean },
+  original: string
+): Promise<{ ok: true } | { ok: false; fehler: string }> {
+  const benutzer = await verlangeAnmeldung();
+  if (benutzer.rolle === "lesen") {
+    return { ok: false, fehler: "Dieses Konto darf Fälle nur ansehen." };
+  }
+  if (!id || !schluessel) return { ok: false, fehler: "Kein Feld angegeben." };
+
+  try {
+    await setzePruefung(id, schluessel, aenderung, original);
+  } catch (ausnahme) {
+    return {
+      ok: false,
+      fehler: ausnahme instanceof Error ? ausnahme.message : String(ausnahme),
+    };
+  }
+
+  revalidatePath(`/crm/antrag/${id}`);
   return { ok: true };
 }
 

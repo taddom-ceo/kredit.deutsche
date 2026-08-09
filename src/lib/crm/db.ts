@@ -223,6 +223,20 @@ const SCHEMA = [
                  GREATEST((SELECT COALESCE(MAX(nummer), 1000) FROM antrag), 1000))`,
   `ALTER TABLE antrag ALTER COLUMN nummer SET DEFAULT nextval('antrag_nummer_seq')`,
   `CREATE UNIQUE INDEX IF NOT EXISTS antrag_nummer_idx ON antrag (nummer)`,
+  /**
+   * Was am Telefon geprueft und richtiggestellt wurde.
+   *
+   * Bewusst eine eigene Spalte und nicht in `rohdaten` hinein: Dort steht,
+   * was der Kunde selbst abgeschickt hat, und das darf sich nachtraeglich
+   * nicht aendern. Sonst laesst sich spaeter nicht mehr sagen, ob eine
+   * Telefonnummer von Anfang an so lautete oder ob jemand sie korrigiert hat
+   * — und genau diese Frage stellt sich, wenn ein Anruf ins Leere geht.
+   *
+   * Form: { "telefon": { "wert": "0151 …", "ok": true }, … }. Ein Eintrag
+   * ohne `wert` ist eine blosse Bestaetigung, einer ohne `ok` eine
+   * Richtigstellung, die noch niemand abgehakt hat.
+   */
+  `ALTER TABLE antrag ADD COLUMN IF NOT EXISTS pruefung jsonb NOT NULL DEFAULT '{}'::jsonb`,
 ];
 
 /**

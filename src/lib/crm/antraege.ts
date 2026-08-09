@@ -65,6 +65,17 @@ export type AntragEingang = {
   kontoinhaber: string;
 };
 
+/**
+ * Was am Telefon geprueft wurde, je Feld.
+ *
+ * `wert` ist die Richtigstellung — was der Kunde tatsaechlich gesagt hat,
+ * wenn seine urspruengliche Angabe nicht stimmte. `ok` heisst: vorgelesen und
+ * bestaetigt. Beides ist unabhaengig voneinander: Man kann bestaetigen, ohne
+ * zu aendern, und aendern, ohne schon bestaetigt zu haben.
+ */
+export type Pruefeintrag = { wert?: string; ok?: boolean };
+export type Pruefstand = Record<string, Pruefeintrag>;
+
 /** Ein Antrag, wie er im CRM steht. */
 export type Antrag = AntragEingang & {
   id: string;
@@ -82,6 +93,11 @@ export type Antrag = AntragEingang & {
    * der sich fortlaufen liesse.
    */
   nummer: number | null;
+  /**
+   * Die Pruefung am Telefon. Steht neben den Angaben des Kunden, nicht
+   * anstelle von ihnen — beides bleibt nebeneinander lesbar.
+   */
+  pruefung: Pruefstand;
 };
 
 /** Was im Verlauf eines Falls steht. */
@@ -283,6 +299,7 @@ type AntragZeile = {
   // Postgres liefert bigint als Zeichenkette, damit nichts an der Grenze von
   // JavaScripts Zahlen verlorengeht.
   nummer: string | number | null;
+  pruefung: Pruefstand | null;
   rohdaten: AntragEingang;
 };
 
@@ -329,10 +346,11 @@ function ausZeile(zeile: AntragZeile): Antrag {
     status: zeile.status as StatusId,
     wiedervorlage: alsTag(zeile.wiedervorlage),
     nummer: zeile.nummer === null ? null : Number(zeile.nummer),
+    pruefung: zeile.pruefung ?? {},
   };
 }
 
-const SPALTEN = `id, eingang, status, wiedervorlage, nummer, rohdaten`;
+const SPALTEN = `id, eingang, status, wiedervorlage, nummer, pruefung, rohdaten`;
 
 /** Antrag aufnehmen. Neueste stehen vorn. */
 export async function nimmAntragAn(
@@ -346,6 +364,7 @@ export async function nimmAntragAn(
     status,
     wiedervorlage: null,
     nummer: null,
+    pruefung: {},
   };
 
   if (ablageart() === "speicher") {
@@ -804,6 +823,61 @@ export async function setzeStatus(
     nachStatus: status,
     text: null,
   });
+}
+
+/**
+ * Ein Feld richtigstellen oder bestaetigen.
+ *
+ * Geschrieben wird in `pruefung`, nie in `rohdaten`: Dort steht, was der Kunde
+ * selbst abgeschickt hat, und das bleibt, wie es war. Wer spaeter fragt, ob
+ * eine Telefonnummer von Anfang an so lautete, findet beides nebeneinander.
+ *
+ * `wert` und `ok` werden getrennt uebergeben und getrennt geschrieben:
+ * `undefined` heisst "nicht angefasst", nicht "leeren". Sonst loeschte ein
+ * Haken die Richtigstellung, die kurz davor jemand eingetippt hat.
+ *
+ * Eine Richtigstellung, die dem Original entspricht, wird wieder entfernt.
+ * Sonst stuende im Datensatz eine Korrektur, die nichts korrigiert, und die
+ * Anzeige zeigte eine Aenderung an, wo keine ist.
+ */
+export async function setzePruefung(
+  id: string,
+  schluessel: string,
+  aenderung: { wert?: string; ok?: boolean },
+  original: string
+): Promise<void> {
+  const vorher = await findeAntrag(id);
+  if (!vorher) return;
+
+  const alt = vorher.pruefung[schluessel] ?? {};
+  const neu: Pruefeintrag = { ...alt };
+
+  if (aenderung.wert !== undefined) {
+    const sauber = aenderung.wert.trim().slice(0, 200);
+    if (!sauber || sauber === original.trim()) delete neu.wert;
+    else neu.wert = sauber;
+  }
+  if (aenderung.ok !== undefined) {
+    if (aenderung.ok) neu.ok = true;
+    else delete neu.ok;
+  }
+
+  const stand: Pruefstand = { ...vorher.pruefung };
+  // Ein Feld ohne Richtigstellung und ohne Haken gehoert nicht in die Ablage.
+  // Sonst waechst `pruefung` mit jedem Klick, der nichts hinterlaesst.
+  if (neu.wert === undefined && neu.ok === undefined) delete stand[schluessel];
+  else stand[schluessel] = neu;
+
+  if (ablageart() === "speicher") {
+    const treffer = (ablage.__crmAntraege ?? []).find((a) => a.id === id);
+    if (treffer) treffer.pruefung = stand;
+    return;
+  }
+
+  await abfrage(`UPDATE antrag SET pruefung = $2 WHERE id = $1`, [
+    id,
+    JSON.stringify(stand),
+  ]);
 }
 
 /**
