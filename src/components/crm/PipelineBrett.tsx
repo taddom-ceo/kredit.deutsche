@@ -46,6 +46,15 @@ export type BrettStation = {
   name: string;
   beschreibung: string;
   ton: Ton;
+  /**
+   * Wohin der Kopf fuehrt: die Liste unten auf diesen Ordner eingeschraenkt.
+   * Ist der Ordner schon gewaehlt, hebt derselbe Klick den Filter wieder auf.
+   *
+   * Fertig gebaut vom Server statt hier zusammengesetzt, weil die Adresse die
+   * uebrigen Filter — Suchwort, nur Faellige — mitnehmen muss. Die kennt diese
+   * Ansicht nicht, und sie sollte sie auch nicht kennen muessen.
+   */
+  href: string;
   /** Nicht mehr Teil der Pipeline, nur noch da, weil Faelle darin liegen. */
   stillgelegt?: boolean;
 };
@@ -85,10 +94,13 @@ export default function PipelineBrett({
   stationen,
   faelle,
   darfSchieben,
+  gewaehlt,
 }: {
   stationen: BrettStation[];
   faelle: BrettFall[];
   darfSchieben: boolean;
+  /** Der Ordner, auf den die Liste unten gerade eingeschraenkt ist. */
+  gewaehlt: StatusId | null;
 }) {
   /**
    * Die Karte liegt in der neuen Spalte, sobald man loslaesst — nicht erst,
@@ -142,6 +154,7 @@ export default function PipelineBrett({
     name: string;
     beschreibung: string;
     stillgelegt: boolean;
+    offen: boolean;
     x: number;
     y: number;
   } | null>(null);
@@ -308,6 +321,7 @@ export default function PipelineBrett({
       name: station.name,
       beschreibung: station.beschreibung,
       stillgelegt: Boolean(station.stillgelegt),
+      offen: gewaehlt === station.id,
       x,
       y: rand.bottom + 6,
     });
@@ -352,6 +366,7 @@ export default function PipelineBrett({
           const karten = nachOrdner(station.id);
           const ton = TON_KLASSEN[station.ton];
           const aktiv = ziel === station.id && zug !== null;
+          const offen = gewaehlt === station.id;
           const Zeichen = stationIcon(station.id);
           return (
             <section
@@ -360,26 +375,47 @@ export default function PipelineBrett({
               className={`flex min-w-0 flex-col rounded-[16px] border transition-colors duration-150 ${
                 aktiv
                   ? "border-accent/60 bg-accent/[0.06]"
-                  : station.stillgelegt
-                    ? "border-dashed border-border bg-surface/60"
-                    : "border-border bg-surface"
+                  : offen
+                    ? // Der aufgeschlagene Ordner. Ohne diese Markierung
+                      // stuende unten eine gefilterte Liste, ohne dass oben zu
+                      // sehen waere, welcher Ordner sie fuellt.
+                      "border-accent/50 bg-accent/[0.04] ring-1 ring-accent/25"
+                    : station.stillgelegt
+                      ? "border-dashed border-border bg-surface/60"
+                      : "border-border bg-surface"
               }`}
             >
               {/**
-               * Der Kopf traegt nur noch Zeichen und Anzahl.
+               * Der Kopf traegt nur noch Zeichen und Anzahl — und er ist ein
+               * Verweis: Ein Klick schlaegt den Ordner in der Liste unter dem
+               * Brett auf, ein zweiter klappt ihn wieder zu.
                *
-               * `tabIndex` und die Fokus-Ereignisse sind kein Beiwerk: Ein
-               * Hinweis, den es nur beim Zeigen mit der Maus gibt, gibt es
-               * fuer die Tastatur gar nicht. So laesst sich das Brett
-               * durchtabben und jeder Ordner sagt seinen Namen — sichtbar in
-               * der Fahne, vorgelesen ueber `aria-label`.
+               * Ein echter Verweis und kein Knopf mit Skript, aus demselben
+               * Grund, aus dem die Suche darunter ein gewoehnliches Formular
+               * ist: Der aufgeschlagene Ordner steht danach in der Adresse.
+               * Er laesst sich als Lesezeichen ablegen, weitergeben und mit
+               * dem Zurueck-Knopf verlassen.
+               *
+               * Die Fokus-Ereignisse sind kein Beiwerk: Ein Hinweis, den es
+               * nur beim Zeigen mit der Maus gibt, gibt es fuer die Tastatur
+               * gar nicht. So laesst sich das Brett durchtabben und jeder
+               * Ordner sagt seinen Namen — sichtbar in der Fahne, vorgelesen
+               * ueber `aria-label`.
                */}
-              <header
-                tabIndex={0}
+              <Link
+                href={station.href}
+                // Ein <a> laesst sich vom Browser von Haus aus ziehen. Bliebe
+                // das an, zoege ein Griff neben dem Kopf gelegentlich den
+                // Verweis statt der Karte.
+                draggable={false}
                 aria-label={`${station.name}: ${karten.length} ${
                   karten.length === 1 ? "Fall" : "Fälle"
-                }. ${station.beschreibung}`}
-                className="flex cursor-default items-center justify-center gap-1.5 rounded-t-[15px] px-2 py-2.5 transition-colors duration-150 hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40"
+                }. ${station.beschreibung} ${
+                  offen
+                    ? "Ordner ist unten aufgeschlagen — klicken zeigt wieder alle Fälle."
+                    : "Klicken zeigt diesen Ordner in der Liste unten."
+                }`}
+                className="flex items-center justify-center gap-1.5 rounded-t-[15px] px-2 py-2.5 transition-colors duration-150 hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40"
                 onPointerEnter={(e) => zeigeFahne(e.currentTarget, station)}
                 onPointerLeave={() => setFahne(null)}
                 onFocus={(e) => zeigeFahne(e.currentTarget, station)}
@@ -397,7 +433,7 @@ export default function PipelineBrett({
                 >
                   {karten.length}
                 </span>
-              </header>
+              </Link>
 
               {/* Die Mindesthoehe haelt leere Ordner als Ziel offen: Eine
                   Spalte ohne Karten waere sonst nur der Kopf hoch, und dorthin
@@ -439,6 +475,11 @@ export default function PipelineBrett({
           </p>
           <p className="mt-0.5 text-[11px] leading-snug text-muted">
             {fahne.beschreibung}
+          </p>
+          <p className="mt-1.5 text-[11px] font-medium text-accent">
+            {fahne.offen
+              ? "Klicken zeigt wieder alle Fälle"
+              : "Klicken öffnet den Ordner unten"}
           </p>
         </div>
       )}
