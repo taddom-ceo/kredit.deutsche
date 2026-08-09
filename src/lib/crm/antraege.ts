@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { abfrage, datenbankVorhanden, stelleSchemaSicher } from "./db";
-import type { StatusId } from "./pipeline";
+import { imPapierkorb, type StatusId } from "./pipeline";
 import { entschluessele, verschluessele } from "./verschluesselung";
 
 /**
@@ -449,6 +449,15 @@ export type AntragFilter = {
   station?: StatusId | null;
   /** Nur Faelle, deren Wiedervorlage heute oder frueher faellig ist. */
   nurFaellig?: boolean;
+  /**
+   * Den Papierkorb mitnehmen, obwohl nicht nach ihm gefiltert wird.
+   *
+   * Genau eine Ansicht braucht das: das Brett. Es zeigt alle Ordner
+   * nebeneinander, und der Papierkorb ist einer davon — ohne seine Karten
+   * liesse sich nichts wieder herausziehen. Liste, Zaehlung und Export
+   * lassen die Kennzeichnung weg und sehen den Papierkorb damit gar nicht.
+   */
+  mitPapierkorb?: boolean;
 };
 
 /**
@@ -461,6 +470,17 @@ function fuerLike(suche: string): string {
 }
 
 function passtImSpeicher(antrag: Antrag, filter: AntragFilter): boolean {
+  // Der Papierkorb bleibt draussen, solange niemand ausdruecklich hineinsieht.
+  // Ohne diese Zeile stuenden zum Loeschen vorgemerkte Faelle weiter in der
+  // Liste, in der Gesamtzahl und im Export — und "geloescht" waere nur ein
+  // anderes Wort fuer "woanders einsortiert".
+  if (
+    imPapierkorb(antrag.status) &&
+    !imPapierkorb(filter.station ?? "") &&
+    filter.mitPapierkorb !== true
+  ) {
+    return false;
+  }
   if (filter.station && antrag.status !== filter.station) return false;
   if (filter.nurFaellig) {
     const heute = new Date().toISOString().slice(0, 10);
@@ -522,6 +542,11 @@ const WO = `
   AND ($2::text IS NULL OR status = $2)
   AND ($3::boolean IS NOT TRUE OR
        (wiedervorlage IS NOT NULL AND wiedervorlage <= CURRENT_DATE))
+  -- Der Papierkorb bleibt draussen, solange niemand ausdruecklich
+  -- hineinsieht. Die Bedingung steht hier und nicht in den drei Aufrufern,
+  -- weil Liste, Zaehlung und Export dieselbe Zeichenkette benutzen: So kann
+  -- keiner von ihnen den Papierkorb versehentlich doch mitzaehlen.
+  AND (status <> 'papierkorb' OR $2 = 'papierkorb' OR $4::boolean IS TRUE)
 `;
 
 function filterWerte(filter: AntragFilter): unknown[] {
@@ -530,6 +555,7 @@ function filterWerte(filter: AntragFilter): unknown[] {
     suche ? fuerLike(suche) : null,
     filter.station ?? null,
     filter.nurFaellig === true,
+    filter.mitPapierkorb === true,
   ];
 }
 
