@@ -146,12 +146,28 @@ export default async function CrmSeite({
     if (!bekannt.has(antrag.status)) uebrige.add(antrag.status);
   }
 
+  /**
+   * Wohin der Kopf einer Spalte fuehrt.
+   *
+   * Ist der Ordner schon aufgeschlagen, hebt derselbe Klick den Filter wieder
+   * auf — sonst gaebe es einen Weg hinein und keinen zurueck ausser ueber
+   * "Filter zuruecksetzen", das ganz woanders steht.
+   *
+   * Die Sprungmarke ist kein Schmuck: Das Brett ist hoch, die Liste steht
+   * darunter. Ohne `#eingang` klickte man oben auf einen Ordner, die Seite
+   * lade neu, und man staende wieder oben vor demselben Brett — die Antwort
+   * auf den Klick laege ungesehen unterhalb des Bildschirmrands.
+   */
+  const ordnerAdresse = (id: StatusId) =>
+    `${mitParametern(filter, { station: filter.station === id ? null : id })}#eingang`;
+
   const spalten: BrettStation[] = [
     ...STATIONEN.map((s) => ({
       id: s.id,
       name: s.name,
       beschreibung: s.beschreibung,
       ton: s.ton,
+      href: ordnerAdresse(s.id),
     })),
     ...[...uebrige].map((status) => {
       const s = stationOderErsatz(status);
@@ -160,10 +176,14 @@ export default async function CrmSeite({
         name: s.name,
         beschreibung: s.beschreibung,
         ton: s.ton,
+        href: ordnerAdresse(s.id),
         stillgelegt: true,
       };
     }),
   ];
+
+  /** Der aufgeschlagene Ordner — fuer die Markierung oben und die Ueberschrift unten. */
+  const offenerOrdner = filter.station ? stationOderErsatz(filter.station) : null;
 
   const karten: BrettFall[] = fuersBrett.map((antrag) => ({
     id: antrag.id,
@@ -275,7 +295,8 @@ export default async function CrmSeite({
                   sieht, kaeme sonst nicht darauf, dass die Namen ueberhaupt
                   noch irgendwo stehen. */}
               <span className="text-xs text-muted">
-                Auf ein Symbol zeigen zeigt den Namen des Ordners.{" "}
+                Auf ein Symbol zeigen zeigt den Namen, klicken öffnet den
+                Ordner in der Liste darunter.{" "}
                 {benutzer.rolle === "lesen"
                   ? "Dieses Konto darf Fälle nur ansehen."
                   : "Karte am Griff links greifen und in einen anderen Ordner ziehen."}{" "}
@@ -287,19 +308,46 @@ export default async function CrmSeite({
               stationen={spalten}
               faelle={karten}
               darfSchieben={benutzer.rolle !== "lesen"}
+              gewaehlt={filter.station ?? null}
             />
           </section>
         )}
 
         {!fehler && (
-        <section className="flex flex-col gap-4">
+        /* `scroll-mt`: Der Sprung vom Brett landet sonst mit der Ueberschrift
+           genau auf der Oberkante, und die Liste klebt am Fensterrand. */
+        <section id="eingang" className="flex flex-col gap-4 scroll-mt-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold">
-              Eingang
-              {filterAktiv && (
-                <span className="ml-2 font-normal text-muted">
-                  {getroffen} von {gesamt}
-                </span>
+            {/* Ist ein Ordner aufgeschlagen, traegt die Ueberschrift seinen
+                Namen. "Eingang" ueber einer Liste, in der nur "Tag 2" steht,
+                waere schlicht die falsche Auskunft — und der Klick oben im
+                Brett bliebe ohne sichtbare Antwort. */}
+            <h2 className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+              {offenerOrdner ? (
+                <>
+                  <span
+                    className={`rounded-full border px-2.5 py-1 text-[11px] whitespace-nowrap ${
+                      TON_KLASSEN[offenerOrdner.ton].schild
+                    }`}
+                  >
+                    {offenerOrdner.name}
+                  </span>
+                  <span className="font-normal text-muted">
+                    {getroffen} von {gesamt}
+                  </span>
+                  <span className="hidden font-normal text-muted sm:inline">
+                    · {offenerOrdner.beschreibung}
+                  </span>
+                </>
+              ) : (
+                <>
+                  Eingang
+                  {filterAktiv && (
+                    <span className="font-normal text-muted">
+                      {getroffen} von {gesamt}
+                    </span>
+                  )}
+                </>
               )}
             </h2>
 
@@ -311,7 +359,16 @@ export default async function CrmSeite({
                 {filter.nurFaellig && (
                   <input type="hidden" name="faellig" value="1" />
                 )}
+                {/* `key` an beiden Feldern, und zwar am jeweils gefilterten
+                    Wert: `defaultValue` wirkt nur beim ersten Aufbau. Beim
+                    Klick auf einen Ordner im Brett wechselt die Seite ohne
+                    Neuladen, React behaelt die vorhandenen Felder — und dann
+                    stuende hier weiter "Alle Ordner", obwohl unten nur noch
+                    ein Ordner zu sehen ist. Die beiden Ansichten
+                    widersprechen sich, und wer danach auf "Suchen" drueckt,
+                    verliert den Ordner wieder. */}
                 <input
+                  key={filter.suche}
                   type="search"
                   name="q"
                   defaultValue={filter.suche}
@@ -322,6 +379,7 @@ export default async function CrmSeite({
                     eingeschraenkt — fuer die Liste und fuer den Export, der
                     denselben Filter mitnimmt. */}
                 <select
+                  key={filter.station ?? "alle"}
                   name="station"
                   defaultValue={filter.station ?? ""}
                   aria-label="Ordner"
@@ -375,15 +433,23 @@ export default async function CrmSeite({
 
           {antraege.length === 0 ? (
             <div className="rounded-[24px] border border-border bg-surface p-8 flex flex-col gap-2 text-center">
+              {/* Ein leerer Ordner ist etwas anderes als eine Suche ohne
+                  Treffer. "Kein Fall passt zu dieser Suche" ueber einem
+                  Ordner, in den man gerade erst geklickt hat, klaenge nach
+                  einem Fehler — dabei ist der Ordner einfach leer. */}
               <span className="text-sm font-semibold">
-                {filterAktiv
-                  ? "Kein Fall passt zu dieser Suche"
-                  : "Noch kein Antrag eingegangen"}
+                {offenerOrdner && !filter.suche && !filter.nurFaellig
+                  ? `In "${offenerOrdner.name}" liegt kein Fall`
+                  : filterAktiv
+                    ? "Kein Fall passt zu dieser Suche"
+                    : "Noch kein Antrag eingegangen"}
               </span>
               <p className="text-xs text-muted leading-relaxed">
-                {filterAktiv
-                  ? `Insgesamt liegen ${gesamt} Fälle vor.`
-                  : "Sobald jemand die Antragsstrecke abschließt, steht der Fall hier — mit allen Angaben aus den acht Schritten."}
+                {offenerOrdner && !filter.suche && !filter.nurFaellig
+                  ? `${offenerOrdner.beschreibung} Insgesamt liegen ${gesamt} Fälle vor.`
+                  : filterAktiv
+                    ? `Insgesamt liegen ${gesamt} Fälle vor.`
+                    : "Sobald jemand die Antragsstrecke abschließt, steht der Fall hier — mit allen Angaben aus den acht Schritten."}
               </p>
             </div>
           ) : (
