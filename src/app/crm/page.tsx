@@ -8,6 +8,7 @@ import {
   ablageart,
   alleAntraege,
   ibanVerkuerzt,
+  kundennummer,
   vollerName,
   zaehleAntraege,
   zaehleFaellige,
@@ -282,23 +283,23 @@ export default async function CrmSeite({
           </section>
         )}
 
+        {/* Der Zustand der Ablage als schmale Zeile statt als Kasten.
+            Solange alles steht, ist das eine Randnotiz — und eine Randnotiz
+            gehoert an den Rand. Fehlt der Schluessel oder die Datenbank,
+            faerbt sich dieselbe Zeile und faellt dann auch auf. */}
         {!fehler && art === "postgres" && (
-          <section className="rounded-[20px] border border-border bg-surface px-5 py-3 flex items-center gap-3">
-            <span className="size-2 rounded-full bg-accent shrink-0" />
-            <span className="text-xs text-muted">
-              Postgres verbunden über{" "}
-              <code className="text-foreground">{adressName()}</code> — Anträge
-              bleiben gespeichert.{" "}
-              {schluesselVorhanden() ? (
-                <>Bankverbindungen liegen verschlüsselt.</>
-              ) : (
-                <span className="text-amber-200/80">
-                  Bankverbindungen liegen im Klartext — dafür fehlt{" "}
-                  <code>CRM_DATEN_SCHLUESSEL</code>.
-                </span>
-              )}
-            </span>
-          </section>
+          <p className="-mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted">
+            <span className="size-1.5 rounded-full bg-accent shrink-0" />
+            Postgres über <code className="text-foreground/80">{adressName()}</code>
+            {schluesselVorhanden() ? (
+              <span>· Bankverbindungen verschlüsselt</span>
+            ) : (
+              <span className="text-amber-200/90">
+                · Bankverbindungen im Klartext, es fehlt{" "}
+                <code>CRM_DATEN_SCHLUESSEL</code>
+              </span>
+            )}
+          </p>
         )}
 
         {!fehler && art === "speicher" && (
@@ -492,6 +493,10 @@ export default async function CrmSeite({
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border text-[11px] text-muted">
+                      {/* Die Kundennummer ganz vorn: Sie ist die Angabe, mit
+                          der jemand anruft, und damit die, nach der man in
+                          einer Liste sucht. */}
+                      <th className="text-left font-semibold px-5 py-3">Nr.</th>
                       <th className="text-left font-semibold px-5 py-3">
                         Eingang
                       </th>
@@ -525,6 +530,9 @@ export default async function CrmSeite({
                           key={antrag.id}
                           className="border-b border-border/60 last:border-0 hover:bg-surface-2/60 transition-colors duration-150"
                         >
+                          <td className="px-5 py-3 text-xs tabular-nums whitespace-nowrap">
+                            {kundennummer(antrag)}
+                          </td>
                           <td className="px-5 py-3 text-xs text-muted whitespace-nowrap">
                             {new Date(antrag.eingang).toLocaleString("de-DE", {
                               day: "2-digit",
@@ -596,21 +604,6 @@ export default async function CrmSeite({
           )}
         </section>
         )}
-
-        <section className="rounded-[24px] border border-border bg-surface p-6 lg:p-8 flex flex-col gap-4">
-          <h2 className="text-sm font-semibold">Was als Nächstes kommt</h2>
-          <ol className="flex flex-col gap-3 text-sm text-muted leading-relaxed list-decimal pl-5">
-            <li>
-              Zuweisung an einen Berater — heute steht am Verlauf, wer etwas
-              getan hat, aber nicht, wer zuständig ist.
-            </li>
-            <li>Benachrichtigung ans Team bei Eingang, Excel-Export.</li>
-            <li>
-              Eigene Konten statt der Umgebungsvariable, damit sich eine
-              Sitzung auch vorzeitig beenden lässt.
-            </li>
-          </ol>
-        </section>
 
         <Link
           href="/"
