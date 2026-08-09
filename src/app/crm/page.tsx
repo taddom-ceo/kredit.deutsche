@@ -19,9 +19,11 @@ import { adressName } from "@/lib/crm/db";
 import { schluesselVorhanden } from "@/lib/crm/verschluesselung";
 import { ROLLEN_NAMEN } from "@/lib/crm/benutzer";
 import {
+  PAPIERKORB,
   STATIONEN,
   TON_KLASSEN,
   findeStation,
+  imPapierkorb,
   stationOderErsatz,
   type StatusId,
 } from "@/lib/crm/pipeline";
@@ -95,6 +97,9 @@ export default async function CrmSeite({
   const brettFilter: AntragFilter = {
     suche: filter.suche,
     nurFaellig: filter.nurFaellig,
+    // Nur hier: Ohne die Karten des Papierkorbs liesse sich aus ihm nichts
+    // wieder herausziehen. Liste, Zaehlung und Export lassen ihn weg.
+    mitPapierkorb: true,
   };
 
   // Faellt die Datenbank aus, soll hier nicht eine leere Liste stehen — die
@@ -106,20 +111,19 @@ export default async function CrmSeite({
   let faellige = 0;
   let zaehler: Record<string, number> = {};
   let fehler: string | null = null;
-  let eigenesBrett: Antrag[] | null = null;
 
   try {
-    [antraege, eigenesBrett, gesamt, getroffen, faellige, zaehler] =
+    [antraege, fuersBrett, gesamt, getroffen, faellige, zaehler] =
       await Promise.all([
         alleAntraege(filter),
-        // Ohne Ordner-Filter ist es dieselbe Abfrage — dann keine zweite.
-        filter.station ? alleAntraege(brettFilter) : Promise.resolve(null),
+        // Immer eine eigene Abfrage: Das Brett zeigt alle Ordner und nimmt
+        // den Papierkorb mit, die Liste tut beides nicht.
+        alleAntraege(brettFilter),
         zaehleAntraege(),
         zaehleAntraege(filter),
         zaehleFaellige(),
         zaehleNachStatus(),
       ]);
-    fuersBrett = eigenesBrett ?? antraege;
   } catch (ausnahme) {
     fehler = ausnahme instanceof Error ? ausnahme.message : String(ausnahme);
   }
@@ -137,7 +141,13 @@ export default async function CrmSeite({
    * sein Ordner gestrichen wurde — er bekommt eine eigene, gestrichelte Spalte,
    * bis ihn jemand herauszieht. Danach verschwindet sie von selbst.
    */
-  const bekannt = new Set(STATIONEN.map((s) => s.id));
+  // Der Papierkorb gehoert dazu, obwohl er nicht in STATIONEN steht. Ohne ihn
+  // hier hielte ihn die Schleife unten fuer eine unbekannte Kennung und gaebe
+  // ihm eine gestrichelte Ersatzspalte neben der eigenen.
+  const bekannt = new Set<string>([
+    ...STATIONEN.map((s) => s.id),
+    PAPIERKORB.id,
+  ]);
   const uebrige = new Set<string>();
   for (const [status, anzahl] of Object.entries(zaehler)) {
     if (anzahl > 0 && !bekannt.has(status as StatusId)) uebrige.add(status);
@@ -169,6 +179,18 @@ export default async function CrmSeite({
       ton: s.ton,
       href: ordnerAdresse(s.id),
     })),
+    // Der Papierkorb steht am Ende, hinter allen Ordnern der Pipeline und vor
+    // den stillgelegten. Er ist kein Schritt im Vertrieb, sondern der Weg
+    // hinaus — und ganz rechts ist er da, wo man ihn sucht, ohne zwischen den
+    // Arbeitsordnern im Weg zu stehen.
+    {
+      id: PAPIERKORB.id,
+      name: PAPIERKORB.name,
+      beschreibung: PAPIERKORB.beschreibung,
+      ton: PAPIERKORB.ton,
+      href: ordnerAdresse(PAPIERKORB.id),
+      abseits: true,
+    },
     ...[...uebrige].map((status) => {
       const s = stationOderErsatz(status);
       return {
@@ -178,6 +200,7 @@ export default async function CrmSeite({
         ton: s.ton,
         href: ordnerAdresse(s.id),
         stillgelegt: true,
+        abseits: true,
       };
     }),
   ];
@@ -218,6 +241,17 @@ export default async function CrmSeite({
             </span>
           </div>
           <div className="flex min-w-0 items-center gap-4">
+            {/* Nur fuer Administratoren, weil nur sie loeschen duerfen — und
+                weil ein Verweis auf eine Seite, die dann "nicht fuer Sie"
+                sagt, schlechter ist als gar keiner. */}
+            {benutzer.rolle === "admin" && (
+              <Link
+                href="/crm/protokoll"
+                className="hidden sm:inline text-xs text-muted transition-colors duration-150 hover:text-foreground"
+              >
+                Löschprotokoll
+              </Link>
+            )}
             <div className="min-w-0 text-right leading-tight">
               <div className="truncate text-sm font-semibold">
                 {benutzer.anzeigename}

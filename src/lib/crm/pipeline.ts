@@ -30,6 +30,8 @@ export type StatusId =
   | "tag4plus"
   | "on_hold"
   | "watch"
+  /* Kein Ordner der Pipeline, sondern der Weg hinaus — siehe unten. */
+  | "papierkorb"
   /* Stillgelegt — siehe unten. */
   | "kontaktiert"
   | "unterlagen_angefordert"
@@ -194,6 +196,35 @@ export const STATIONEN: Station[] = [
 ];
 
 /**
+ * Der Papierkorb.
+ *
+ * Kein Ordner der Pipeline, sondern der Weg hinaus — deshalb steht er nicht in
+ * STATIONEN, sondern hier für sich. Der Unterschied ist nicht kosmetisch: Wer
+ * hier liegt, zählt nicht mehr mit. Er fehlt in der Liste, in der Gesamtzahl
+ * und im Export, und er taucht erst wieder auf, wenn man den Papierkorb
+ * ausdrücklich öffnet. Stünde er weiter zwischen den anderen, wäre "gelöscht"
+ * nur ein anderes Wort für "woanders einsortiert".
+ *
+ * Warum überhaupt eine Zwischenstufe: Ein Fall ist eine Person mit
+ * Telefonnummer und Bankverbindung. Ein Fehlgriff beim Aufräumen ist damit
+ * nicht ärgerlich, sondern unwiederbringlich — der Kunde ist weg, und niemand
+ * weiß mehr, dass es ihn gab. Der Papierkorb kostet einen zweiten Klick und
+ * nimmt genau diesen Fehler zurück.
+ *
+ * Endgültig gelöscht wird trotzdem, und zwar nur von hier aus. Ein
+ * Löschbegehren nach Art. 17 DSGVO lässt sich damit weiterhin in zwei
+ * Schritten erfüllen; ein Papierkorb, aus dem nichts mehr herauskommt, wäre
+ * dagegen keine Sicherheit, sondern eine Lücke.
+ */
+export const PAPIERKORB: Station = {
+  id: "papierkorb",
+  name: "Papierkorb",
+  beschreibung:
+    "Zum Löschen vorgemerkt. Herausziehen holt den Fall zurück, endgültig gelöscht wird nur von hier aus.",
+  ton: "weg",
+};
+
+/**
  * Ordner aus der frueheren Aufteilung.
  *
  * Sie bekommen keine eigene Spalte mehr, bleiben aber auffindbar — aus zwei
@@ -250,10 +281,15 @@ export const STILLGELEGTE: Station[] = [
   },
 ];
 
-const ALLE = [...STATIONEN, ...STILLGELEGTE];
+const ALLE = [...STATIONEN, PAPIERKORB, ...STILLGELEGTE];
 
 export function findeStation(id: string): Station | undefined {
   return ALLE.find((s) => s.id === id);
+}
+
+/** Liegt der Fall im Papierkorb? An einer Stelle, damit die Kennung nur hier steht. */
+export function imPapierkorb(status: string): boolean {
+  return status === PAPIERKORB.id;
 }
 
 /**

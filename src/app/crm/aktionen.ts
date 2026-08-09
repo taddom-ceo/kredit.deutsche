@@ -3,13 +3,24 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
+  aktivitaeten,
+  findeAntrag,
   haltEinsichtFest,
   loescheAntrag,
   schreibeNotiz,
   setzeStatus,
   setzeWiedervorlage,
 } from "@/lib/crm/antraege";
-import { findeStation, type StatusId } from "@/lib/crm/pipeline";
+import {
+  PAPIERKORB,
+  findeStation,
+  imPapierkorb,
+  type StatusId,
+} from "@/lib/crm/pipeline";
+import {
+  haltLoeschungFest,
+  istLoeschgrund,
+} from "@/lib/crm/loeschprotokoll";
 import { verlangeAnmeldung } from "@/lib/crm/zugang";
 
 /**
@@ -133,15 +144,77 @@ export async function wiedervorlageSetzen(formular: FormData) {
 }
 
 /**
+ * Einen Fall in den Papierkorb legen.
+ *
+ * Der gewoehnliche Weg, einen Kunden loszuwerden. Er loescht nichts, sondern
+ * setzt den Status — der Fall verschwindet damit aus Liste, Gesamtzahl und
+ * Export, bleibt aber vollstaendig erhalten und steht im Papierkorb.
+ *
+ * Darf jeder Bearbeiter, nicht nur ein Administrator: Der Schritt ist
+ * umkehrbar, und eine Huerde davor haette nur zur Folge, dass Faelle
+ * liegenbleiben, die niemand mehr braucht. Endgueltig loeschen darf weiterhin
+ * nur der Administrator.
+ *
+ * Der Statuswechsel steht wie jeder andere im Verlauf. Das ist nicht Beiwerk:
+ * Woher ein Fall im Papierkorb kam, ist genau die Frage, die sich beim
+ * Zurueckholen stellt.
+ */
+export async function inPapierkorb(formular: FormData) {
+  const benutzer = await verlangeBearbeiter();
+  const id = fallKennung(formular);
+  await setzeStatus(id, PAPIERKORB.id, benutzer.anzeigename);
+  aktualisiere(id);
+}
+
+/**
+ * Einen Fall aus dem Papierkorb zurueckholen.
+ *
+ * Zurueck geht es dorthin, wo er herkam. Der Verlauf weiss das: Beim Weg in
+ * den Papierkorb wurde festgehalten, aus welchem Ordner er kam. Ihn
+ * stattdessen pauschal nach "Neu" zu legen waere bequemer, wuerde aber die
+ * Arbeit zurueckdrehen — ein Fall, der schon in "Tag 3" stand, faenge wieder
+ * von vorne an, und niemand saehe, dass das passiert ist.
+ *
+ * Findet sich nichts, geht es nach "Neu". Das ist der Fall, wenn der Weg in
+ * den Papierkorb aelter ist als der Verlauf oder aus einer Zeit stammt, in
+ * der es ihn noch nicht gab.
+ */
+export async function ausPapierkorb(formular: FormData) {
+  const benutzer = await verlangeBearbeiter();
+  const id = fallKennung(formular);
+
+  const eintraege = await aktivitaeten(id);
+  const hinein = eintraege.find(
+    (e) => e.art === "status" && e.nachStatus === PAPIERKORB.id
+  );
+  const zurueck =
+    hinein?.vonStatus && findeStation(hinein.vonStatus)
+      ? hinein.vonStatus
+      : "neu";
+
+  await setzeStatus(id, zurueck, benutzer.anzeigename);
+  aktualisiere(id);
+}
+
+/**
  * Einen Fall endgueltig loeschen.
  *
- * Nur fuer Administratoren, und ohne Netz darunter: Es gibt keinen
- * Papierkorb. Das ist Absicht — der Grund fuer diese Funktion ist ein
- * Loeschbegehren nach Art. 17 DSGVO oder der Widerspruch eines Abbrechers,
- * der nie etwas abgeschickt hat. Ein Papierkorb waere dabei keine
- * Sicherheit, sondern eine Luecke: geloescht heisst geloescht.
+ * Nur fuer Administratoren, und nur aus dem Papierkorb heraus. Die zweite
+ * Bedingung ist die eigentliche Sicherung: Ein Fall ist eine Person mit
+ * Telefonnummer und Bankverbindung, ein Fehlgriff beim Aufraeumen also nicht
+ * aergerlich, sondern unwiederbringlich. Wer wirklich loeschen will, legt
+ * erst in den Papierkorb und loescht dann von dort — zwei bewusste Schritte
+ * statt einem.
  *
- * Die Rueckfrage steht deshalb in der Oberflaeche, nicht hier.
+ * Ein Loeschbegehren nach Art. 17 DSGVO laesst sich damit weiterhin sofort
+ * erfuellen, es kostet nur einen Klick mehr. Die Pruefung steht hier und
+ * nicht bloss in der Oberflaeche: Server Functions sind per POST auch direkt
+ * erreichbar.
+ *
+ * Festgehalten wird die Loeschung im Loeschprotokoll — ohne die Daten des
+ * Geloeschten, nur wann, durch wen, unter welcher Kennung und aus welchem
+ * Grund. Ohne diesen Eintrag verschwaende mit dem Fall auch der Umstand, dass
+ * er je geloescht wurde: Sein Verlauf haengt an ihm und geht mit.
  */
 export async function fallLoeschen(formular: FormData) {
   const benutzer = await verlangeAnmeldung();
@@ -149,6 +222,28 @@ export async function fallLoeschen(formular: FormData) {
     throw new Error("Nur Administratoren duerfen Faelle loeschen.");
   }
   const id = fallKennung(formular);
+
+  const antrag = await findeAntrag(id);
+  if (!antrag) return;
+  if (!imPapierkorb(antrag.status)) {
+    throw new Error(
+      "Endgueltig geloescht wird nur aus dem Papierkorb. Den Fall zuerst dorthin legen."
+    );
+  }
+
+  const grund = String(formular.get("grund") ?? "");
+  if (!istLoeschgrund(grund)) throw new Error("Kein gueltiger Loeschgrund.");
+
+  // Erst der Nachweis, dann die Loeschung. Andersherum stuende im
+  // schlechtesten Fall ein geloeschter Fall ohne jeden Eintrag da — und das
+  // ist genau der Zustand, den das Protokoll verhindern soll.
+  await haltLoeschungFest({
+    antragId: antrag.id,
+    eingang: antrag.eingang,
+    benutzer: benutzer.anzeigename,
+    grund,
+  });
+
   await loescheAntrag(id);
   revalidatePath("/crm");
   // Die Fallakte gibt es nicht mehr; wer darauf stehen bliebe, saehe eine

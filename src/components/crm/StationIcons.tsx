@@ -175,6 +175,18 @@ function Auge({ className }: IconProps) {
   );
 }
 
+/** Papierkorb mit Deckel — zum Löschen vorgemerkt, aber noch da. */
+function Papierkorb({ className }: IconProps) {
+  return (
+    <svg {...gemeinsam} className={className}>
+      <path d="M4.2 6.6h15.6" />
+      <path d="M9.4 6.6V5.2a1.4 1.4 0 0 1 1.4-1.4h2.4a1.4 1.4 0 0 1 1.4 1.4v1.4" />
+      <path d="M6.2 6.6l.8 12.2a1.6 1.6 0 0 0 1.6 1.5h6.8a1.6 1.6 0 0 0 1.6-1.5l.8-12.2" />
+      <path d="M10.4 10.4v6M13.6 10.4v6" />
+    </svg>
+  );
+}
+
 /** Archivkasten — Ordner aus der früheren Aufteilung, und alles Unbekannte. */
 function Archiv({ className }: IconProps) {
   return (
@@ -201,6 +213,7 @@ const STATION_ICONS: Partial<Record<StatusId, ComponentType<IconProps>>> = {
   tag4plus: tagIcon("4"),
   on_hold: Pause,
   watch: Auge,
+  papierkorb: Papierkorb,
 };
 
 /**

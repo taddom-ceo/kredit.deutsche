@@ -57,6 +57,14 @@ export type BrettStation = {
   href: string;
   /** Nicht mehr Teil der Pipeline, nur noch da, weil Faelle darin liegen. */
   stillgelegt?: boolean;
+  /**
+   * Steht neben der Pipeline, nicht darin — Papierkorb und stillgelegte
+   * Ordner. Sie bekommen einen gestrichelten Rahmen und einen blasseren
+   * Grund, damit die Reihe der Arbeitsordner sichtbar dort aufhoert, wo sie
+   * aufhoert. Ohne das laege der Papierkorb als fuenfzehnte gleichberechtigte
+   * Spalte da, und "weggeworfen" saehe aus wie "eine Station weiter".
+   */
+  abseits?: boolean;
 };
 
 /**
@@ -380,7 +388,7 @@ export default function PipelineBrett({
                       // stuende unten eine gefilterte Liste, ohne dass oben zu
                       // sehen waere, welcher Ordner sie fuellt.
                       "border-accent/50 bg-accent/[0.04] ring-1 ring-accent/25"
-                    : station.stillgelegt
+                    : station.abseits
                       ? "border-dashed border-border bg-surface/60"
                       : "border-border bg-surface"
               }`}

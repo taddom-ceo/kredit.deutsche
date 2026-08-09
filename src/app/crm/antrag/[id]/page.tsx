@@ -10,15 +10,19 @@ import {
 } from "@/lib/crm/antraege";
 import {
   findeStation,
+  imPapierkorb,
   stationOderErsatz,
   STATIONEN,
   TON_KLASSEN,
 } from "@/lib/crm/pipeline";
+import { LOESCHGRUENDE } from "@/lib/crm/loeschprotokoll";
 import { verlangeAnmeldung } from "@/lib/crm/zugang";
 import { schluesselVorhanden } from "@/lib/crm/verschluesselung";
 import IbanKopieren from "@/components/crm/IbanKopieren";
 import {
+  ausPapierkorb,
   fallLoeschen,
+  inPapierkorb,
   notizSchreiben,
   statusAendern,
   wiedervorlageSetzen,
@@ -118,6 +122,7 @@ export default async function AntragSeite({
     : undefined;
   const station = stationOderErsatz(antrag.status);
   const abgebrochen = unvollstaendig(antrag);
+  const liegtImPapierkorb = imPapierkorb(antrag.status);
   const rate = monthlyPayment(antrag.amount, antrag.months);
   const heute = new Date().toISOString().slice(0, 10);
 
@@ -419,48 +424,140 @@ export default async function AntragSeite({
           )}
         </section>
 
-        {benutzer.rolle === "admin" && (
+        {/**
+         * Löschen in zwei Schritten.
+         *
+         * Liegt der Fall noch in der Pipeline, gibt es nur einen Weg: in den
+         * Papierkorb. Das darf jeder Bearbeiter, denn es ist umkehrbar. Erst
+         * im Papierkorb erscheint das endgültige Löschen, und das nur für
+         * Administratoren — mit derselben Rückfrage wie vorher.
+         *
+         * Dass der zweite Knopf woanders steht als der erste, ist der ganze
+         * Sinn der Sache: Ein Fall ist eine Person mit Telefonnummer und
+         * Bankverbindung. Ein Fehlgriff beim Aufräumen ist damit nicht
+         * ärgerlich, sondern unwiederbringlich.
+         */}
+        {darfBearbeiten && !liegtImPapierkorb && (
           <section className="rounded-[20px] border border-border bg-surface p-5 flex flex-col gap-3">
             <h2 className="text-xs font-semibold text-muted tracking-wide">
-              Löschen
+              Papierkorb
             </h2>
-            {loeschenGefragt ? (
-              <form
-                action={fallLoeschen}
-                className="flex flex-wrap items-center gap-3"
+            <form
+              action={inPapierkorb}
+              className="flex flex-wrap items-center gap-3"
+            >
+              <input type="hidden" name="id" value={antrag.id} />
+              <p className="text-xs text-muted leading-relaxed">
+                Der Fall verschwindet aus Liste, Zählung und Export, bleibt
+                aber vollständig erhalten. Zurückholen geht jederzeit.
+              </p>
+              <button
+                type="submit"
+                className="ml-auto rounded-[12px] border border-border px-3 py-2 text-xs text-muted transition-colors duration-150 hover:border-red-400/50 hover:text-red-300"
               >
+                In den Papierkorb
+              </button>
+            </form>
+          </section>
+        )}
+
+        {liegtImPapierkorb && (
+          <section className="rounded-[20px] border border-dashed border-red-400/40 bg-red-400/[0.04] p-5 flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-xs font-semibold text-red-300/90 tracking-wide">
+                Im Papierkorb
+              </h2>
+              <p className="text-xs text-muted leading-relaxed">
+                Dieser Fall ist zum Löschen vorgemerkt und taucht in Liste,
+                Zählung und Export nicht mehr auf. Gelöscht ist er noch nicht.
+              </p>
+            </div>
+
+            {darfBearbeiten && (
+              <form action={ausPapierkorb} className="flex">
                 <input type="hidden" name="id" value={antrag.id} />
-                <span className="text-sm">
-                  Fall und Verlauf endgültig löschen? Das lässt sich nicht
-                  rückgängig machen.
-                </span>
                 <button
                   type="submit"
-                  className="rounded-[12px] border border-red-400/50 bg-red-400/10 px-4 py-2 text-xs font-semibold text-red-300 transition-colors duration-150 hover:bg-red-400/20"
+                  className="rounded-[12px] border border-border-strong bg-surface-2 px-4 py-2 text-xs font-semibold text-foreground transition-colors duration-150 hover:bg-surface"
                 >
-                  Ja, endgültig löschen
+                  Zurückholen
                 </button>
-                <Link
-                  href={`/crm/antrag/${antrag.id}`}
-                  className="text-xs text-muted transition-colors duration-150 hover:text-foreground"
-                >
-                  Abbrechen
-                </Link>
               </form>
-            ) : (
-              <div className="flex flex-wrap items-center gap-3">
-                <p className="text-xs text-muted leading-relaxed">
-                  Für ein Löschbegehren nach Art. 17 DSGVO oder den Widerspruch
-                  eines Abbrechers. Der Verlauf verschwindet mit.
-                </p>
-                <Link
-                  href={`/crm/antrag/${antrag.id}?loeschen=1`}
-                  className="ml-auto rounded-[12px] border border-border px-3 py-2 text-xs text-muted transition-colors duration-150 hover:border-red-400/50 hover:text-red-300"
-                >
-                  Fall löschen
-                </Link>
-              </div>
             )}
+
+            {benutzer.rolle === "admin" &&
+              (loeschenGefragt ? (
+                <form
+                  action={fallLoeschen}
+                  className="flex flex-col gap-3 border-t border-red-400/20 pt-4"
+                >
+                  <input type="hidden" name="id" value={antrag.id} />
+                  <span className="text-sm">
+                    Fall und Verlauf endgültig löschen? Das lässt sich nicht
+                    rückgängig machen.
+                  </span>
+
+                  {/* Der Grund ist Pflicht und eine Auswahl, kein Freitext.
+                      In ein Textfeld tippt früher oder später jemand
+                      "Löschbegehren Frau Müller vom 3.8." — und damit stünde
+                      der Name wieder in der Datenbank, an einer Stelle, an
+                      der ihn niemand vermutet und deshalb auch niemand
+                      mitlöscht. */}
+                  <div className="flex flex-wrap items-end gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label htmlFor="grund" className="text-xs text-muted">
+                        Grund — steht später im Löschprotokoll
+                      </label>
+                      <select
+                        id="grund"
+                        name="grund"
+                        required
+                        defaultValue="loeschbegehren"
+                        className="rounded-[12px] border border-border bg-surface-2 px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                      >
+                        {LOESCHGRUENDE.map((g) => (
+                          <option key={g.id} value={g.id}>
+                            {g.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      type="submit"
+                      className="rounded-[12px] border border-red-400/50 bg-red-400/10 px-4 py-2 text-xs font-semibold text-red-300 transition-colors duration-150 hover:bg-red-400/20"
+                    >
+                      Ja, endgültig löschen
+                    </button>
+                    <Link
+                      href={`/crm/antrag/${antrag.id}`}
+                      className="pb-2 text-xs text-muted transition-colors duration-150 hover:text-foreground"
+                    >
+                      Abbrechen
+                    </Link>
+                  </div>
+                </form>
+              ) : (
+                <div className="flex flex-wrap items-center gap-3 border-t border-red-400/20 pt-4">
+                  <p className="text-xs text-muted leading-relaxed">
+                    Für ein Löschbegehren nach Art. 17 DSGVO oder den
+                    Widerspruch eines Abbrechers. Der Verlauf verschwindet mit;
+                    im{" "}
+                    <Link
+                      href="/crm/protokoll"
+                      className="underline underline-offset-2 hover:text-foreground"
+                    >
+                      Löschprotokoll
+                    </Link>{" "}
+                    bleibt der Nachweis.
+                  </p>
+                  <Link
+                    href={`/crm/antrag/${antrag.id}?loeschen=1`}
+                    className="ml-auto rounded-[12px] border border-border px-3 py-2 text-xs text-muted transition-colors duration-150 hover:border-red-400/50 hover:text-red-300"
+                  >
+                    Endgültig löschen
+                  </Link>
+                </div>
+              ))}
           </section>
         )}
 
