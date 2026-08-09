@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AbmeldeKnopf from "@/components/crm/AbmeldeKnopf";
+import FallZeile from "@/components/crm/FallZeile";
 import PipelineBrett, {
   type BrettFall,
   type BrettStation,
@@ -530,8 +531,13 @@ export default async function CrmSeite({
                         : undefined;
                       const station = stationOderErsatz(antrag.status);
                       return (
-                        <tr
+                        /* Die ganze Zeile fuehrt zum Fall, nicht nur der
+                           Name. Der Verweis am Namen bleibt trotzdem — er
+                           ist der Weg fuer die Tastatur und fuer "in neuem
+                           Tab oeffnen". */
+                        <FallZeile
                           key={antrag.id}
+                          href={`/crm/antrag/${antrag.id}`}
                           className="border-b border-border/60 last:border-0 hover:bg-surface-2/60 transition-colors duration-150"
                         >
                           <td className="px-5 py-3 text-xs tabular-nums whitespace-nowrap">
@@ -598,7 +604,7 @@ export default async function CrmSeite({
                               {station.name}
                             </span>
                           </td>
-                        </tr>
+                        </FallZeile>
                       );
                     })}
                   </tbody>
