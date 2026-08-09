@@ -636,25 +636,62 @@ export async function findeAntrag(id: string): Promise<Antrag | undefined> {
   return zeilen[0] ? ausZeile(zeilen[0]) : undefined;
 }
 
-/** Wie viele Faelle je Station stehen — fuer die Spalten der Pipeline. */
-export async function zaehleNachStatus(): Promise<Record<string, number>> {
+/**
+ * Alle Zahlen der Uebersicht auf einmal.
+ *
+ * Vorher waren das drei Abfragen: Gesamtzahl, faellige Wiedervorlagen, Zahl
+ * je Ordner. Alle drei zaehlen dieselbe Tabelle, nur anders gruppiert — das
+ * kann Postgres in einem Durchgang, und der HTTP-Treiber spart sich zwei
+ * Anfragen ans Netz.
+ *
+ * Der Papierkorb faellt aus Gesamtzahl und Faelligkeiten heraus, steht aber
+ * in `jeOrdner`: Seine Spalte im Brett zeigt ja an, wie viel darin liegt.
+ */
+export async function zaehleUebersicht(): Promise<{
+  gesamt: number;
+  faellig: number;
+  jeOrdner: Record<string, number>;
+}> {
   if (ablageart() === "speicher") {
-    const zaehler: Record<string, number> = {};
-    for (const antrag of ablage.__crmAntraege ?? []) {
-      zaehler[antrag.status] = (zaehler[antrag.status] ?? 0) + 1;
+    const heute = new Date().toISOString().slice(0, 10);
+    const jeOrdner: Record<string, number> = {};
+    let gesamt = 0;
+    let faellig = 0;
+    for (const a of ablage.__crmAntraege ?? []) {
+      jeOrdner[a.status] = (jeOrdner[a.status] ?? 0) + 1;
+      if (imPapierkorb(a.status)) continue;
+      gesamt++;
+      if (a.wiedervorlage && a.wiedervorlage <= heute) faellig++;
     }
-    return zaehler;
+    return { gesamt, faellig, jeOrdner };
   }
 
   await stelleSchemaSicher();
-  // Gezaehlt wird in der Datenbank, nicht ueber die geladene Liste: Sonst
-  // stimmten die Zahlen nur fuer die ersten 500 Faelle.
-  const zeilen = await abfrage<{ status: string; anzahl: string }>(
-    `SELECT status, count(*)::text AS anzahl FROM antrag GROUP BY status`
+  const zeilen = await abfrage<{
+    status: string;
+    anzahl: string;
+    faellig: string;
+  }>(
+    `SELECT status,
+            count(*)::text AS anzahl,
+            count(*) FILTER (
+              WHERE wiedervorlage IS NOT NULL AND wiedervorlage <= CURRENT_DATE
+            )::text AS faellig
+       FROM antrag
+      GROUP BY status`
   );
-  const zaehler: Record<string, number> = {};
-  for (const zeile of zeilen) zaehler[zeile.status] = Number(zeile.anzahl);
-  return zaehler;
+
+  const jeOrdner: Record<string, number> = {};
+  let gesamt = 0;
+  let faellig = 0;
+  for (const zeile of zeilen) {
+    const anzahl = Number(zeile.anzahl);
+    jeOrdner[zeile.status] = anzahl;
+    if (imPapierkorb(zeile.status)) continue;
+    gesamt += anzahl;
+    faellig += Number(zeile.faellig);
+  }
+  return { gesamt, faellig, jeOrdner };
 }
 
 /**
@@ -677,10 +714,6 @@ export async function zaehleAntraege(
   return Number(zeilen[0]?.anzahl ?? 0);
 }
 
-/** Wie viele Wiedervorlagen heute oder frueher faellig sind. */
-export async function zaehleFaellige(): Promise<number> {
-  return zaehleAntraege({ nurFaellig: true });
-}
 
 /**
  * Einen Fall samt Verlauf loeschen.
@@ -801,28 +834,52 @@ export async function setzeStatus(
   status: StatusId,
   benutzer: string
 ): Promise<void> {
-  const vorher = await findeAntrag(id);
-  if (!vorher || vorher.status === status) return;
-
-  // Den alten Stand festhalten, bevor geschrieben wird — nicht erst danach
-  // aus `vorher` lesen. Sonst haengt der Verlauf daran, ob der gelesene Satz
-  // zufaellig dasselbe Objekt ist wie der gespeicherte.
-  const vonStatus = vorher.status;
-
   if (ablageart() === "speicher") {
     const treffer = (ablage.__crmAntraege ?? []).find((a) => a.id === id);
-    if (treffer) treffer.status = status;
-  } else {
-    await abfrage(`UPDATE antrag SET status = $1 WHERE id = $2`, [status, id]);
+    if (!treffer || treffer.status === status) return;
+    const vonStatus = treffer.status;
+    treffer.status = status;
+    await haltFest(id, {
+      benutzer,
+      art: "status",
+      vonStatus,
+      nachStatus: status,
+      text: null,
+    });
+    return;
   }
 
-  await haltFest(id, {
-    benutzer,
-    art: "status",
-    vonStatus,
-    nachStatus: status,
-    text: null,
-  });
+  /**
+   * Lesen, schreiben und vermerken in einer einzigen Anweisung.
+   *
+   * Vorher waren das drei: den Fall holen, den Status setzen, den Verlauf
+   * schreiben. Der HTTP-Treiber macht aus jeder ein eigenes Hin und Her, und
+   * weil sie aufeinander aufbauen, laufen sie nacheinander — beim Schieben
+   * einer Karte war das die spuerbare Wartezeit. Als eine Anweisung ist es
+   * eine Runde statt dreien.
+   *
+   * Datenaendernde CTEs sehen in Postgres alle denselben Stand von vor der
+   * Anweisung. `alt` liest den Status deshalb so, wie er vor dem UPDATE war,
+   * obwohl beide zur selben Anweisung gehoeren — genau das braucht der
+   * Verlaufseintrag.
+   *
+   * `AND status <> $2` haelt den Fall ab, in dem sich nichts aendert: Dann
+   * liefert `geaendert` keine Zeile, und der INSERT traegt nichts ein. Ein
+   * Verlauf voller "Neu → Neu" waere schlimmer als keiner.
+   */
+  await abfrage(
+    `WITH alt AS (
+       SELECT status FROM antrag WHERE id = $1
+     ), geaendert AS (
+       UPDATE antrag SET status = $2
+        WHERE id = $1 AND status <> $2
+       RETURNING id
+     )
+     INSERT INTO aktivitaet (antrag_id, benutzer, art, von_status, nach_status)
+     SELECT $1, $3, 'status', alt.status, $2
+       FROM alt, geaendert`,
+    [id, status, benutzer]
+  );
 }
 
 /**
@@ -846,10 +903,13 @@ export async function setzePruefung(
   aenderung: { wert?: string; ok?: boolean },
   original: string
 ): Promise<void> {
-  const vorher = await findeAntrag(id);
-  if (!vorher) return;
+  // Nur die Pruefspalte holen, nicht den ganzen Fall. `findeAntrag` laedt
+  // `rohdaten` mit und entschluesselt die Bankverbindung — beides fuer einen
+  // Haken an einer Telefonnummer umsonst.
+  const stand = await lesePruefung(id);
+  if (stand === null) return;
 
-  const alt = vorher.pruefung[schluessel] ?? {};
+  const alt = stand[schluessel] ?? {};
   const neu: Pruefeintrag = { ...alt };
 
   if (aenderung.wert !== undefined) {
@@ -862,22 +922,37 @@ export async function setzePruefung(
     else delete neu.ok;
   }
 
-  const stand: Pruefstand = { ...vorher.pruefung };
+  const naechster: Pruefstand = { ...stand };
   // Ein Feld ohne Richtigstellung und ohne Haken gehoert nicht in die Ablage.
   // Sonst waechst `pruefung` mit jedem Klick, der nichts hinterlaesst.
-  if (neu.wert === undefined && neu.ok === undefined) delete stand[schluessel];
-  else stand[schluessel] = neu;
+  if (neu.wert === undefined && neu.ok === undefined) delete naechster[schluessel];
+  else naechster[schluessel] = neu;
 
   if (ablageart() === "speicher") {
     const treffer = (ablage.__crmAntraege ?? []).find((a) => a.id === id);
-    if (treffer) treffer.pruefung = stand;
+    if (treffer) treffer.pruefung = naechster;
     return;
   }
 
   await abfrage(`UPDATE antrag SET pruefung = $2 WHERE id = $1`, [
     id,
-    JSON.stringify(stand),
+    JSON.stringify(naechster),
   ]);
+}
+
+/** Nur der Pruefstand eines Falls. Gibt null zurueck, wenn es ihn nicht gibt. */
+async function lesePruefung(id: string): Promise<Pruefstand | null> {
+  if (ablageart() === "speicher") {
+    const treffer = (ablage.__crmAntraege ?? []).find((a) => a.id === id);
+    return treffer ? { ...treffer.pruefung } : null;
+  }
+  await stelleSchemaSicher();
+  const zeilen = await abfrage<{ pruefung: Pruefstand | null }>(
+    `SELECT pruefung FROM antrag WHERE id = $1`,
+    [id]
+  );
+  if (zeilen.length === 0) return null;
+  return zeilen[0].pruefung ?? {};
 }
 
 /**
