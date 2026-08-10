@@ -13,11 +13,12 @@
  * ------------------------------------------------------------------
  * Zwei Entscheidungen, die die Größe bestimmen:
  *
- * Nach den ersten DREI Zeichen aufgeteilt. Bei zwei Zeichen wären einzelne
- * Bündel bis 365 KB groß — zu viel für ein Adressfeld, das jemand am Telefon
- * ausfüllt. Bei vier Zeichen wären es 21.000 Dateien im Repository. Drei
- * Zeichen sind der Punkt dazwischen: 4.340 Dateien, im Median 0,1 KB, neun
- * von zehn unter 1,7 KB, nur das größte Bündel 94 KB.
+ * Nach den ersten DREI Zeichen aufgeteilt. Alle drei Aufteilungen gemessen,
+ * jeweils gepackt: Bei zwei Zeichen wären es 732 Dateien, aber das größte
+ * Bündel 233 KB und jedes zehnte über 13 KB — zu viel für ein Adressfeld,
+ * das jemand am Telefon ausfüllt. Bei vier Zeichen wären es 20.960 Dateien
+ * im Repository. Drei Zeichen sind der Punkt dazwischen: 5.293 Dateien, im
+ * Median 0,1 KB, neun von zehn unter 1 KB, nur das größte Bündel 95 KB.
  *
  * Namen in mehr als VIER Postleitzahlen fallen heraus. "Bismarckstraße" gibt
  * es in 518 Postleitzahlen, "Hohe Straße" in 454; eine Liste davon hilft
