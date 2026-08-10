@@ -1318,3 +1318,56 @@ input[type="range"]:active::-moz-range-thumb {
 .zweck-kern {
   color: var(--zweck);
 }
+
+/* ── Datenblatt im CRM ──────────────────────────────────────────────────
+   Eine Zeile je Feld, und je Kreditnehmer eine Gruppe aus Wert,
+   Richtigstellung und Haken.
+
+   Warum eigenes CSS und keine Tailwind-Klassen: Die Zeile hat je nach Fall
+   zwei, vier oder sieben Spalten, und die Umschaltpunkte liegen nicht auf dem
+   Raster der Standardbreiten. Die 1180 Pixel sind gemessen: Bei einem
+   Kreditnehmer bleibt die Fallakte neben dem Journal breit genug fuer vier
+   Spalten ab 640; die sieben Spalten der zweispaltigen Zeile brauchen rund
+   730 Pixel, und die hat die Akte erst ab dieser Fensterbreite.
+
+   `display: contents` ist der Kunstgriff dabei: Oberhalb des Umschaltpunkts
+   loest sich die Gruppe auf und ihre drei Zellen sitzen im Gitter der Zeile —
+   darunter bleibt sie eine eigene Reihe, in der die drei nebeneinander
+   stehen. So braucht es kein zweites Markup fuer schmale Fenster. */
+.pruefzeile {
+  display: grid;
+  align-items: baseline;
+  column-gap: 0.75rem;
+  row-gap: 0.25rem;
+  grid-template-columns: minmax(6rem, 1fr) minmax(0, auto);
+}
+
+.pruefgruppe {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .pruefzeile:not(.pruefzeile-zwei) {
+    grid-template-columns:
+      minmax(7rem, 1fr) minmax(0, 15rem) minmax(0, 15rem)
+      auto;
+  }
+  .pruefzeile:not(.pruefzeile-zwei) .pruefgruppe {
+    display: contents;
+  }
+}
+
+@media (min-width: 1180px) {
+  .pruefzeile-zwei {
+    grid-template-columns:
+      minmax(6rem, 1fr)
+      minmax(0, 9rem) minmax(0, 7rem) auto
+      minmax(0, 9rem) minmax(0, 7rem) auto;
+  }
+  .pruefzeile-zwei .pruefgruppe {
+    display: contents;
+  }
+}
