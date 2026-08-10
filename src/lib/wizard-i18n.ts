@@ -96,6 +96,8 @@ export interface WizardTranslations {
     ort: string;
     ortPlaceholder: string;
     ortAwaitingPlz: string;
+    /** Ueber den Knoepfen, wenn die Strasse mehrere Postleitzahlen zulaesst. */
+    plzVorschlag: string;
     plzChecking: string;
     plzUnknown: string;
     plzLookupFailed: string;
@@ -356,6 +358,7 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       ort: "Ort",
       ortPlaceholder: "Bitte Ort wählen",
       ortAwaitingPlz: "Erst Postleitzahl eingeben",
+      plzVorschlag: "Diese Straße gibt es in mehreren Orten — welche Postleitzahl ist Ihre?",
       plzChecking: "Postleitzahl wird geprüft …",
       plzUnknown: "Diese Postleitzahl gibt es in Deutschland nicht.",
       plzLookupFailed:
@@ -640,6 +643,7 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       ort: "City",
       ortPlaceholder: "Please select a city",
       ortAwaitingPlz: "Enter a postal code first",
+      plzVorschlag: "This street exists in several places — which postal code is yours?",
       plzChecking: "Checking postal code …",
       plzUnknown: "This postal code does not exist in Germany.",
       plzLookupFailed: "Check currently unavailable. Please try again later.",

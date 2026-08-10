@@ -7,6 +7,7 @@ import { useWizard } from "@/lib/wizard-context";
 import WizardStepLayout from "./WizardStepLayout";
 import { FormField, FormSelect } from "./FormField";
 import { streetChunkUrl, streetMatches } from "@/lib/streets";
+import { plzBundUrl, plzZuStrasse } from "@/lib/plz-suche";
 
 type StreetLookup =
   | { status: "idle" }
@@ -36,6 +37,8 @@ const HOUSE_NUMBER = /^\d{1,4}\s*[a-zA-Z]?([-/]\s*\d{1,4}\s*[a-zA-Z]?)?$/;
 const cache = new Map<string, string[]>();
 // Straßenbündel je PLZ-Präfix; ein Bündel deckt rund zehn Postleitzahlen ab.
 const streetCache = new Map<string, Record<string, string[]>>();
+// Und die Gegenrichtung: Bündel des Rückwärtsverzeichnisses je Namensanfang.
+const plzCache = new Map<string, Record<string, string[]>>();
 
 export default function StepAdresse() {
   const { lang } = useLanguage();
@@ -43,8 +46,11 @@ export default function StepAdresse() {
   const { data, update, goNext, goBack } = useWizard();
   const [lookup, setLookup] = useState<Lookup>({ status: "idle" });
   const [streets, setStreets] = useState<StreetLookup>({ status: "idle" });
+  /** Postleitzahlen, die zur eingetippten Straße passen. */
+  const [vorschlaege, setVorschlaege] = useState<string[]>([]);
 
   const plz = data.plz.trim();
+  const strasse = data.strasse.trim();
   // Der zuletzt gewählte Ort wird über eine Ref gelesen, damit die Abfrage
   // ausschließlich von der PLZ abhängt und nicht bei jedem Tastendruck neu läuft.
   const ortRef = useRef(data.ort);
@@ -93,6 +99,57 @@ export default function StepAdresse() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [plz]);
+
+  /**
+   * Aus der Straße die Postleitzahl suchen.
+   *
+   * Läuft nur, solange noch keine vollständige Postleitzahl dasteht — wer sie
+   * selbst tippt, soll nicht überschrieben werden. Ist der Name eindeutig,
+   * wird sie gesetzt; gibt es zwei bis vier Möglichkeiten, stehen sie als
+   * Knöpfe darunter. Ist der Name zu häufig, passiert nichts, und die
+   * Postleitzahl wird wie bisher eingetippt.
+   */
+  useEffect(() => {
+    const url = plzBundUrl(strasse);
+    if (!url || /^\d{5}$/.test(plz)) {
+      setVorschlaege([]);
+      return;
+    }
+
+    const nutze = (bund: Record<string, string[]>) => {
+      const treffer = plzZuStrasse(bund, strasse);
+      setVorschlaege(treffer);
+      // Genau eine Möglichkeit: Die trägt sich selbst ein. Bei mehreren wäre
+      // das Raten — dann darf der Mensch wählen.
+      if (treffer.length === 1) update({ plz: treffer[0] });
+    };
+
+    const gemerkt = plzCache.get(url);
+    if (gemerkt) {
+      nutze(gemerkt);
+      return;
+    }
+
+    let abgebrochen = false;
+    fetch(url)
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((bund: Record<string, string[]>) => {
+        if (abgebrochen) return;
+        plzCache.set(url, bund);
+        nutze(bund);
+      })
+      // Ohne Verzeichnis gibt es eben keinen Vorschlag. Das ist kein Fehler,
+      // den jemand sehen müsste — die Postleitzahl lässt sich weiterhin
+      // eintippen.
+      .catch(() => {
+        if (!abgebrochen) setVorschlaege([]);
+      });
+
+    return () => {
+      abgebrochen = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [strasse, plz]);
 
   // Straßenverzeichnis der Postleitzahl nachladen.
   useEffect(() => {
@@ -179,10 +236,39 @@ export default function StepAdresse() {
       onNext={goNext}
       nextDisabled={!valid}
     >
-      {/* Postleitzahl und Ort stehen oben, die Straße darunter — in genau der
-          Reihenfolge, in der die Angaben auseinander hervorgehen: Erst die
-          Postleitzahl bestimmt, welcher Ort infrage kommt und welches
-          Straßenverzeichnis geladen wird. */}
+      {/* Die Straße steht oben, die Postleitzahl darunter.
+          Vorher war es umgekehrt, und die Straße nahm nichts an, solange die
+          Postleitzahl fehlte. Der Grund dafür war technisch richtig — die
+          Vorschlagsliste und die Prüfung hängen an der Postleitzahl — aber er
+          zwang eine Reihenfolge auf, die niemand von sich aus wählt: Man sagt
+          seine Adresse mit der Straße zuerst.
+          Jetzt geht es in beide Richtungen. Steht die Straße, wird die
+          Postleitzahl gesucht; steht die Postleitzahl, werden Ort und
+          Straßenverzeichnis geladen wie bisher. Gesperrt ist nichts mehr. */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4">
+        <FormField
+          id="strasse"
+          label={wt.step5.strasse}
+          value={data.strasse}
+          onChange={(e) => update({ strasse: e.target.value })}
+          list="strassen"
+          autoComplete="address-line1"
+          error={strasseError}
+        />
+        <FormField
+          id="hausnummer"
+          label={wt.step5.hausnummer}
+          value={data.hausnummer}
+          onChange={(e) => update({ hausnummer: e.target.value })}
+          className="lg:w-28"
+          error={
+            hausnummerTouched && !hausnummerOk
+              ? wt.step5.hausnummerInvalid
+              : undefined
+          }
+        />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-4">
         <FormField
           id="plz"
@@ -220,40 +306,25 @@ export default function StepAdresse() {
         </FormSelect>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4">
-        {/* Solange die Postleitzahl nicht bestätigt ist, nimmt keines der
-            beiden Felder etwas an. Das ist keine reine Formsache: Die
-            Vorschlagsliste und die Prüfung gegen das Verzeichnis hängen an der
-            Postleitzahl, und eine vorher getippte Straße würde gegen ein
-            Verzeichnis geprüft, das noch gar nicht geladen ist.
-            Den Platzhalter trägt nur die Straße — im schmalen Feld der
-            Hausnummer bliebe der Satz ohnehin abgeschnitten, und einmal
-            ausgesprochen genügt er für die ganze Zeile. */}
-        <FormField
-          id="strasse"
-          label={wt.step5.strasse}
-          value={data.strasse}
-          onChange={(e) => update({ strasse: e.target.value })}
-          list="strassen"
-          autoComplete="address-line1"
-          disabled={!plzOk}
-          placeholder={plzOk ? undefined : wt.step5.ortAwaitingPlz}
-          error={strasseError}
-        />
-        <FormField
-          id="hausnummer"
-          label={wt.step5.hausnummer}
-          value={data.hausnummer}
-          onChange={(e) => update({ hausnummer: e.target.value })}
-          disabled={!plzOk}
-          className="lg:w-28"
-          error={
-            hausnummerTouched && !hausnummerOk
-              ? wt.step5.hausnummerInvalid
-              : undefined
-          }
-        />
-      </div>
+      {/* Mehrere Möglichkeiten: Der Mensch wählt. Bei genau einer trägt sie
+          sich schon selbst ein, dann steht hier nichts. */}
+      {vorschlaege.length > 1 && !/^\d{5}$/.test(plz) && (
+        <div className="flex flex-col gap-2">
+          <span className="text-sm text-muted">{wt.step5.plzVorschlag}</span>
+          <div className="flex flex-wrap gap-2">
+            {vorschlaege.map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => update({ plz: v })}
+                className="rounded-full border border-border bg-surface-2 px-4 py-2 text-sm tabular-nums transition-all duration-200 hover:border-border-strong hover:-translate-y-px focus-visible:ring-2 focus-visible:ring-accent/40"
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {streets.status === "ok" && (
         <datalist id="strassen">

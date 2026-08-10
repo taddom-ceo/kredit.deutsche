@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "crm:benutzer": "node --experimental-strip-types --no-warnings scripts/crm-benutzer.mjs",
-    "crm:dummy": "node scripts/crm-dummy.mjs"
+    "crm:dummy": "node scripts/crm-dummy.mjs",
+    "plz:index": "node scripts/plz-index.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
