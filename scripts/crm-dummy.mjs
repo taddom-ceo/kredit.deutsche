@@ -116,16 +116,21 @@ if (!passwort) {
  * zurueckrufen kann.
  */
 const FAELLE = [
+  // Der einzige Fall mit zweitem Vornamen — das Feld gibt es, also soll es
+  // auch in den Testdaten vorkommen. Mit dem zweiten Kreditnehmer hat es
+  // nichts zu tun: Es ist der Mittelname derselben Person.
   { v: "Annika", zweck: "frei", betrag: 12000, monate: 48, personen: 1,
-    geb: "14.06.1988", plz: "10115", ort: "Berlin", str: "Invalidenstraße", nr: "112",
+    zweiter: "Maria", geb: "14.06.1988", plz: "10115", ort: "Berlin", str: "Invalidenstraße", nr: "112",
     beruf: "Angestellt", ag: "Contoso Deutschland GmbH", seit: "2019-03",
     netto: "2850", nk: "420", unterhalt: "0",
     iban: "DE54120300001000000000", bank: "Deutsche Kreditbank" },
 
-  { v: "Bernd", zweck: "fahrzeug", betrag: 28500, monate: 72, personen: 2, zweiter: "Claudia",
+  { v: "Bernd", zweck: "fahrzeug", betrag: 28500, monate: 72, personen: 2,
     geb: "02.11.1975", plz: "80331", ort: "München", str: "Sendlinger Straße", nr: "7a",
     beruf: "Beamter/-in", ag: "Freistaat Bayern", seit: "2011-09",
     netto: "3940", miete: "620", nk: "690", unterhalt: "0",
+    partner: { v: "Claudia", n: "Dummy", geb: "17.04.1978", zusammen: true,
+      beruf: "Angestellt", ag: "Klinikum München Süd", seit: "2014-02", netto: "2610" },
     iban: "DE42100500001000000137", bank: "Landesbank Berlin" },
 
   { v: "Cem", zweck: "umschuldung", betrag: 41000, monate: 96, personen: 1,
@@ -141,10 +146,15 @@ const FAELLE = [
     ],
     iban: "DE04200505501000000411", bank: "ING" },
 
-  { v: "Doreen", zweck: "modernisierung", betrag: 65000, monate: 120, personen: 2, zweiter: "Marek",
+  { v: "Doreen", zweck: "modernisierung", betrag: 65000, monate: 120, personen: 2,
     geb: "09.08.1970", plz: "01067", ort: "Dresden", str: "Wilsdruffer Straße", nr: "3",
     beruf: "Angestellt", ag: "Sächsische Aufbaubank", seit: "2008-07",
     netto: "4200", nk: "480", unterhalt: "0",
+    // Zwei Kreditnehmer, die nicht zusammen wohnen — den Fall gibt es, und
+    // die Fallakte muss ihn anders anzeigen als den Normalfall.
+    partner: { v: "Marek", n: "Dummy", geb: "30.01.1969", zusammen: false,
+      str: "Prager Straße", nr: "12", plz: "01069", ort: "Dresden",
+      beruf: "Selbstständig", ag: "Eigenes Gewerbe", seit: "2015-10", netto: "3180" },
     iban: "DE04701500001000000548", bank: "Hamburger Sparkasse" },
 
   { v: "Erkan", zweck: "dispo", betrag: 4500, monate: 24, personen: 1,
@@ -159,10 +169,12 @@ const FAELLE = [
     geb: "05.05.2003", plz: "20095", ort: "Hamburg", str: "Mönckebergstraße", nr: "17",
     abbruch: true },
 
-  { v: "Gerhard", zweck: "kueche", betrag: 17500, monate: 60, personen: 2, zweiter: "Ingrid",
+  { v: "Gerhard", zweck: "kueche", betrag: 17500, monate: 60, personen: 2,
     geb: "23.02.1957", plz: "90402", ort: "Nürnberg", str: "Karolinenstraße", nr: "8",
     beruf: "Rentner/-in", ag: "Deutsche Rentenversicherung", seit: "1979-04",
     netto: "1960", nk: "350", unterhalt: "0", pkv: "210",
+    partner: { v: "Ingrid", n: "Dummy", geb: "05.12.1959", zusammen: true,
+      beruf: "Rentner/-in", ag: "Deutsche Rentenversicherung", seit: "1981-08", netto: "1420" },
     iban: "DE98500105171000000822", bank: "Commerzbank" },
 
   { v: "Hanne-Lore", zweck: "wohnmobil", betrag: 52000, monate: 108, personen: 1,
@@ -187,10 +199,12 @@ const FAELLE = [
     netto: "2640", nk: "430", unterhalt: "180",
     iban: "DE36660501011000001233", bank: "Sparkasse KölnBonn" },
 
-  { v: "Ludmila", zweck: "hochzeit", betrag: 14500, monate: 60, personen: 2, zweiter: "Tobias",
+  { v: "Ludmila", zweck: "hochzeit", betrag: 14500, monate: 60, personen: 2,
     geb: "21.05.1993", plz: "76133", ort: "Karlsruhe", str: "Kaiserstraße", nr: "142",
     beruf: "Angestellt", ag: "dm-drogerie markt", seit: "2021-06",
     netto: "2480", nk: "460", unterhalt: "0",
+    partner: { v: "Tobias", n: "Dummy", geb: "08.09.1990", zusammen: true,
+      beruf: "Auszubildende/-r", ag: "Stadtwerke Karlsruhe", seit: "2023-09", netto: "1180" },
     iban: "DE40360501051000001370", bank: "Sparkasse Karlsruhe" },
 
   { v: "Mohammed", zweck: "medizin", betrag: 7500, monate: 36, personen: 1,
@@ -218,7 +232,7 @@ const FAELLE = [
   // damit jede Ansicht einmal zeigt, was sie mit einer Zeile macht, die nicht
   // passt.
   { v: "Philippa-Charlotte", zweck: "ratenkauf", betrag: 92000, monate: 120, personen: 2,
-    zweiter: "Maximilian-Alexander", geb: "12.03.1968",
+    geb: "12.03.1968",
     plz: "67059", ort: "Ludwigshafen am Rhein", str: "Bismarckstraße", nr: "104",
     beruf: "Selbstständig", ag: "Steuerberatungskanzlei Weinheimer & Partner", seit: "2009-05",
     netto: "7900", miete: "2350", nk: "1180", unterhalt: "0",
@@ -230,6 +244,8 @@ const FAELLE = [
         auszahlung: "2023-11", laufzeit: "60", zins: "7,4", restschuld: "19600",
         bank: "TARGOBANK", iban: "" },
     ],
+    partner: { v: "Maximilian-Alexander", n: "Dummy", geb: "24.06.1965", zusammen: true,
+      beruf: "Angestellt", ag: "BASF SE", seit: "1998-04", netto: "6350" },
     iban: "DE75500502011000002055", bank: "Sparkasse Vorderpfalz" },
 ];
 
@@ -263,6 +279,12 @@ function gehaelterFuer(netto, nummer) {
     [0, 60, 240], // niedrigster: der erste
   ][nummer % 3];
   return muster.map((abweichung) => String(grund + abweichung));
+}
+
+/** Aus "17.04.1978" wird "1978-04-17" — die Form, in der die Strecke sendet. */
+function isoDatum(deutsch) {
+  const [tag, monat, jahr] = deutsch.split(".");
+  return `${jahr}-${monat}-${tag}`;
 }
 
 /** Aus einem Eintrag oben wird der Satz, den die Antragsstrecke schicken wuerde. */
@@ -307,6 +329,31 @@ function bauFall(f, nummer) {
     unterhalt: f.unterhalt,
     hatKredite: kredite.length > 0 ? "ja" : "nein",
     kredite,
+    // Der zweite Kreditnehmer, wenn der Fall zwei hat. Dieselbe Form wie in
+    // der Strecke: Gehaelter als Dreierliste, Anschrift nur bei abweichender.
+    zweitePerson: f.partner
+      ? {
+          vorname: f.partner.v,
+          zweiterVorname: "",
+          nachname: f.partner.n,
+          geburtstag: f.partner.geb.slice(0, 2),
+          geburtsmonat: String(Number(f.partner.geb.slice(3, 5))),
+          geburtsjahr: f.partner.geb.slice(6),
+          geburtsdatum: isoDatum(f.partner.geb),
+          gleicheAnschrift: f.partner.zusammen ? "ja" : "nein",
+          strasse: f.partner.str ?? "",
+          hausnummer: f.partner.nr ?? "",
+          plz: f.partner.plz ?? "",
+          ort: f.partner.ort ?? "",
+          beschaeftigungsart: f.partner.beruf,
+          arbeitgeber: f.partner.ag,
+          beschaeftigtSeitMonat: String(Number(f.partner.seit.slice(5))),
+          beschaeftigtSeitJahr: f.partner.seit.slice(0, 4),
+          beschaeftigtSeit: f.partner.seit,
+          nettoeinkommen: f.partner.netto,
+          gehaelter: gehaelterFuer(f.partner.netto, nummer + 1),
+        }
+      : null,
     iban: f.iban ? ibanFormatiert(f.iban) : "",
     bankname: f.bank,
     kontoinhaber: `${f.v} Dummy`,

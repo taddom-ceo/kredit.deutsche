@@ -48,6 +48,16 @@ export function antragNutzlast(data: WizardData) {
     iban: data.iban,
     bankname: data.bankname,
     kontoinhaber: data.kontoinhaber,
+    /**
+     * Der zweite Kreditnehmer — nur, wenn es ihn gibt.
+     *
+     * Wer auf zwei Antragsteller geklickt hat, etwas eingetragen und dann auf
+     * einen zurueckgewechselt ist, hat einen Antragsteller gestellt. Seine
+     * Eingaben bleiben im Formular stehen, damit ein Zurueckwechseln nichts
+     * kostet — mitgeschickt werden sie nicht. Sonst stuende im CRM ein
+     * zweiter Kreditnehmer, den es im Antrag nicht gibt.
+     */
+    zweitePerson: data.personCount === 2 ? data.zweitePerson : null,
   };
 }
 

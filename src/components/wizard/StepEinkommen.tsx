@@ -44,6 +44,64 @@ function Ausklapp({
   );
 }
 
+/**
+ * Die Liste der drei Monate auf drei Felder bringen.
+ *
+ * Ein Fall von vor dieser Aenderung kann kuerzer sein, und eine Zuweisung an
+ * `naechste[2]` in einer zweielementigen Liste ergaebe eine Luecke statt eines
+ * leeren Feldes.
+ */
+function fuelleDrei(gehaelter: string[]): string[] {
+  const naechste = [...gehaelter];
+  while (naechste.length < 3) naechste.push("");
+  return naechste;
+}
+
+/**
+ * Die drei Gehaltsfelder einer Person.
+ *
+ * Bei zwei Kreditnehmern steht der Satz zweimal da — einmal je Person. Die
+ * Beschriftungen bleiben dieselben; welche Person gemeint ist, sagt die
+ * Ueberschrift darueber.
+ */
+function Gehaltsfelder({
+  praefix,
+  titel,
+  text,
+  labels,
+  gehaelter,
+  onGehalt,
+}: {
+  praefix: string;
+  titel: string;
+  text?: string;
+  labels: string[];
+  gehaelter: string[];
+  onGehalt: (index: number, wert: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-sm font-medium text-muted">{titel}</span>
+      {text && <p className="text-xs text-muted">{text}</p>}
+      {/* Am unteren Rand ausgerichtet: Bricht eine Beschriftung auf schmalen
+          Karten in die zweite Zeile, rutschte sonst nur dieses eine Feld nach
+          unten und die drei stünden auf drei Höhen. */}
+      <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-3">
+        {[0, 1, 2].map((i) => (
+          <BetragFeld
+            key={i}
+            id={`${praefix}gehalt-${i}`}
+            label={labels[i]}
+            placeholder={i === 0 && praefix === "" ? "2.800" : undefined}
+            wert={gehaelter[i] ?? ""}
+            onWert={(z) => onGehalt(i, z)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** Überschrift eines Abschnitts mit erklärendem Text darunter. */
 function Abschnitt({
   titel,
@@ -69,7 +127,8 @@ export default function StepEinkommen() {
   const { lang } = useLanguage();
   const wt = wizardTranslations[lang];
   const t = wt.step7;
-  const { data, update, goNext, goBack } = useWizard();
+  const { data, update, updateZweite, goNext, goBack } = useWizard();
+  const zwei = data.personCount === 2;
 
   const hatMiete = data.mieteinnahmen === "ja";
   const hatKredite = data.hatKredite === "ja";
@@ -110,11 +169,17 @@ export default function StepEinkommen() {
     k.auszahlung !== "" &&
     Number(k.restschuld) > 0;
 
+  const dreiMonate = (gehaelter: string[]) =>
+    gehaelter.slice(0, 3).every((g) => Number(g) > 0) &&
+    gehaelter.length >= 3;
+
   const valid =
     // Alle drei Monate sind Pflicht. Zwei davon waeren eine Auswahl, und wer
     // auswaehlen darf, laesst den schlechtesten weg — genau den, um den es
-    // geht.
-    data.gehaelter.slice(0, 3).every((g) => Number(g) > 0) &&
+    // geht. Bei zwei Kreditnehmern gilt das fuer beide: Ein gemeinsamer Kredit
+    // wird aus beiden Einkommen bedient.
+    dreiMonate(data.gehaelter) &&
+    (!zwei || dreiMonate(data.zweitePerson.gehaelter)) &&
     data.mieteinnahmen !== null &&
     (!hatMiete || Number(data.mieteinnahmenBetrag) > 0) &&
     data.hatKredite !== null &&
@@ -145,36 +210,45 @@ export default function StepEinkommen() {
           * Fälle von vor dieser Änderung es lesen; hier ist es kein zweiter
           * Wert, sondern eine Kopie des ersten Feldes.
           */}
-        <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-muted">
-            {t.gehaelterTitel}
-          </span>
-          <p className="text-xs text-muted">{t.gehaelterText}</p>
-          {/* Am unteren Rand ausgerichtet: Bricht eine Beschriftung auf
-              schmalen Karten in die zweite Zeile, rutschte sonst nur dieses
-              eine Feld nach unten und die drei stünden auf drei Höhen. */}
-          <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-3">
-            {[0, 1, 2].map((i) => (
-              <BetragFeld
-                key={i}
-                id={`gehalt-${i}`}
-                label={t.gehaelterLabels[i]}
-                placeholder={i === 0 ? "2.800" : undefined}
-                wert={data.gehaelter[i] ?? ""}
-                onWert={(z) => {
-                  const naechste = [...data.gehaelter];
-                  while (naechste.length < 3) naechste.push("");
-                  naechste[i] = z;
-                  update(
-                    i === 0
-                      ? { gehaelter: naechste, nettoeinkommen: z }
-                      : { gehaelter: naechste }
-                  );
-                }}
-              />
-            ))}
-          </div>
-        </div>
+        <Gehaltsfelder
+          praefix=""
+          titel={zwei ? `${t.gehaelterTitel} — ${wt.zweite.ersterTitel}` : t.gehaelterTitel}
+          text={t.gehaelterText}
+          labels={t.gehaelterLabels}
+          gehaelter={data.gehaelter}
+          onGehalt={(i, z) => {
+            const naechste = fuelleDrei(data.gehaelter);
+            naechste[i] = z;
+            update(
+              i === 0
+                ? { gehaelter: naechste, nettoeinkommen: z }
+                : { gehaelter: naechste }
+            );
+          }}
+        />
+
+        {/* Der zweite Kreditnehmer bringt sein eigenes Einkommen mit — und
+            zwar hier, direkt unter dem ersten. Ausgaben, Mieteinnahmen und
+            laufende Kredite stehen bewusst nur einmal: Sie gehoeren zum
+            Haushalt, nicht zur Person, und zweimal abgefragt kaeme dieselbe
+            Miete zweimal in die Haushaltsrechnung. */}
+        {zwei && (
+          <Gehaltsfelder
+            praefix="zweite-"
+            titel={`${t.gehaelterTitel} — ${wt.zweite.zweiterTitel}`}
+            labels={t.gehaelterLabels}
+            gehaelter={data.zweitePerson.gehaelter}
+            onGehalt={(i, z) => {
+              const naechste = fuelleDrei(data.zweitePerson.gehaelter);
+              naechste[i] = z;
+              updateZweite(
+                i === 0
+                  ? { gehaelter: naechste, nettoeinkommen: z }
+                  : { gehaelter: naechste }
+              );
+            }}
+          />
+        )}
 
         <div className="flex flex-col gap-2">
           <span id="frage-miete" className="text-sm font-medium text-muted">

@@ -9,6 +9,7 @@ import {
   kundennummer,
   niedrigsterGehaltIndex,
   unvollstaendig,
+  type ZweitePersonEingang,
   vollerName,
   type Aktivitaet,
 } from "@/lib/crm/antraege";
@@ -63,6 +64,20 @@ function datum(wert: string): string {
   if (teile.length === 3) return `${teile[2]}.${teile[1]}.${teile[0]}`;
   if (teile.length === 2) return `${teile[1]}/${teile[0]}`;
   return wert;
+}
+
+/**
+ * Die Anschrift des zweiten Kreditnehmers als eine Zeile.
+ *
+ * Wohnt er beim ersten, steht das ausdruecklich da. Ein Gedankenstrich liesse
+ * offen, ob niemand gefragt hat oder ob es dieselbe Anschrift ist — und wer
+ * anruft, muss wissen, welche der beiden Auskuenfte gilt.
+ */
+function zweiteAnschrift(person: ZweitePersonEingang): string {
+  if (person.gleicheAnschrift === "ja") return "wie erster Kreditnehmer";
+  const strasse = [person.strasse, person.hausnummer].filter(Boolean).join(" ");
+  const ort = [person.plz, person.ort].filter(Boolean).join(" ");
+  return [strasse, ort].filter(Boolean).join(", ");
 }
 
 /** Ein Eintrag des Verlaufs in einem Satz. */
@@ -123,6 +138,12 @@ export default async function AntragSeite({
    */
   const gehaelter = gehaltsliste(antrag);
   const niedrigsterIndex = niedrigsterGehaltIndex(antrag);
+  const zweiteGehaelter = antrag.zweitePerson
+    ? gehaltsliste(antrag.zweitePerson)
+    : [];
+  const zweiteNiedrigster = antrag.zweitePerson
+    ? niedrigsterGehaltIndex(antrag.zweitePerson)
+    : -1;
   const gehaltsNamen =
     gehaelter.length > 1
       ? ["Gehalt · zuletzt", "Gehalt · Vormonat", "Gehalt · davor"]
@@ -357,6 +378,79 @@ export default async function AntragSeite({
                   },
                 ],
               },
+              /**
+               * Der zweite Kreditnehmer, als eigener Block.
+               *
+               * Nur, wenn es ihn gibt — und dann vollstaendig: Person,
+               * Anschrift, Beschaeftigung, Einkommen. Seine Zeilen tragen die
+               * Vorsilbe "zweite." im Schluessel, damit die Pruefung am
+               * Telefon sie von denen des ersten unterscheidet. Ohne die
+               * Vorsilbe bestaetigte ein Haken am Nachnamen beide Personen
+               * zugleich.
+               */
+              ...(antrag.zweitePerson
+                ? [
+                    {
+                      titel: "Zweiter Kreditnehmer",
+                      zeilen: [
+                        {
+                          schluessel: "zweite.vorname",
+                          name: "Vorname",
+                          wert: [
+                            antrag.zweitePerson.vorname,
+                            antrag.zweitePerson.zweiterVorname,
+                          ]
+                            .filter(Boolean)
+                            .join(" "),
+                        },
+                        {
+                          schluessel: "zweite.nachname",
+                          name: "Nachname",
+                          wert: antrag.zweitePerson.nachname,
+                        },
+                        {
+                          schluessel: "zweite.geburtsdatum",
+                          name: "Geburtsdatum",
+                          wert: datum(antrag.zweitePerson.geburtsdatum),
+                        },
+                        {
+                          schluessel: "zweite.anschrift",
+                          name: "Anschrift",
+                          // Bei gleicher Anschrift stehen die vier Felder leer
+                          // und es gilt die oben. Das auszuschreiben ist kein
+                          // Beiwerk: Ein Gedankenstrich hier laese offen, ob
+                          // niemand gefragt hat oder ob es dieselbe ist.
+                          wert: zweiteAnschrift(antrag.zweitePerson),
+                        },
+                        {
+                          schluessel: "zweite.beschaeftigungsart",
+                          name: "Beschäftigung",
+                          wert: antrag.zweitePerson.beschaeftigungsart,
+                        },
+                        {
+                          schluessel: "zweite.arbeitgeber",
+                          name: "Arbeitgeber",
+                          wert: antrag.zweitePerson.arbeitgeber,
+                        },
+                        {
+                          schluessel: "zweite.beschaeftigtSeit",
+                          name: "Beschäftigt seit",
+                          wert: datum(antrag.zweitePerson.beschaeftigtSeit),
+                        },
+                        ...zweiteGehaelter.map((g, i) => ({
+                          schluessel: `zweite.gehalt${i}`,
+                          name: gehaltsNamen[i] ?? `Gehalt ${i + 1}`,
+                          wert: geldbetrag(g),
+                          hervorgehoben: i === zweiteNiedrigster,
+                          hinweis:
+                            i === zweiteNiedrigster
+                              ? "niedrigster der drei Monate"
+                              : undefined,
+                        })),
+                      ],
+                    },
+                  ]
+                : []),
               {
                 titel: "Kreditwunsch",
                 zeilen: [

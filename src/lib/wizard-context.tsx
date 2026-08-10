@@ -15,6 +15,41 @@ import {
   sendeAntrag,
 } from "./antrag-senden";
 
+/**
+ * Die Angaben des zweiten Kreditnehmers.
+ *
+ * Dieselben Felder wie beim ersten, mit zwei Ausnahmen:
+ *
+ *   · Kein eigener Kontakt. E-Mail und Telefonnummer gehoeren zum Antrag, nicht
+ *     zur Person — der Berater ruft einmal an, nicht zweimal. Wer den zweiten
+ *     Kreditnehmer sprechen muss, erfaehrt seine Nummer im Gespraech.
+ *   · Die Anschrift nur, wenn sie abweicht. Zwei Kreditnehmer sind in aller
+ *     Regel ein Haushalt; dieselbe Adresse ein zweites Mal einzutippen waere
+ *     eine Zumutung fuer den Normalfall zugunsten der Ausnahme.
+ */
+export type ZweitePerson = {
+  vorname: string;
+  zweiterVorname: string;
+  nachname: string;
+  geburtstag: string;
+  geburtsmonat: string;
+  geburtsjahr: string;
+  geburtsdatum: string;
+  /** "ja" heisst: dieselbe Anschrift wie der erste Kreditnehmer. */
+  gleicheAnschrift: JaNein;
+  strasse: string;
+  hausnummer: string;
+  plz: string;
+  ort: string;
+  beschaeftigungsart: string;
+  arbeitgeber: string;
+  beschaeftigtSeitMonat: string;
+  beschaeftigtSeitJahr: string;
+  beschaeftigtSeit: string;
+  nettoeinkommen: string;
+  gehaelter: string[];
+};
+
 export interface WizardData {
   step: number;
   // Weitester bereits erreichter Schritt. Erlaubt es, über die
@@ -66,6 +101,20 @@ export interface WizardData {
   iban: string;
   bankname: string;
   kontoinhaber: string;
+  /**
+   * Der zweite Kreditnehmer.
+   *
+   * Steht immer da, gilt aber nur bei `personCount === 2`. Ein eigener
+   * Datensatz statt zwanzig Feldern mit Vorsilbe: Die zweite Person hat
+   * dieselben Angaben wie die erste, und wenn sie dieselbe Form haben, laesst
+   * sich dieselbe Pruefung darauf anwenden — statt sie zweimal zu schreiben
+   * und beim naechsten Mal nur eine davon zu aendern.
+   *
+   * Er wird nicht geleert, wenn jemand auf einen Antragsteller zurueckwechselt:
+   * Wer sich verklickt und zurueckwechselt, findet seine Eingaben wieder.
+   * Mitgeschickt wird er nur bei zwei Antragstellern (siehe antragNutzlast).
+   */
+  zweitePerson: ZweitePerson;
   submitted: boolean;
   /**
    * Entwicklermodus: haelt "Weiter" immer offen und gibt alle Schritte in der
@@ -158,6 +207,33 @@ export function leererKredit(): BestehenderKredit {
   };
 }
 
+export function leereZweitePerson(): ZweitePerson {
+  return {
+    vorname: "",
+    zweiterVorname: "",
+    nachname: "",
+    geburtstag: "",
+    geburtsmonat: "",
+    geburtsjahr: "",
+    geburtsdatum: "",
+    // Der Normalfall steht nicht vor: Zwei Kreditnehmer sind meistens ein
+    // Haushalt, aber "meistens" ist keine Antwort, die jemand fuer den Kunden
+    // geben darf. Die Frage bleibt offen, bis er sie beantwortet.
+    gleicheAnschrift: null,
+    strasse: "",
+    hausnummer: "",
+    plz: "",
+    ort: "",
+    beschaeftigungsart: "",
+    arbeitgeber: "",
+    beschaeftigtSeitMonat: "",
+    beschaeftigtSeitJahr: "",
+    beschaeftigtSeit: "",
+    nettoeinkommen: "",
+    gehaelter: ["", "", ""],
+  };
+}
+
 const initialData: WizardData = {
   step: 1,
   maxStep: 1,
@@ -199,6 +275,7 @@ const initialData: WizardData = {
   iban: "",
   bankname: "",
   kontoinhaber: "",
+  zweitePerson: leereZweitePerson(),
   submitted: false,
   devModus: false,
 };
@@ -206,6 +283,8 @@ const initialData: WizardData = {
 type WizardContextValue = {
   data: WizardData;
   update: (patch: Partial<WizardData>) => void;
+  /** Angaben des zweiten Kreditnehmers aendern. */
+  updateZweite: (patch: Partial<ZweitePerson>) => void;
   goNext: () => void;
   goBack: () => void;
   goToStep: (step: number) => void;
@@ -343,6 +422,21 @@ export function WizardProvider({
     setData((prev) => ({ ...prev, ...patch }));
   }
 
+  /**
+   * Dasselbe fuer den zweiten Kreditnehmer.
+   *
+   * Ohne diesen Weg stuende in jedem Feld der zweiten Person
+   * `update({ zweitePerson: { ...data.zweitePerson, vorname: wert } })` — ein
+   * Satz, bei dem man das Ausbreiten genau einmal vergessen muss, um alle
+   * uebrigen Angaben zu loeschen.
+   */
+  function updateZweite(patch: Partial<ZweitePerson>) {
+    setData((prev) => ({
+      ...prev,
+      zweitePerson: { ...prev.zweitePerson, ...patch },
+    }));
+  }
+
   function goNext() {
     // Beim Verlassen der Schritte mit Kontaktdaten den Stand sichern. Der
     // letzte Schritt ist ausgenommen: Dort geht ohnehin der fertige Antrag
@@ -410,6 +504,7 @@ export function WizardProvider({
       value={{
         data,
         update,
+        updateZweite,
         goNext,
         goBack,
         goToStep,
