@@ -435,9 +435,8 @@ export default async function AntragSeite({
             <p className="pt-2 text-[11px] leading-relaxed text-muted">
               {schluesselVorhanden() ? (
                 <>
-                  Verschlüsselt gespeichert. In der Übersicht stehen nur die
-                  letzten vier Stellen; jedes Kopieren wird im Verlauf
-                  vermerkt.
+                  Verschlüsselt gespeichert. Sie steht nur hier, nicht in der
+                  Fallliste; jedes Kopieren wird im Verlauf vermerkt.
                 </>
               ) : (
                 <span className="text-amber-200/80">
