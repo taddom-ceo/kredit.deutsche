@@ -66,20 +66,6 @@ function datum(wert: string): string {
   return wert;
 }
 
-/**
- * Die Anschrift des zweiten Kreditnehmers als eine Zeile.
- *
- * Wohnt er beim ersten, steht das ausdruecklich da. Ein Gedankenstrich liesse
- * offen, ob niemand gefragt hat oder ob es dieselbe Anschrift ist — und wer
- * anruft, muss wissen, welche der beiden Auskuenfte gilt.
- */
-function zweiteAnschrift(person: ZweitePersonEingang): string {
-  if (person.gleicheAnschrift === "ja") return "wie erster Kreditnehmer";
-  const strasse = [person.strasse, person.hausnummer].filter(Boolean).join(" ");
-  const ort = [person.plz, person.ort].filter(Boolean).join(" ");
-  return [strasse, ort].filter(Boolean).join(", ");
-}
-
 /** Ein Eintrag des Verlaufs in einem Satz. */
 function beschreibe(eintrag: Aktivitaet): string {
   if (eintrag.art === "notiz") return eintrag.text ?? "";
@@ -138,12 +124,48 @@ export default async function AntragSeite({
    */
   const gehaelter = gehaltsliste(antrag);
   const niedrigsterIndex = niedrigsterGehaltIndex(antrag);
+  /**
+   * Eine Angabe des zweiten Kreditnehmers fuer die rechte Haelfte der Zeile.
+   *
+   * Gibt es keinen zweiten, kommt `undefined` zurueck und die Haelfte bleibt
+   * leer. Der Schluessel bekommt die Vorsilbe "zweite.", damit die Pruefung
+   * am Telefon beide auseinanderhaelt — ohne sie bestaetigte ein Haken am
+   * Nachnamen beide Personen zugleich.
+   */
+  const zweiteAngabe = (
+    schluessel: string,
+    lies: (person: ZweitePersonEingang) => string
+  ) =>
+    antrag.zweitePerson
+      ? {
+          schluessel: `zweite.${schluessel}`,
+          wert: lies(antrag.zweitePerson),
+          ...pruefstand(`zweite.${schluessel}`),
+        }
+      : undefined;
+
+  /** Was zu einem Schluessel schon geprueft wurde. */
+  const pruefstand = (schluessel: string) => ({
+    korrektur: antrag.pruefung[schluessel]?.wert,
+    bestaetigt: antrag.pruefung[schluessel]?.ok,
+  });
+
+  /** Steht ausgeschrieben da, wo der zweite die Angabe des ersten teilt. */
+  const WIE_ERSTER = "wie erster Kreditnehmer";
+
   const zweiteGehaelter = antrag.zweitePerson
     ? gehaltsliste(antrag.zweitePerson)
     : [];
   const zweiteNiedrigster = antrag.zweitePerson
     ? niedrigsterGehaltIndex(antrag.zweitePerson)
     : -1;
+  /* So viele Zeilen, wie die laengere der beiden Listen hat. Sonst fiele der
+     dritte Monat des zweiten Kreditnehmers weg, nur weil der erste nur einen
+     angegeben hat. */
+  const gehaltsZeilen = Array.from(
+    { length: Math.max(gehaelter.length, zweiteGehaelter.length) },
+    (_, i) => i
+  );
   const gehaltsNamen =
     gehaelter.length > 1
       ? ["Gehalt · zuletzt", "Gehalt · Vormonat", "Gehalt · davor"]
@@ -264,6 +286,17 @@ export default async function AntragSeite({
           <Datenblatt
             antragId={antrag.id}
             darfBearbeiten={darfBearbeiten}
+            /* Ueber jeder Haelfte steht, wessen Angaben dort stehen. Der
+               Vorname genuegt: Der Nachname ist bei zwei Kreditnehmern meist
+               derselbe und traegt zur Unterscheidung nichts bei. */
+            namen={
+              antrag.zweitePerson
+                ? [
+                    antrag.vorname || "Erster Kreditnehmer",
+                    antrag.zweitePerson.vorname || "Zweiter Kreditnehmer",
+                  ]
+                : [antrag.vorname]
+            }
             bloecke={[
               {
                 titel: "Person",
@@ -274,20 +307,46 @@ export default async function AntragSeite({
                     wert: [antrag.vorname, antrag.zweiterVorname]
                       .filter(Boolean)
                       .join(" "),
+                    zweite: zweiteAngabe("vorname", (p) =>
+                      [p.vorname, p.zweiterVorname].filter(Boolean).join(" ")
+                    ),
                   },
-                  { schluessel: "nachname", name: "Nachname", wert: antrag.nachname },
+                  {
+                    schluessel: "nachname",
+                    name: "Nachname",
+                    wert: antrag.nachname,
+                    zweite: zweiteAngabe("nachname", (p) => p.nachname),
+                  },
                   {
                     schluessel: "geburtsdatum",
                     name: "Geburtsdatum",
                     wert: datum(antrag.geburtsdatum),
+                    zweite: zweiteAngabe("geburtsdatum", (p) =>
+                      datum(p.geburtsdatum)
+                    ),
                   },
-                  { schluessel: "email", name: "E-Mail", wert: antrag.email },
+                  {
+                    schluessel: "email",
+                    name: "E-Mail",
+                    wert: antrag.email,
+                    // Bei "kein eigener Kontakt" steht ausgeschrieben, was
+                    // gilt. Ein Gedankenstrich liesse offen, ob niemand
+                    // gefragt hat oder ob es dieselbe Adresse ist.
+                    zweite: zweiteAngabe("email", (p) =>
+                      p.eigenerKontakt === "ja" ? p.email : WIE_ERSTER
+                    ),
+                  },
                   {
                     schluessel: "telefon",
                     name: "Telefon",
                     wert: [antrag.telefonVorwahl, antrag.telefon]
                       .filter(Boolean)
                       .join(" "),
+                    zweite: zweiteAngabe("telefon", (p) =>
+                      p.eigenerKontakt === "ja"
+                        ? [p.telefonVorwahl, p.telefon].filter(Boolean).join(" ")
+                        : WIE_ERSTER
+                    ),
                   },
                   {
                     schluessel: "personCount",
@@ -306,9 +365,28 @@ export default async function AntragSeite({
                     wert: [antrag.strasse, antrag.hausnummer]
                       .filter(Boolean)
                       .join(" "),
+                    zweite: zweiteAngabe("strasse", (p) =>
+                      p.gleicheAnschrift === "ja"
+                        ? WIE_ERSTER
+                        : [p.strasse, p.hausnummer].filter(Boolean).join(" ")
+                    ),
                   },
-                  { schluessel: "plz", name: "PLZ", wert: antrag.plz },
-                  { schluessel: "ort", name: "Ort", wert: antrag.ort },
+                  {
+                    schluessel: "plz",
+                    name: "PLZ",
+                    wert: antrag.plz,
+                    zweite: zweiteAngabe("plz", (p) =>
+                      p.gleicheAnschrift === "ja" ? WIE_ERSTER : p.plz
+                    ),
+                  },
+                  {
+                    schluessel: "ort",
+                    name: "Ort",
+                    wert: antrag.ort,
+                    zweite: zweiteAngabe("ort", (p) =>
+                      p.gleicheAnschrift === "ja" ? WIE_ERSTER : p.ort
+                    ),
+                  },
                 ],
               },
               {
@@ -318,16 +396,24 @@ export default async function AntragSeite({
                     schluessel: "beschaeftigungsart",
                     name: "Art",
                     wert: antrag.beschaeftigungsart,
+                    zweite: zweiteAngabe(
+                      "beschaeftigungsart",
+                      (p) => p.beschaeftigungsart
+                    ),
                   },
                   {
                     schluessel: "arbeitgeber",
                     name: "Arbeitgeber",
                     wert: antrag.arbeitgeber,
+                    zweite: zweiteAngabe("arbeitgeber", (p) => p.arbeitgeber),
                   },
                   {
                     schluessel: "beschaeftigtSeit",
                     name: "Beschäftigt seit",
                     wert: datum(antrag.beschaeftigtSeit),
+                    zweite: zweiteAngabe("beschaeftigtSeit", (p) =>
+                      datum(p.beschaeftigtSeit)
+                    ),
                   },
                 ],
               },
@@ -341,15 +427,27 @@ export default async function AntragSeite({
                      vor der Umstellung haben ihre Prüfung unter
                      "nettoeinkommen" abgelegt, und die soll nicht verloren
                      gehen, nur weil das Feld jetzt dreigeteilt ist. */
-                  ...gehaelter.map((g, i) => ({
+                  ...gehaltsZeilen.map((i) => ({
                     schluessel: i === 0 ? "nettoeinkommen" : `gehalt${i}`,
                     name: gehaltsNamen[i] ?? `Gehalt ${i + 1}`,
-                    wert: geldbetrag(g),
+                    wert: geldbetrag(gehaelter[i] ?? ""),
                     hervorgehoben: i === niedrigsterIndex,
                     hinweis:
                       i === niedrigsterIndex
                         ? "niedrigster der drei Monate"
                         : undefined,
+                    zweite: antrag.zweitePerson
+                      ? {
+                          schluessel: `zweite.gehalt${i}`,
+                          wert: geldbetrag(zweiteGehaelter[i] ?? ""),
+                          hervorgehoben: i === zweiteNiedrigster,
+                          hinweis:
+                            i === zweiteNiedrigster
+                              ? "niedrigster der drei Monate"
+                              : undefined,
+                          ...pruefstand(`zweite.gehalt${i}`),
+                        }
+                      : undefined,
                   })),
                   {
                     schluessel: "mieteinnahmen",
@@ -378,101 +476,6 @@ export default async function AntragSeite({
                   },
                 ],
               },
-              /**
-               * Der zweite Kreditnehmer, als eigener Block.
-               *
-               * Nur, wenn es ihn gibt — und dann vollstaendig: Person,
-               * Anschrift, Beschaeftigung, Einkommen. Seine Zeilen tragen die
-               * Vorsilbe "zweite." im Schluessel, damit die Pruefung am
-               * Telefon sie von denen des ersten unterscheidet. Ohne die
-               * Vorsilbe bestaetigte ein Haken am Nachnamen beide Personen
-               * zugleich.
-               */
-              ...(antrag.zweitePerson
-                ? [
-                    {
-                      titel: "Zweiter Kreditnehmer",
-                      zeilen: [
-                        {
-                          schluessel: "zweite.vorname",
-                          name: "Vorname",
-                          wert: [
-                            antrag.zweitePerson.vorname,
-                            antrag.zweitePerson.zweiterVorname,
-                          ]
-                            .filter(Boolean)
-                            .join(" "),
-                        },
-                        {
-                          schluessel: "zweite.nachname",
-                          name: "Nachname",
-                          wert: antrag.zweitePerson.nachname,
-                        },
-                        {
-                          schluessel: "zweite.geburtsdatum",
-                          name: "Geburtsdatum",
-                          wert: datum(antrag.zweitePerson.geburtsdatum),
-                        },
-                        {
-                          schluessel: "zweite.email",
-                          // Wie bei der Anschrift: ausgeschrieben, was gilt.
-                          wert:
-                            antrag.zweitePerson.eigenerKontakt === "ja"
-                              ? antrag.zweitePerson.email
-                              : "wie erster Kreditnehmer",
-                          name: "E-Mail",
-                        },
-                        {
-                          schluessel: "zweite.telefon",
-                          name: "Telefon",
-                          wert:
-                            antrag.zweitePerson.eigenerKontakt === "ja"
-                              ? [
-                                  antrag.zweitePerson.telefonVorwahl,
-                                  antrag.zweitePerson.telefon,
-                                ]
-                                  .filter(Boolean)
-                                  .join(" ")
-                              : "wie erster Kreditnehmer",
-                        },
-                        {
-                          schluessel: "zweite.anschrift",
-                          name: "Anschrift",
-                          // Bei gleicher Anschrift stehen die vier Felder leer
-                          // und es gilt die oben. Das auszuschreiben ist kein
-                          // Beiwerk: Ein Gedankenstrich hier laese offen, ob
-                          // niemand gefragt hat oder ob es dieselbe ist.
-                          wert: zweiteAnschrift(antrag.zweitePerson),
-                        },
-                        {
-                          schluessel: "zweite.beschaeftigungsart",
-                          name: "Beschäftigung",
-                          wert: antrag.zweitePerson.beschaeftigungsart,
-                        },
-                        {
-                          schluessel: "zweite.arbeitgeber",
-                          name: "Arbeitgeber",
-                          wert: antrag.zweitePerson.arbeitgeber,
-                        },
-                        {
-                          schluessel: "zweite.beschaeftigtSeit",
-                          name: "Beschäftigt seit",
-                          wert: datum(antrag.zweitePerson.beschaeftigtSeit),
-                        },
-                        ...zweiteGehaelter.map((g, i) => ({
-                          schluessel: `zweite.gehalt${i}`,
-                          name: gehaltsNamen[i] ?? `Gehalt ${i + 1}`,
-                          wert: geldbetrag(g),
-                          hervorgehoben: i === zweiteNiedrigster,
-                          hinweis:
-                            i === zweiteNiedrigster
-                              ? "niedrigster der drei Monate"
-                              : undefined,
-                        })),
-                      ],
-                    },
-                  ]
-                : []),
               {
                 titel: "Kreditwunsch",
                 zeilen: [
@@ -495,10 +498,11 @@ export default async function AntragSeite({
               },
             ].map((block) => ({
               ...block,
+              // Die zweite Haelfte bringt ihren Pruefstand schon mit; hier
+              // kommt der der ersten dazu, fuer jede Zeile auf dieselbe Weise.
               zeilen: block.zeilen.map((z) => ({
                 ...z,
-                korrektur: antrag.pruefung[z.schluessel]?.wert,
-                bestaetigt: antrag.pruefung[z.schluessel]?.ok,
+                ...pruefstand(z.schluessel),
               })),
             }))}
           />
