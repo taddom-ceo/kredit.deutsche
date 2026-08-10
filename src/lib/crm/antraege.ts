@@ -52,7 +52,26 @@ export type AntragEingang = {
   beschaeftigungsart: string;
   arbeitgeber: string;
   beschaeftigtSeit: string;
+  /**
+   * Das zuletzt ausgezahlte Nettoeinkommen.
+   *
+   * Bleibt als eigenes Feld bestehen, obwohl `gehaelter` es enthaelt: Liste,
+   * Export und alle Faelle von vor dieser Aenderung lesen es. Fuer neue
+   * Antraege ist es derselbe Wert wie `gehaelter[0]`.
+   */
   nettoeinkommen: string;
+  /**
+   * Die drei zuletzt ausgezahlten Nettoeinkommen, neuestes zuerst.
+   *
+   * Drei statt einem, weil ein einzelner Monat wenig aussagt: Urlaubsgeld,
+   * eine Sonderzahlung oder ein Monat mit Kurzarbeit verschieben das Bild in
+   * beide Richtungen. Banken rechnen deshalb mit mehreren Monaten, und der
+   * niedrigste davon ist die Zahl, die traegt.
+   *
+   * Leer bei Faellen, die vor dieser Aenderung eingegangen sind — dort steht
+   * nur `nettoeinkommen`.
+   */
+  gehaelter: string[];
   mieteinnahmen: string;
   mieteinnahmenBetrag: string;
   wohnnebenkosten: string;
@@ -155,6 +174,19 @@ function kredite(wert: unknown): BestehenderKreditEingang[] {
   });
 }
 
+/**
+ * Die drei Gehaelter, sauber gemacht.
+ *
+ * Hoechstens drei, jedes hoechstens dreissig Zeichen. Leere Felder bleiben
+ * leer und werden nicht weggeworfen: Die Stelle in der Liste sagt, welcher
+ * Monat gemeint ist — wer den mittleren nicht angibt, hat nicht zwei Monate
+ * angegeben, sondern den mittleren ausgelassen.
+ */
+function gehaelter(wert: unknown): string[] {
+  if (!Array.isArray(wert)) return [];
+  return wert.slice(0, 3).map((e) => text(e, 30));
+}
+
 /** Grenzen, die auch die Rechner auf der Seite einhalten. */
 const BETRAG_MIN = 1000;
 const BETRAG_MAX = 100000;
@@ -205,6 +237,7 @@ export function pruefeAntrag(
     arbeitgeber: text(d.arbeitgeber, 120),
     beschaeftigtSeit: text(d.beschaeftigtSeit, 7),
     nettoeinkommen: text(d.nettoeinkommen, 30),
+    gehaelter: gehaelter(d.gehaelter),
     mieteinnahmen: text(d.mieteinnahmen, 10),
     mieteinnahmenBetrag: text(d.mieteinnahmenBetrag, 30),
     wohnnebenkosten: text(d.wohnnebenkosten, 30),
@@ -1043,6 +1076,67 @@ export function ibanVerkuerzt(iban: string): string {
   const sauber = iban.replace(/\s+/g, "");
   if (sauber.length < 4) return "—";
   return `••••${sauber.slice(-4)}`;
+}
+
+/**
+ * Die Gehaelter eines Falls, immer als Liste.
+ *
+ * Faelle von vor der Umstellung haben nur `nettoeinkommen`. Sie kommen hier
+ * als einelementige Liste heraus, damit die Anzeige nicht zwei Wege kennen
+ * muss.
+ *
+ * Nur am Ende wird gekuerzt, nicht in der Mitte: Die Stelle in der Liste sagt,
+ * welcher Monat gemeint ist. Wer den mittleren auslaesst, hat nicht zwei
+ * Monate angegeben — ruecken die hinteren nach, stuende der vorletzte Monat
+ * unter "Vormonat" und die Akte behauptete etwas, das nie jemand angegeben
+ * hat.
+ */
+export function gehaltsliste(antrag: Antrag): string[] {
+  const liste = [...(antrag.gehaelter ?? [])];
+  while (liste.length > 0 && liste[liste.length - 1].trim() === "") liste.pop();
+  if (liste.length > 0) return liste.map((g) => g.trim());
+  return antrag.nettoeinkommen.trim() ? [antrag.nettoeinkommen] : [];
+}
+
+/**
+ * Der niedrigste der angegebenen Monate — die Zahl, mit der gerechnet wird.
+ *
+ * Ein einzelner Monat sagt wenig: Urlaubsgeld hebt ihn, Kurzarbeit senkt ihn.
+ * Was traegt, ist der schlechteste der drei. Gibt es nur einen Monat, ist er
+ * es zwangslaeufig; gibt es keinen, kommt null zurueck.
+ */
+export function niedrigstesGehalt(antrag: Antrag): number | null {
+  const zahlen = gehaltszahlen(antrag).filter((n) => n !== null);
+  return zahlen.length > 0 ? Math.min(...(zahlen as number[])) : null;
+}
+
+/**
+ * Welcher der Monate der niedrigste ist — als Platz in `gehaltsliste`.
+ *
+ * Das Datenblatt braucht die Stelle, nicht den Betrag: Es markiert eine Zeile.
+ * Bei nur einem Monat gibt es nichts zu vergleichen, dann kommt -1 zurueck —
+ * eine einzelne Zahl als "die niedrigste" auszuzeichnen sagt nichts. Sind zwei
+ * Monate gleich niedrig, gewinnt der erste; zwei Markierungen mit derselben
+ * Begruendung wuerden nur fragen lassen, welche denn nun gilt.
+ */
+export function niedrigsterGehaltIndex(antrag: Antrag): number {
+  const zahlen = gehaltszahlen(antrag);
+  if (zahlen.filter((n) => n !== null).length < 2) return -1;
+  let platz = -1;
+  for (let i = 0; i < zahlen.length; i++) {
+    const n = zahlen[i];
+    if (n === null) continue;
+    if (platz === -1 || n < (zahlen[platz] as number)) platz = i;
+  }
+  return platz;
+}
+
+/** Die Monate als Zahl, Stelle fuer Stelle — unlesbares wird zu null. */
+function gehaltszahlen(antrag: Antrag): (number | null)[] {
+  return gehaltsliste(antrag).map((g) => {
+    const n = Number(g.replace(/\./g, "").replace(",", "."));
+    return Number.isFinite(n) && n > 0 ? n : null;
+  });
 }
 
 export function vollerName(antrag: Antrag): string {

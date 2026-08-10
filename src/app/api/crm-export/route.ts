@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import {
   alleAntraege,
+  gehaltsliste,
   ibanVerkuerzt,
+  niedrigstesGehalt,
   type AntragFilter,
 } from "@/lib/crm/antraege";
 import { findeStation, type StatusId } from "@/lib/crm/pipeline";
@@ -52,7 +54,14 @@ const SPALTEN = [
   "IBAN",
   "Bank",
   "Beschäftigung",
-  "Nettoeinkommen",
+  // Die drei Monate einzeln und die Zahl, mit der gerechnet wird. Sie steht
+  // ausgerechnet daneben, weil eine Tabelle sortiert und gefiltert wird — wer
+  // nach tragfaehigem Einkommen sortieren will, soll das nicht erst mit einer
+  // Formel ueber drei Spalten nachbauen muessen.
+  "Gehalt zuletzt",
+  "Gehalt Vormonat",
+  "Gehalt davor",
+  "Niedrigstes Gehalt",
 ];
 
 export async function GET(request: Request) {
@@ -81,6 +90,7 @@ export async function GET(request: Request) {
 
   const zeilen = [SPALTEN.map(zelle).join(TRENNER)];
   for (const antrag of antraege) {
+    const gehaelter = gehaltsliste(antrag);
     zeilen.push(
       [
         new Date(antrag.eingang).toLocaleString("de-DE"),
@@ -104,7 +114,10 @@ export async function GET(request: Request) {
         ibanVerkuerzt(antrag.iban),
         antrag.bankname,
         antrag.beschaeftigungsart,
-        antrag.nettoeinkommen,
+        gehaelter[0] ?? "",
+        gehaelter[1] ?? "",
+        gehaelter[2] ?? "",
+        niedrigstesGehalt(antrag) ?? "",
       ]
         .map(zelle)
         .join(TRENNER)

@@ -44,6 +44,14 @@ export type Pruefzeile = {
   /** Was jemand stattdessen eingetragen hat. */
   korrektur?: string;
   bestaetigt?: boolean;
+  /**
+   * Diese Zeile ist die maßgebliche unter mehreren gleichartigen — bei den
+   * drei Gehältern der niedrigste Monat. Sie wird hervorgehoben, damit man
+   * beim Überfliegen den Wert trifft, mit dem gerechnet wird.
+   */
+  hervorgehoben?: boolean;
+  /** Ein Wort dazu, warum sie hervorsticht. Steht klein unter dem Namen. */
+  hinweis?: string;
 };
 
 export type Pruefblock = {
@@ -149,19 +157,35 @@ export default function Datenblatt({
               return (
                 <div
                   key={zeile.schluessel}
-                  className="group grid grid-cols-[minmax(6rem,1fr)_minmax(0,auto)] items-baseline gap-x-3 gap-y-1 border-b border-border/60 py-2 last:border-0 sm:grid-cols-[minmax(7rem,1fr)_minmax(0,15rem)_minmax(0,15rem)_auto]"
+                  className={`group grid grid-cols-[minmax(6rem,1fr)_minmax(0,auto)] items-baseline gap-x-3 gap-y-1 border-b border-border/60 py-2 last:border-0 sm:grid-cols-[minmax(7rem,1fr)_minmax(0,15rem)_minmax(0,15rem)_auto] ${
+                    zeile.hervorgehoben
+                      ? "-mx-2 rounded-[10px] bg-amber-400/[0.07] px-2"
+                      : ""
+                  }`}
                 >
-                  <dt className="text-xs text-muted">{zeile.name}</dt>
+                  <dt className="text-xs text-muted">
+                    {zeile.name}
+                    {zeile.hinweis && (
+                      <span className="block text-[10px] leading-tight text-amber-200/70">
+                        {zeile.hinweis}
+                      </span>
+                    )}
+                  </dt>
 
                   {/* Die Angabe des Kunden. Ist sie richtiggestellt, tritt sie
-                      zurück — durchgestrichen und blass, aber lesbar. */}
+                      zurück — durchgestrichen und blass, aber lesbar.
+                      Die Reihenfolge ist Absicht: richtiggestellt schlägt
+                      bestätigt, bestätigt schlägt hervorgehoben. Sonst sähe
+                      ein bestätigtes Gehalt aus wie ein ungeprüftes. */}
                   <dd
                     className={`min-w-0 break-words text-sm sm:text-right ${
                       geaendert
                         ? "text-muted/50 line-through decoration-muted/40"
                         : ok
                           ? "text-emerald-300"
-                          : ""
+                          : zeile.hervorgehoben
+                            ? "font-semibold text-amber-200"
+                            : ""
                     }`}
                   >
                     {zeile.wert || "—"}

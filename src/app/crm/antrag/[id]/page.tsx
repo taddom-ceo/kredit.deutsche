@@ -4,8 +4,10 @@ import { notFound } from "next/navigation";
 import {
   aktivitaeten,
   findeAntrag,
+  gehaltsliste,
   geldbetrag,
   kundennummer,
+  niedrigsterGehaltIndex,
   unvollstaendig,
   vollerName,
   type Aktivitaet,
@@ -111,6 +113,20 @@ export default async function AntragSeite({
   const station = stationOderErsatz(antrag.status);
   const abgebrochen = unvollstaendig(antrag);
   const liegtImPapierkorb = imPapierkorb(antrag.status);
+  /**
+   * Die letzten Gehaltseingänge und der niedrigste darunter.
+   *
+   * Hervorgehoben wird der niedrigste, weil er die Zahl ist, mit der eine Bank
+   * rechnet — nicht der zuletzt ausgezahlte. Fälle von vor der Umstellung
+   * haben nur einen Monat; dort steht wie bisher schlicht "Nettoeinkommen" und
+   * nichts ist markiert.
+   */
+  const gehaelter = gehaltsliste(antrag);
+  const niedrigsterIndex = niedrigsterGehaltIndex(antrag);
+  const gehaltsNamen =
+    gehaelter.length > 1
+      ? ["Gehalt · zuletzt", "Gehalt · Vormonat", "Gehalt · davor"]
+      : ["Nettoeinkommen"];
   const rate = monthlyPayment(antrag.amount, antrag.months);
   const heute = new Date().toISOString().slice(0, 10);
 
@@ -297,11 +313,23 @@ export default async function AntragSeite({
               {
                 titel: "Einkommen und Ausgaben",
                 zeilen: [
-                  {
-                    schluessel: "nettoeinkommen",
-                    name: "Nettoeinkommen",
-                    wert: geldbetrag(antrag.nettoeinkommen),
-                  },
+                  /* Die drei Monate einzeln, damit jeder für sich geprüft
+                     und richtiggestellt werden kann. Der niedrigste ist
+                     markiert — das ist die Zahl, mit der gerechnet wird.
+                     Der erste Monat behält den alten Schlüssel: Fälle von
+                     vor der Umstellung haben ihre Prüfung unter
+                     "nettoeinkommen" abgelegt, und die soll nicht verloren
+                     gehen, nur weil das Feld jetzt dreigeteilt ist. */
+                  ...gehaelter.map((g, i) => ({
+                    schluessel: i === 0 ? "nettoeinkommen" : `gehalt${i}`,
+                    name: gehaltsNamen[i] ?? `Gehalt ${i + 1}`,
+                    wert: geldbetrag(g),
+                    hervorgehoben: i === niedrigsterIndex,
+                    hinweis:
+                      i === niedrigsterIndex
+                        ? "niedrigster der drei Monate"
+                        : undefined,
+                  })),
                   {
                     schluessel: "mieteinnahmen",
                     name: "Mieteinnahmen",

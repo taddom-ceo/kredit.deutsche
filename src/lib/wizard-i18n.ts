@@ -134,7 +134,12 @@ export interface WizardTranslations {
     trust: string[];
     einnahmenTitel: string;
     einnahmenText: string;
-    nettoeinkommen: string;
+    /** Ueberschrift ueber den drei Gehaltsfeldern. */
+    gehaelterTitel: string;
+    /** Erklaerung darunter. */
+    gehaelterText: string;
+    /** Beschriftung der drei Felder, neuestes zuerst. */
+    gehaelterLabels: string[];
     mieteinnahmenFrage: string;
     mieteinnahmenBetrag: string;
     ausgabenTitel: string;
@@ -414,7 +419,10 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       einnahmenTitel: "Monatliche Einnahmen",
       einnahmenText:
         "Die monatlichen Einnahmen werden für Ihre Haushaltsrechnung benötigt. Diese wird von den Banken durchgeführt, um Ihr Kreditangebot zu ermitteln.",
-      nettoeinkommen: "Ihr Nettoeinkommen",
+      gehaelterTitel: "Ihre letzten drei Gehaltseingänge",
+      gehaelterText:
+        "Bitte die drei zuletzt ausgezahlten Nettobeträge — so wie sie auf dem Konto eingegangen sind.",
+      gehaelterLabels: ["Zuletzt (€)", "Monat davor (€)", "Und davor (€)"],
       mieteinnahmenFrage: "Haben Sie Mieteinnahmen?",
       mieteinnahmenBetrag: "Monatliche warme Mieteinnahmen",
       ausgabenTitel: "Monatliche Ausgaben",
@@ -697,7 +705,10 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       einnahmenTitel: "Monthly income",
       einnahmenText:
         "Banks need your monthly income for the affordability check they run to work out your offer.",
-      nettoeinkommen: "Your net income",
+      gehaelterTitel: "Your last three salary payments",
+      gehaelterText:
+        "The three most recent net amounts — as they arrived in your account.",
+      gehaelterLabels: ["Most recent (€)", "Month before (€)", "And before (€)"],
       mieteinnahmenFrage: "Do you have rental income?",
       mieteinnahmenBetrag: "Monthly gross rental income",
       ausgabenTitel: "Monthly expenses",
