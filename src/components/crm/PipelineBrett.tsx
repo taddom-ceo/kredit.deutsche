@@ -11,6 +11,7 @@ import {
 } from "react";
 import { fallVerschieben } from "@/app/crm/aktionen";
 import { stationIcon } from "@/components/crm/StationIcons";
+import { ZweckZeichen } from "@/components/illustrations/ZweckIcons";
 import { TON_KLASSEN, type StatusId, type Ton } from "@/lib/crm/pipeline";
 
 /**
@@ -39,6 +40,13 @@ import { TON_KLASSEN, type StatusId, type Ton } from "@/lib/crm/pipeline";
  *
  * Wer nicht ziehen kann oder will — Tastatur, Vorleseprogramm, ruhige Hand —
  * nimmt das Auswahlfeld am Fuss der Karte. Es fuehrt zur selben Aktion.
+ *
+ * Die Karten tragen dieselbe Sparsamkeit wie die Spalten: der Betrag gross,
+ * der Name klein darunter, der Verwendungszweck als Zeichen statt als Wort.
+ * Ort, Datum, Laufzeit und der ausgeschriebene Zweck stehen beim Zeigen
+ * darunter — die Karte waechst dann in der Reihe, statt einen Kasten
+ * einzublenden. Das Brett bleibt ueberschaubar, ohne dass etwas verloren
+ * geht: Was vorher auf jeder Karte stand, ist eine Mausbewegung entfernt.
  */
 
 export type BrettStation = {
@@ -88,7 +96,10 @@ export type BrettFall = {
   /** Vorformatiert als TT.MM., oder null. */
   wiedervorlage: string | null;
   faellig: boolean;
+  /** Der ausgeschriebene Verwendungszweck — fuer Text und Vorleseprogramm. */
   art: string | null;
+  /** Dessen Kennung — dafuer, welches Zeichen die Karte traegt. */
+  kreditart: string | null;
 };
 
 /** Wie weit der Zeiger wandern muss, bis aus einem Klick ein Zug wird. */
@@ -555,7 +566,7 @@ function Karte({
     // Seite in die Breite: Das CRM liess sich am Telefon seitlich
     // wegschieben, obwohl das Brett fuer sich sauber rollte.
     <li
-      className={`relative flex gap-0.5 rounded-[14px] border border-border bg-surface-2 transition-opacity duration-150 ${
+      className={`group relative flex gap-0.5 rounded-[14px] border border-border bg-surface-2 transition-[opacity,border-color,box-shadow] duration-150 hover:border-border-strong hover:shadow-[0_10px_24px_-14px_rgba(0,0,0,0.9)] focus-within:border-border-strong ${
         inDerLuft ? "opacity-40" : ""
       }`}
     >
@@ -588,31 +599,103 @@ function Karte({
       )}
 
       {/**
-       * Vier Zeilen statt drei, und das Auswahlfeld unten statt oben rechts.
+       * Das Auswahlfeld unten statt oben rechts.
        *
        * In einer 120 Pixel breiten Spalte bleiben nach Griff und Rand rund
        * neunzig fuer den Inhalt. Sass das Feld oben in der Ecke, nahm es davon
-       * ein Viertel weg — und zwar in der einen Zeile, in der es am meisten
-       * weh tut, naemlich beim Namen. Unten teilt es sich die Zeile mit der
-       * Wiedervorlage, die ohnehin nur selten da ist.
+       * ein Viertel weg — und zwar in der Zeile, in der es am meisten weh tut.
+       * Unten teilt es sich die Zeile mit der Wiedervorlage, die ohnehin nur
+       * selten da ist.
        */}
       <div className="flex min-w-0 flex-1 flex-col gap-0.5 py-1.5 pr-1.5">
-        <Link
-          href={`/crm/antrag/${fall.id}`}
-          title={fall.name}
-          className="truncate text-[11px] font-semibold leading-snug hover:text-accent"
-        >
-          {fall.name}
-        </Link>
-        <div className="flex items-baseline justify-between gap-1.5 text-[10px] text-muted">
-          <span className="truncate">{fall.ort || "—"}</span>
-          <span className="shrink-0 tabular-nums">{fall.betrag}</span>
-        </div>
-        <div className="flex items-baseline justify-between gap-1.5 text-[10px] text-muted/70">
-          <span className="truncate" title={fall.art ?? undefined}>
-            {fall.art ?? fall.laufzeit}
+        {/**
+         * Der Betrag gross, alles Uebrige klein.
+         *
+         * Vorher standen vier gleich grosse Zeilen da — Name, Ort, Betrag,
+         * Zweck, Datum —, und ein Brett aus vierzig solchen Karten war eine
+         * Wand aus Text, durch die niemand hindurchsah. Auf einem Brett zaehlt
+         * die Frage "wo liegt wie viel", und die beantwortet der Betrag. Der
+         * Name steht darunter: Er sagt, wer es ist, sobald man schon weiss,
+         * welche Karte man ansieht.
+         */}
+        <span className="truncate text-[15px] font-semibold leading-tight tabular-nums">
+          {fall.betrag}
+        </span>
+
+        {/* Der Zweck als Zeichen statt als Wort, und in der Zeile des Namens
+            statt in der des Betrags. Neben dem Betrag gemessen blieben fuer
+            ihn rund achtzig Pixel, und "92.000 €" braucht sie fast alle — die
+            hohen Betraege, also gerade die auffaelligen, standen abgeschnitten
+            da. Neben dem kleineren Namen kostet das Zeichen niemanden etwas.
+            "Modernisierung" dagegen nimmt eine ganze Zeile und wird in einer
+            120 Pixel schmalen Spalte ohnehin abgeschnitten; das Zeichen ist
+            dasselbe, das der Kunde in der Antragsstrecke angeklickt hat. Der
+            ausgeschriebene Name steht beim Zeigen darunter und geht an
+            Vorleseprogramme als Text. */}
+        <div className="flex min-w-0 items-center gap-1">
+          <span className="shrink-0 text-muted/80" title={fall.art ?? undefined}>
+            {fall.kreditart ? (
+              <ZweckZeichen id={fall.kreditart} className="size-3.5" />
+            ) : (
+              <span aria-hidden className="block size-3.5" />
+            )}
+            <span className="sr-only">{fall.art ?? "Verwendung offen"}</span>
           </span>
-          <span className="shrink-0 tabular-nums">{fall.eingang}</span>
+          {/* Ruhend abgeschnitten, beim Zeigen ausgeschrieben: In 120 Pixeln
+              hat "Philippa-Charlotte Dummy" keinen Platz, und drei Punkte sind
+              ehrlicher als eine zerquetschte Zeile. Wer den ganzen Namen will,
+              zeigt darauf — dann bricht er um, wie alles andere auch. */}
+          <Link
+            href={`/crm/antrag/${fall.id}`}
+            title={fall.name}
+            className="truncate text-[11px] leading-snug text-muted hover:text-accent group-hover:overflow-visible group-hover:whitespace-normal group-focus-within:overflow-visible group-focus-within:whitespace-normal"
+          >
+            {fall.name}
+          </Link>
+        </div>
+
+        {/**
+         * Beim Zeigen klappt aus, was die Karte sonst weglaesst.
+         *
+         * Kein eingeblendeter Kasten am Zeiger, sondern die Karte selbst wird
+         * hoeher. Ein Kasten muesste `fixed` liegen und von Hand ausgerichtet
+         * werden — die Spalte rollt in sich und beschneidet alles, was
+         * darueber hinausragt (dasselbe Problem wie bei der Fahne ueber den
+         * Ordnern). Waechst die Karte in der Reihe, rollt die Spalte einfach
+         * mit.
+         *
+         * `focus-within` steht daneben, damit dieselbe Auskunft ueber die
+         * Tastatur zu bekommen ist. Ein Hinweis, den es nur mit der Maus gibt,
+         * gibt es fuer die Tastatur gar nicht.
+         */}
+        <div
+          lang="de"
+          /* `hyphens-auto` vor `break-words`: Ein Wort, das nicht in 74 Pixel
+             passt, wird sonst irgendwo zerschnitten — "Zahnbehandlu/ng".
+             Mit Silbentrennung bricht es dort, wo es ein Mensch auch braeche,
+             und mit Trennstrich. Kennt der Browser die deutschen Trennregeln
+             nicht, bleibt der harte Umbruch als Rueckfall. */
+          className="hidden flex-col gap-0.5 hyphens-auto break-words pt-1 text-[10px] leading-snug text-muted group-hover:flex group-focus-within:flex"
+        >
+          {/* Eine Angabe je Zeile, nichts abgeschnitten — das ist der Sinn
+              des Aufklappens.
+
+              Nebeneinander geht nicht: Gemessen bleiben in einer 120 Pixel
+              schmalen Spalte 74 Pixel Innenbreite. Steht rechts daneben noch
+              "36 Mon.", bleiben links 25 — und "Zahnbehandlung" ist ein Wort,
+              das sich nicht auf 25 Pixel umbrechen laesst. Es lief dann quer
+              ueber die Laufzeit hinweg, zwei Texte uebereinander.
+
+              Nur Laufzeit und Datum teilen sich eine Zeile, und auch die per
+              `flex-wrap`: Passen sie nebeneinander, stehen sie nebeneinander;
+              passen sie nicht, rutscht das Datum eine Zeile tiefer, statt
+              irgendwo hinauszuragen. */}
+          <span>{fall.ort || "—"}</span>
+          <span>{fall.art ?? "—"}</span>
+          <span className="flex flex-wrap gap-x-1.5 tabular-nums">
+            <span>{fall.laufzeit}</span>
+            <span>{fall.eingang}</span>
+          </span>
         </div>
 
         <div className="mt-0.5 flex min-h-6 items-center justify-between gap-1.5">

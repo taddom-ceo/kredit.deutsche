@@ -252,3 +252,23 @@ export const ZWECK_ICONS: Record<string, ComponentType<IconProps>> = {
 export function zweckIcon(id: string): ComponentType<IconProps> {
   return ZWECK_ICONS[id] ?? Schein;
 }
+
+/**
+ * Dasselbe als Bauteil, das die Kennung entgegennimmt.
+ *
+ * Wer `zweckIcon` aufruft, hält danach ein Bauteil in einer Variablen — und
+ * das ist im Rumpf einer Komponente genau das Muster, vor dem die React-Regel
+ * "keine Bauteile beim Rendern erzeugen" warnt. Hier drin ist der Nachschlag
+ * dagegen der ganze Zweck der Übung: Die Zeichnungen stehen alle im Modul und
+ * werden nur ausgewählt, nicht erzeugt.
+ */
+export function ZweckZeichen({
+  id,
+  className,
+}: {
+  id: string;
+  className?: string;
+}) {
+  const Zeichnung = ZWECK_ICONS[id] ?? Schein;
+  return <Zeichnung className={className} />;
+}
