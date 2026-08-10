@@ -414,6 +414,28 @@ export default async function AntragSeite({
                           wert: datum(antrag.zweitePerson.geburtsdatum),
                         },
                         {
+                          schluessel: "zweite.email",
+                          // Wie bei der Anschrift: ausgeschrieben, was gilt.
+                          wert:
+                            antrag.zweitePerson.eigenerKontakt === "ja"
+                              ? antrag.zweitePerson.email
+                              : "wie erster Kreditnehmer",
+                          name: "E-Mail",
+                        },
+                        {
+                          schluessel: "zweite.telefon",
+                          name: "Telefon",
+                          wert:
+                            antrag.zweitePerson.eigenerKontakt === "ja"
+                              ? [
+                                  antrag.zweitePerson.telefonVorwahl,
+                                  antrag.zweitePerson.telefon,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" ")
+                              : "wie erster Kreditnehmer",
+                        },
+                        {
                           schluessel: "zweite.anschrift",
                           name: "Anschrift",
                           // Bei gleicher Anschrift stehen die vier Felder leer

@@ -152,7 +152,7 @@ const FAELLE = [
     netto: "4200", nk: "480", unterhalt: "0",
     // Zwei Kreditnehmer, die nicht zusammen wohnen — den Fall gibt es, und
     // die Fallakte muss ihn anders anzeigen als den Normalfall.
-    partner: { v: "Marek", n: "Dummy", geb: "30.01.1969", zusammen: false,
+    partner: { v: "Marek", n: "Dummy", geb: "30.01.1969", zusammen: false, tel: "30001001",
       str: "Prager Straße", nr: "12", plz: "01069", ort: "Dresden",
       beruf: "Selbstständig", ag: "Eigenes Gewerbe", seit: "2015-10", netto: "3180" },
     iban: "DE04701500001000000548", bank: "Hamburger Sparkasse" },
@@ -203,7 +203,7 @@ const FAELLE = [
     geb: "21.05.1993", plz: "76133", ort: "Karlsruhe", str: "Kaiserstraße", nr: "142",
     beruf: "Angestellt", ag: "dm-drogerie markt", seit: "2021-06",
     netto: "2480", nk: "460", unterhalt: "0",
-    partner: { v: "Tobias", n: "Dummy", geb: "08.09.1990", zusammen: true,
+    partner: { v: "Tobias", n: "Dummy", geb: "08.09.1990", zusammen: true, tel: "30001002",
       beruf: "Auszubildende/-r", ag: "Stadtwerke Karlsruhe", seit: "2023-09", netto: "1180" },
     iban: "DE40360501051000001370", bank: "Sparkasse Karlsruhe" },
 
@@ -340,6 +340,13 @@ function bauFall(f, nummer) {
           geburtsmonat: String(Number(f.partner.geb.slice(3, 5))),
           geburtsjahr: f.partner.geb.slice(6),
           geburtsdatum: isoDatum(f.partner.geb),
+          eigenerKontakt: f.partner.tel ? "ja" : "nein",
+          email: f.partner.tel
+            ? `${f.partner.v.toLowerCase().replace(/[^a-zäöüß]/g, "")}.dummy${nummer}@example.de`
+            : "",
+          telefonLand: "DE",
+          telefonVorwahl: f.partner.tel ? "0160" : "",
+          telefon: f.partner.tel ?? "",
           gleicheAnschrift: f.partner.zusammen ? "ja" : "nein",
           strasse: f.partner.str ?? "",
           hausnummer: f.partner.nr ?? "",

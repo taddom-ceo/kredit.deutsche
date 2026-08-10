@@ -45,18 +45,22 @@ export default function StepBank() {
   const ibanValid = isValidIban(data.iban);
 
   /**
-   * Die IBAN ist keine Pflicht mehr.
+   * Die ganze Bankverbindung ist freiwillig.
    *
    * Sie wird für die Auszahlung gebraucht, aber nicht, um den Antrag
    * aufzunehmen — und wer sie am Telefon oder unterwegs nicht zur Hand hat,
-   * brach bisher an dieser Stelle ab. Steht eine da, muss sie stimmen: Eine
-   * falsche IBAN ist schlimmer als keine, weil sie so aussieht, als wäre die
-   * Sache erledigt.
+   * brach bisher an dieser Stelle ab. Zuerst war nur die IBAN freigestellt;
+   * Name der Bank und Kontoinhaber blieben Pflicht, und dadurch war der
+   * Antrag praktisch weiter an die IBAN gebunden: Der Name der Bank wird aus
+   * ihr erkannt, also tippte man sie eben doch. Schlimmer noch, der Knopf tat
+   * dann einfach nichts, weil das Absenden am unausgefuellten Feld darunter
+   * scheiterte — ohne ein Wort dazu.
+   *
+   * Jetzt haelt nur noch eines den Antrag auf: eine IBAN, die dasteht und
+   * nicht stimmt. Eine falsche ist schlimmer als keine, weil sie aussieht,
+   * als waere die Sache erledigt — und dazu steht die Meldung am Feld.
    */
-  const valid =
-    (ibanLeer || ibanValid) &&
-    data.bankname.trim() !== "" &&
-    data.kontoinhaber.trim() !== "";
+  const valid = ibanLeer || ibanValid;
 
   /**
    * Der Stand des Bankfeldes, mitgeführt statt beim Rendern abgelesen.
@@ -160,8 +164,8 @@ export default function StepBank() {
         error={touched && !ibanLeer && !ibanValid ? wt.step8.ibanError : undefined}
       />
 
-      {/* Der Hinweis steht nur da, solange das Feld leer ist — genau dann ist
-          er die Antwort auf die Frage "muss ich das jetzt?". Ist die IBAN
+      {/* Der Hinweis steht nur da, solange die IBAN fehlt — genau dann ist er
+          die Antwort auf die Frage "muss ich das jetzt?". Ist sie
           eingetragen, wäre er eine Warnung ohne Anlass.
 
           Bernstein und nicht Rot: Hier ist nichts falsch. Es fehlt etwas, das

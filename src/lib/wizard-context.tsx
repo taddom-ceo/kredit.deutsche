@@ -20,12 +20,12 @@ import {
  *
  * Dieselben Felder wie beim ersten, mit zwei Ausnahmen:
  *
- *   · Kein eigener Kontakt. E-Mail und Telefonnummer gehoeren zum Antrag, nicht
- *     zur Person — der Berater ruft einmal an, nicht zweimal. Wer den zweiten
- *     Kreditnehmer sprechen muss, erfaehrt seine Nummer im Gespraech.
- *   · Die Anschrift nur, wenn sie abweicht. Zwei Kreditnehmer sind in aller
- *     Regel ein Haushalt; dieselbe Adresse ein zweites Mal einzutippen waere
- *     eine Zumutung fuer den Normalfall zugunsten der Ausnahme.
+ *   · Kontakt und Anschrift nur, wenn sie abweichen. Zwei Kreditnehmer sind in
+ *     aller Regel ein Haushalt mit einer Adresse, und oft genug meldet sich
+ *     einer von beiden fuer beide. Dieselben Angaben ein zweites Mal
+ *     einzutippen waere eine Zumutung fuer den Normalfall zugunsten der
+ *     Ausnahme — gefragt wird deshalb erst, ob sie abweichen.
+ *   · Keine eigene Bankverbindung. Ausgezahlt wird auf ein Konto.
  */
 export type ZweitePerson = {
   vorname: string;
@@ -35,6 +35,20 @@ export type ZweitePerson = {
   geburtsmonat: string;
   geburtsjahr: string;
   geburtsdatum: string;
+  /**
+   * "ja" heisst: eigene E-Mail und eigene Telefonnummer.
+   *
+   * Die Frage steht vor den Feldern und nicht als Haken hinter ihnen, aus
+   * demselben Grund wie bei der Anschrift: `null` heisst "noch nicht
+   * beantwortet" und haelt den Schritt offen. Ein Haken kennt diesen Zustand
+   * nicht — er stuende von Anfang an irgendwo, und dieses Irgendwo waere eine
+   * Antwort, die niemand gegeben hat.
+   */
+  eigenerKontakt: JaNein;
+  email: string;
+  telefonLand: string;
+  telefonVorwahl: string;
+  telefon: string;
   /** "ja" heisst: dieselbe Anschrift wie der erste Kreditnehmer. */
   gleicheAnschrift: JaNein;
   strasse: string;
@@ -216,6 +230,11 @@ export function leereZweitePerson(): ZweitePerson {
     geburtsmonat: "",
     geburtsjahr: "",
     geburtsdatum: "",
+    eigenerKontakt: null,
+    email: "",
+    telefonLand: DEFAULT_COUNTRY_ISO,
+    telefonVorwahl: "",
+    telefon: "",
     // Der Normalfall steht nicht vor: Zwei Kreditnehmer sind meistens ein
     // Haushalt, aber "meistens" ist keine Antwort, die jemand fuer den Kunden
     // geben darf. Die Frage bleibt offen, bis er sie beantwortet.

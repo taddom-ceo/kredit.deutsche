@@ -96,16 +96,21 @@ export type AntragEingang = {
 /**
  * Die Angaben des zweiten Kreditnehmers.
  *
- * Ohne eigenen Kontakt: E-Mail und Telefonnummer gehoeren zum Antrag, nicht
- * zur Person. Die Anschrift steht nur da, wenn sie von der des ersten
- * abweicht — bei `gleicheAnschrift: "ja"` sind die vier Felder leer und es
- * gilt die Adresse oben.
+ * Kontakt und Anschrift stehen nur da, wenn sie von denen des ersten
+ * abweichen: Bei `eigenerKontakt: "nein"` sind E-Mail und Telefon leer und es
+ * gelten die oben, bei `gleicheAnschrift: "ja"` ebenso die vier Adressfelder.
+ * Eine eigene Bankverbindung gibt es nicht — ausgezahlt wird auf ein Konto.
  */
 export type ZweitePersonEingang = {
   vorname: string;
   zweiterVorname: string;
   nachname: string;
   geburtsdatum: string;
+  /** "ja" heisst: eigene E-Mail und Telefonnummer, sonst die des ersten. */
+  eigenerKontakt: string;
+  email: string;
+  telefonVorwahl: string;
+  telefon: string;
   gleicheAnschrift: string;
   strasse: string;
   hausnummer: string;
@@ -237,6 +242,10 @@ function zweitePerson(wert: unknown): ZweitePersonEingang | null {
     zweiterVorname: text(p.zweiterVorname, 80),
     nachname: text(p.nachname, 80),
     geburtsdatum: text(p.geburtsdatum, 10),
+    eigenerKontakt: text(p.eigenerKontakt, 10),
+    email: text(p.email, 200),
+    telefonVorwahl: text(p.telefonVorwahl, 10),
+    telefon: text(p.telefon, 20),
     gleicheAnschrift: text(p.gleicheAnschrift, 10),
     strasse: text(p.strasse, 120),
     hausnummer: text(p.hausnummer, 20),

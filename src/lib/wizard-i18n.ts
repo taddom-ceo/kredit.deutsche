@@ -27,8 +27,10 @@ export interface WizardTranslations {
     zweiterTitel: string;
     /** Warum ueberhaupt zweimal gefragt wird — steht einmal, im Datenschritt. */
     einleitung: string;
-    /** Kontakt und Bankverbindung bleiben beim ersten Kreditnehmer. */
+    /** Was einmal reicht und deshalb beim ersten Kreditnehmer steht. */
     kontaktHinweis: string;
+    /** Ob der zweite Kreditnehmer eigene Kontaktdaten hat. */
+    kontaktFrage: string;
     anschriftFrage: string;
     ja: string;
     nein: string;
@@ -284,7 +286,9 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       einleitung:
         "Sie haben zwei Kreditnehmer gewählt. Banken prüfen beide — deshalb fragen wir die Angaben zweimal ab.",
       kontaktHinweis:
-        "E-Mail, Telefon und Bankverbindung brauchen wir nur einmal: Sie gehören zum Antrag, nicht zur Person.",
+        "Die Bankverbindung brauchen wir nur einmal: Ausgezahlt wird auf ein Konto.",
+      kontaktFrage:
+        "Hat der zweite Kreditnehmer eigene Kontaktdaten?",
       anschriftFrage: "Wohnt der zweite Kreditnehmer unter derselben Anschrift?",
       ja: "Ja",
       nein: "Nein",
@@ -534,12 +538,12 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       ],
       iban: "IBAN — optional",
       ibanError: "Bitte eine gültige IBAN eingeben.",
-      ibanSpaeterTitel: "Die IBAN können Sie nachreichen",
+      ibanSpaeterTitel: "Die Bankverbindung können Sie nachreichen",
       ibanSpaeterText:
-        "Haben Sie sie gerade nicht zur Hand, lassen Sie das Feld leer. Für die Auszahlung wird sie gebraucht — wir fragen sie im weiteren Verlauf bei Ihnen ab.",
-      bankname: "Name der Bank",
+        "Haben Sie sie gerade nicht zur Hand, lassen Sie die Felder leer — der Antrag geht auch so hinaus. Für die Auszahlung wird sie gebraucht; wir fragen sie im weiteren Verlauf bei Ihnen ab.",
+      bankname: "Name der Bank — optional",
       bankErkannt: "Aus Ihrer IBAN erkannt. Stimmt das nicht, einfach überschreiben.",
-      kontoinhaber: "Kontoinhaber",
+      kontoinhaber: "Kontoinhaber — optional",
       sendeFehler:
         "Der Antrag konnte nicht übermittelt werden. Bitte noch einmal versuchen.",
       sendet: "Wird gesendet",
@@ -590,7 +594,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       einleitung:
         "You chose two borrowers. Banks assess both — that is why we ask for the details twice.",
       kontaktHinweis:
-        "Email, phone and bank details are needed only once: they belong to the application, not to a person.",
+        "Bank details are needed only once: the loan is paid out to a single account.",
+      kontaktFrage: "Does the second borrower have their own contact details?",
       anschriftFrage: "Does the second borrower live at the same address?",
       ja: "Yes",
       nein: "No",
@@ -837,12 +842,12 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       ],
       iban: "IBAN — optional",
       ibanError: "Please enter a valid IBAN.",
-      ibanSpaeterTitel: "You can supply your IBAN later",
+      ibanSpaeterTitel: "You can supply your bank details later",
       ibanSpaeterText:
-        "If you don't have it to hand, leave the field empty. It is needed for the payout — we will ask you for it later in the process.",
-      bankname: "Bank name",
+        "If you don't have them to hand, leave the fields empty — the application goes out either way. They are needed for the payout; we will ask you for them later in the process.",
+      bankname: "Bank name — optional",
       bankErkannt: "Recognised from your IBAN. If it's wrong, just overwrite it.",
-      kontoinhaber: "Account holder",
+      kontoinhaber: "Account holder — optional",
       sendeFehler: "The application could not be submitted. Please try again.",
       sendet: "Sending",
     },
