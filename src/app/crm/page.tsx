@@ -8,7 +8,6 @@ import PipelineBrett, {
 import {
   ablageart,
   alleAntraege,
-  ibanVerkuerzt,
   kundennummer,
   vollerName,
   zaehleAntraege,
@@ -515,7 +514,13 @@ export default async function CrmSeite({
                       <th className="text-right font-semibold px-5 py-3">
                         Laufzeit
                       </th>
-                      <th className="text-left font-semibold px-5 py-3">IBAN</th>
+                      {/* Keine IBAN-Spalte. Sie stand hier verkuerzt, aber
+                          auch die letzten vier Stellen sind eine
+                          Bankverbindung — und diese Liste ist die Ansicht, die
+                          offen liegt, waehrend jemand telefoniert oder einen
+                          Bildschirm teilt. Wer die IBAN braucht, ruft den Fall
+                          auf; dort steht sie vollstaendig, mit Kopierknopf und
+                          Vermerk im Verlauf. */}
                       <th className="text-left font-semibold px-5 py-3">
                         Wiedervorlage
                       </th>
@@ -570,9 +575,6 @@ export default async function CrmSeite({
                           </td>
                           <td className="px-5 py-3 text-right text-xs text-muted tabular-nums whitespace-nowrap">
                             {antrag.months} Mon.
-                          </td>
-                          <td className="px-5 py-3 text-xs text-muted tabular-nums">
-                            {ibanVerkuerzt(antrag.iban)}
                           </td>
                           <td className="px-5 py-3 text-xs tabular-nums whitespace-nowrap">
                             {antrag.wiedervorlage ? (
