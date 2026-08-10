@@ -27,6 +27,11 @@ import {
   stationOderErsatz,
   type StatusId,
 } from "@/lib/crm/pipeline";
+import {
+  bewerte,
+  zeigeWert,
+  type Prioritaetsklasse,
+} from "@/lib/crm/priorisierung";
 import { verlangeAnmeldung } from "@/lib/crm/zugang";
 import { findeKreditartNachId } from "@/lib/kreditarten";
 import { formatEuro } from "@/lib/loan-calc";
@@ -46,16 +51,37 @@ function einzeln(wert: string | string[] | undefined): string {
 /** Adresse mit geaenderten Suchparametern, ohne die uebrigen zu verlieren. */
 function mitParametern(
   jetzige: AntragFilter,
-  aenderung: Partial<AntragFilter>
+  aenderung: Partial<AntragFilter>,
+  sortierung?: string
 ): string {
   const zusammen = { ...jetzige, ...aenderung };
   const p = new URLSearchParams();
   if (zusammen.suche) p.set("q", zusammen.suche);
   if (zusammen.station) p.set("station", zusammen.station);
   if (zusammen.nurFaellig) p.set("faellig", "1");
+  // Die Sortierung ueberlebt einen Ordnerwechsel: Wer nach Prioritaet sortiert
+  // und dann einen Ordner aufschlaegt, will ihn auch nach Prioritaet sehen.
+  if (sortierung && sortierung !== "eingang") p.set("sortierung", sortierung);
   const text = p.toString();
   return text ? `/crm?${text}` : "/crm";
 }
+
+/**
+ * Die Farbe der Prioritaetsplakette.
+ *
+ * Ausgeschrieben und nicht zusammengesetzt: Tailwind liest den Quelltext nach
+ * fertigen Klassennamen ab. Dieselbe Regel wie bei den Toenen der Ordner.
+ *
+ * Rot fuer P1 waere falsch — rot heisst in diesem CRM "hier endet etwas".
+ * P1 ist kein Alarm, sondern das, was als naechstes drankommt.
+ */
+const KLASSEN_KLASSEN: Record<Prioritaetsklasse, string> = {
+  P1: "border-accent/50 bg-accent/10 text-accent",
+  P2: "border-sky-400/40 bg-sky-400/10 text-sky-200",
+  P3: "border-border text-muted",
+  P4: "border-border/60 text-muted/70",
+  P5: "border-border/40 text-muted/50",
+};
 
 /** TT.MM. — mehr traegt eine Karte nicht, ohne unruhig zu werden. */
 function kurzerTag(wert: string): string {
@@ -86,6 +112,16 @@ export default async function CrmSeite({
   const filterAktiv = Boolean(
     filter.suche || filter.station || filter.nurFaellig
   );
+  /**
+   * Wonach die Liste sortiert ist.
+   *
+   * "Eingang" bleibt die Voreinstellung: Es ist die Reihenfolge, in der die
+   * Faelle hereinkommen, und die Datenbank liefert sie ohnehin so.
+   * "Priorität" sortiert die geladenen Zeilen hier — nicht in SQL, weil der
+   * Wert von der Uhr abhaengt und in keiner Spalte steht. Das reicht, solange
+   * die Liste geladen ist, wie sie ist: hoechstens fuenfhundert Zeilen.
+   */
+  const sortierung = einzeln(parameter.sortierung) === "prio" ? "prio" : "eingang";
 
   /**
    * Das Brett kennt den Ordner-Filter nicht. Es ist die Uebersicht ueber alle
@@ -137,6 +173,16 @@ export default async function CrmSeite({
   const art = ablageart();
   // Fuer die Frage, ob eine Wiedervorlage schon faellig ist.
   const heute = new Date().toISOString().slice(0, 10);
+  /**
+   * Ein Zeitpunkt fuer die ganze Liste.
+   *
+   * Die Aktualitaet geht in den Prioritaetswert ein, und die haengt an der
+   * Uhr. Jede Zeile ihre eigene nehmen zu lassen hiesse, dass die erste und
+   * die letzte nach verschiedenen Massstaeben bewertet werden — bei
+   * fuenfhundert Zeilen sind das Millisekunden, aber der Unterschied waere
+   * willkuerlich und nicht erklaerbar.
+   */
+  const jetzt = new Date();
 
   /**
    * Die Spalten: die sechzehn Ordner der Pipeline, und dahinter jeder weitere
@@ -175,7 +221,26 @@ export default async function CrmSeite({
    * auf den Klick laege ungesehen unterhalb des Bildschirmrands.
    */
   const ordnerAdresse = (id: StatusId) =>
-    `${mitParametern(filter, { station: filter.station === id ? null : id })}#eingang`;
+    `${mitParametern(
+      filter,
+      { station: filter.station === id ? null : id },
+      sortierung
+    )}#eingang`;
+
+  /**
+   * Die Liste in der gewaehlten Reihenfolge.
+   *
+   * Kopiert, nicht an Ort und Stelle sortiert: `antraege` ist das Ergebnis
+   * der Abfrage, und das soll nicht davon abhaengen, was die Anzeige damit
+   * vorhat. Bei gleichem Wert bleibt die Reihenfolge der Abfrage — neueste
+   * zuerst.
+   */
+  const listenAntraege =
+    sortierung === "prio"
+      ? [...antraege].sort(
+          (a, b) => bewerte(b, jetzt).score - bewerte(a, jetzt).score
+        )
+      : antraege;
 
   const spalten: BrettStation[] = [
     ...STATIONEN.map((s) => ({
@@ -463,8 +528,33 @@ export default async function CrmSeite({
                 </button>
               </form>
 
+              {/* Zwei Reihenfolgen, ein Umschalter. Der Eingang ist die
+                  Voreinstellung — er ist die Reihenfolge, in der die Faelle
+                  hereinkommen. Die Prioritaet ist die Reihenfolge, in der man
+                  sie abarbeiten sollte. */}
               <Link
-                href={mitParametern(filter, { nurFaellig: !filter.nurFaellig })}
+                href={mitParametern(
+                  filter,
+                  {},
+                  sortierung === "prio" ? "eingang" : "prio"
+                )}
+                className={`rounded-[12px] border px-3 py-2 text-xs transition-colors duration-150 ${
+                  sortierung === "prio"
+                    ? "border-accent/50 bg-accent/10 text-accent"
+                    : "border-border bg-surface-2 text-muted hover:text-foreground"
+                }`}
+              >
+                {sortierung === "prio"
+                  ? "Nach Priorität"
+                  : "Nach Eingang"}
+              </Link>
+
+              <Link
+                href={mitParametern(
+                  filter,
+                  { nurFaellig: !filter.nurFaellig },
+                  sortierung
+                )}
                 className={`rounded-[12px] border px-3 py-2 text-xs transition-colors duration-150 ${
                   filter.nurFaellig
                     ? "border-amber-400/50 bg-amber-400/10 text-amber-200"
@@ -538,6 +628,13 @@ export default async function CrmSeite({
                       <th className="text-right font-semibold px-5 py-3">
                         Laufzeit
                       </th>
+                      {/* Der Prioritaetswert als eigene Spalte. Er steht in
+                          der Liste, weil hier entschieden wird, wen man als
+                          naechstes anruft — in der Fallakte steht daneben,
+                          woraus er sich zusammensetzt. */}
+                      <th className="text-right font-semibold px-5 py-3">
+                        Priorität
+                      </th>
                       {/* Keine IBAN-Spalte. Sie stand hier verkuerzt, aber
                           auch die letzten vier Stellen sind eine
                           Bankverbindung — und diese Liste ist die Ansicht, die
@@ -554,11 +651,12 @@ export default async function CrmSeite({
                     </tr>
                   </thead>
                   <tbody>
-                    {antraege.map((antrag) => {
+                    {listenAntraege.map((antrag) => {
                       const art = antrag.kreditart
                         ? findeKreditartNachId(antrag.kreditart)?.de.name
                         : undefined;
                       const station = stationOderErsatz(antrag.status);
+                      const bewertung = bewerte(antrag, jetzt);
                       return (
                         /* Die ganze Zeile fuehrt zum Fall, nicht nur der
                            Name. Der Verweis am Namen bleibt trotzdem — er
@@ -599,6 +697,17 @@ export default async function CrmSeite({
                           </td>
                           <td className="px-5 py-3 text-right text-xs text-muted tabular-nums whitespace-nowrap">
                             {antrag.months} Mon.
+                          </td>
+                          <td className="px-5 py-3 text-right whitespace-nowrap">
+                            <span
+                              title={`${bewertung.bedeutung} · Aktualität ${zeigeWert(bewertung.merkmale.recency)}, Kreditsumme ${zeigeWert(bewertung.merkmale.betrag)}, Passung ${zeigeWert(bewertung.merkmale.passung)}, Datenlage ${zeigeWert(bewertung.merkmale.absicht)}, IBAN ${zeigeWert(bewertung.merkmale.iban)}`}
+                              className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] tabular-nums ${KLASSEN_KLASSEN[bewertung.klasse]}`}
+                            >
+                              {bewertung.klasse}
+                              <span className="text-foreground">
+                                {zeigeWert(bewertung.score)}
+                              </span>
+                            </span>
                           </td>
                           <td className="px-5 py-3 text-xs tabular-nums whitespace-nowrap">
                             {antrag.wiedervorlage ? (

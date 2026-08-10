@@ -10,6 +10,7 @@
     "crm:benutzer": "node --experimental-strip-types --no-warnings scripts/crm-benutzer.mjs",
     "crm:dummy": "node scripts/crm-dummy.mjs",
     "plz:index": "node scripts/plz-index.mjs",
+    "test": "node --experimental-strip-types --import ./scripts/test-start.mjs --test \"src/**/*.test.ts\"",
     "blz:index": "node scripts/blz-index.mjs"
   },
   "dependencies": {

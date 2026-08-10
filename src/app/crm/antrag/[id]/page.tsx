@@ -22,6 +22,12 @@ import {
   TON_KLASSEN,
 } from "@/lib/crm/pipeline";
 import { LOESCHGRUENDE } from "@/lib/crm/loeschprotokoll";
+import {
+  bewerte,
+  GEWICHTE,
+  zeigeWert,
+  type Merkmale,
+} from "@/lib/crm/priorisierung";
 import { verlangeAnmeldung } from "@/lib/crm/zugang";
 import { schluesselVorhanden } from "@/lib/crm/verschluesselung";
 import Datenblatt from "@/components/crm/Datenblatt";
@@ -173,6 +179,15 @@ export default async function AntragSeite({
       : ["Nettoeinkommen"];
   const rate = monthlyPayment(antrag.amount, antrag.months);
   const heute = new Date().toISOString().slice(0, 10);
+  /**
+   * Die vertriebliche Priorisierung.
+   *
+   * Gerechnet beim Aufrufen der Seite und nicht gespeichert: Die Aktualitaet
+   * aendert sich stuendlich von selbst, und ein abgelegter Wert waere schon
+   * beim naechsten Blick falsch. Die Zahl ist keine Kreditentscheidung —
+   * siehe den Kopf von lib/crm/priorisierung.ts.
+   */
+  const bewertung = bewerte(antrag);
 
   return (
     <main className="min-h-screen bg-background">
@@ -247,12 +262,19 @@ export default async function AntragSeite({
           {/* Die vier Zahlen, um die es geht, als eigene Zeile. Sie standen
               vorher als vier Zeilen in einem Kasten zwischen zwanzig anderen
               Zeilen — richtig abgelegt, aber nicht zu sehen. */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             {[
               { name: "Verwendung", wert: art ?? "—" },
               { name: "Betrag", wert: formatEuro(antrag.amount) },
               { name: "Laufzeit", wert: `${antrag.months} Mon.` },
               { name: "Rate (Beispiel)", wert: formatEuro(rate) },
+              {
+                // Ganz rechts, neben den vier Zahlen des Antrags: Der Wert
+                // gehoert zum ersten Blick auf den Fall, nicht ans Ende der
+                // Seite. Woraus er sich zusammensetzt, steht unten.
+                name: `Priorität ${bewertung.klasse}`,
+                wert: `${zeigeWert(bewertung.score)} / 100`,
+              },
             ].map((k) => (
               <div
                 key={k.name}
@@ -565,6 +587,83 @@ export default async function AntragSeite({
                   <code>CRM_DATEN_SCHLUESSEL</code>. Ein Auszug der Tabelle
                   liest sich im Klartext.
                 </span>
+              )}
+            </p>
+          </section>
+
+          {/**
+           * Die Aufschluesselung des Prioritaetswerts.
+           *
+           * Ein Wert ohne Herkunft ist im Vertrieb wertlos: Wer nicht sieht,
+           * warum ein Lead oben steht, glaubt der Zahl entweder blind oder gar
+           * nicht. Deshalb steht hier jedes Merkmal mit seinem Gewicht — und
+           * daneben, was nicht zu berechnen war und warum das keine Null ist.
+           */}
+          <section className="rounded-[20px] border border-border bg-surface px-5 py-4 flex flex-col gap-3">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <h2 className="text-xs font-semibold text-muted tracking-wide">
+                Vertriebliche Priorität
+              </h2>
+              <span className="text-xs text-muted">
+                {zeigeWert(bewertung.score)} von 100 · {bewertung.klasse} ·{" "}
+                {bewertung.bedeutung}
+              </span>
+            </div>
+
+            <dl className="flex flex-col">
+              {(
+                [
+                  ["recency", "Aktualität", "Halbwertszeit 8 Stunden"],
+                  ["betrag", "Kreditsumme", "logarithmisch bis 100.000 €"],
+                  ["passung", "Passung", "Wunsch zu Jahreseinkommen"],
+                  ["absicht", "Datenlage", bewertung.absicht.erfuellt.length + " von " + (bewertung.absicht.erfuellt.length + bewertung.absicht.offen.length) + " Angaben"],
+                  ["iban", "IBAN vorhanden", "Prozesssignal, keine Bonität"],
+                ] as [keyof Merkmale, string, string][]
+              ).map(([schluessel, name, hinweis]) => {
+                const wert = bewertung.merkmale[schluessel];
+                return (
+                  <div
+                    key={schluessel}
+                    className="flex items-baseline justify-between gap-3 border-b border-border/60 py-2 last:border-0"
+                  >
+                    <dt className="text-xs text-muted">
+                      {name}
+                      <span className="block text-[10px] leading-tight text-muted/60">
+                        {hinweis} · Gewicht{" "}
+                        {Math.round(GEWICHTE[schluessel] * 100)} %
+                      </span>
+                    </dt>
+                    <dd
+                      className={`shrink-0 text-sm tabular-nums ${
+                        wert === null ? "text-muted/60" : ""
+                      }`}
+                    >
+                      {zeigeWert(wert)}
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
+
+            {bewertung.ohneWert.length > 0 && (
+              <p className="text-[11px] leading-relaxed text-amber-200/80">
+                Ohne Wert und deshalb aus der Rechnung genommen:{" "}
+                {bewertung.ohneWert.join(", ")}. Fehlende Angaben zählen nicht
+                als null — sie werden übersprungen, und die übrigen Gewichte
+                gelten anteilig.
+              </p>
+            )}
+
+            <p className="text-[11px] leading-relaxed text-muted">
+              Reihenfolge für den Vertrieb, keine Kreditentscheidung: Der Wert
+              sagt, wen man zuerst anruft — nichts über Bonität, Zusage oder
+              Konditionen. Die IBAN zählt nur als Prozessschritt.
+              {bewertung.absicht.nichtErhoben.length > 0 && (
+                <>
+                  {" "}
+                  Nicht erhoben und deshalb weder Plus noch Minus:{" "}
+                  {bewertung.absicht.nichtErhoben.join(", ")}.
+                </>
               )}
             </p>
           </section>
