@@ -10,7 +10,7 @@ import {
   type CSSProperties,
   type PointerEvent as ZeigerEreignis,
 } from "react";
-import { fallVerschieben } from "@/app/crm/aktionen";
+import { faelleVerschieben, fallVerschieben } from "@/app/crm/aktionen";
 import { stationIcon } from "@/components/crm/StationIcons";
 import { ZweckZeichen } from "@/components/illustrations/ZweckIcons";
 import {
@@ -47,6 +47,13 @@ import {
  *
  * Wer nicht ziehen kann oder will — Tastatur, Vorleseprogramm, ruhige Hand —
  * nimmt das Auswahlfeld am Fuss der Karte. Es fuehrt zur selben Aktion.
+ *
+ * Mehrere auf einmal: Strg oder Cmd und ein Klick markiert eine Karte, ein
+ * zweiter nimmt die Markierung wieder weg. Zieht man danach eine markierte
+ * Karte, gehen alle markierten mit — auch aus verschiedenen Ordnern. Wer eine
+ * unmarkierte zieht, meint diese eine; eine vergessene Markierung soll nicht
+ * Faelle verschieben, an die gerade niemand denkt. Ohne Maus fuehrt das
+ * Auswahlfeld in der Leiste ueber dem Brett zum selben Ergebnis.
  *
  * Die Karten tragen dieselbe Sparsamkeit wie die Spalten: der Betrag gross,
  * der Name klein darunter, der Verwendungszweck als Zeichen statt als Wort.
@@ -145,11 +152,24 @@ export default function PipelineBrett({
    */
   const [ansicht, zeigeVerschoben] = useOptimistic(
     faelle,
-    (jetzt: BrettFall[], zug: { id: string; nach: StatusId }) =>
-      jetzt.map((f) => (f.id === zug.id ? { ...f, status: zug.nach } : f))
+    (jetzt: BrettFall[], zug: { ids: string[]; nach: StatusId }) =>
+      jetzt.map((f) =>
+        zug.ids.includes(f.id) ? { ...f, status: zug.nach } : f
+      )
   );
 
   const [fehler, setFehler] = useState<string | null>(null);
+  /**
+   * Die markierten Karten.
+   *
+   * Strg oder Cmd und ein Klick markiert eine Karte; zieht man danach eine
+   * markierte, gehen alle mit. Der Zustand liegt hier und nicht in der Karte,
+   * weil er ueber Karten hinweg gilt — und er verschwindet mit dem naechsten
+   * Neuladen. Eine Markierung, die einen Seitenwechsel ueberlebt, waere eine
+   * Falle: Man kaeme zurueck, zoege eine Karte und verschoebe zwanzig, an die
+   * man nicht mehr gedacht hat.
+   */
+  const [markiert, setMarkiert] = useState<Set<string>>(new Set());
   /** Welche Karte gerade in der Luft ist, und wo der Zeiger steht. */
   const [zug, setZug] = useState<{
     id: string;
@@ -284,9 +304,42 @@ export default function PipelineBrett({
   function verschiebe(id: string, nach: StatusId) {
     setFehler(null);
     startTransition(async () => {
-      zeigeVerschoben({ id, nach });
+      zeigeVerschoben({ ids: [id], nach });
       const ergebnis = await fallVerschieben(id, nach);
       if (!ergebnis.ok) setFehler(ergebnis.fehler);
+    });
+  }
+
+  /**
+   * Alle markierten Karten auf einmal.
+   *
+   * Die Markierung wird erst nach der Antwort geleert. Ginge sie sofort weg
+   * und der Server sagte nein, staenden die Karten wieder in ihren alten
+   * Ordnern — ohne dass noch zu sehen waere, welche man gerade zusammen
+   * hatte.
+   */
+  function verschiebeMarkierte(nach: StatusId) {
+    const ids = [...markiert];
+    if (ids.length === 0) return;
+    setFehler(null);
+    startTransition(async () => {
+      zeigeVerschoben({ ids, nach });
+      const ergebnis = await faelleVerschieben(ids, nach);
+      if (!ergebnis.ok) {
+        setFehler(ergebnis.fehler);
+        return;
+      }
+      setMarkiert(new Set());
+    });
+  }
+
+  /** Strg-Klick auf eine Karte: markieren oder Markierung wieder wegnehmen. */
+  function markiereUm(id: string) {
+    setMarkiert((vorher) => {
+      const naechste = new Set(vorher);
+      if (naechste.has(id)) naechste.delete(id);
+      else naechste.add(id);
+      return naechste;
     });
   }
 
@@ -315,7 +368,15 @@ export default function PipelineBrett({
       if (Math.hypot(e.clientX - s.x, e.clientY - s.y) < SCHWELLE) return;
       s.laeuft = true;
     }
-    setZug({ id: s.id, name: s.name, x: e.clientX, y: e.clientY });
+    setZug({
+      id: s.id,
+      name:
+        markiert.has(s.id) && markiert.size > 1
+          ? `${markiert.size} Fälle`
+          : s.name,
+      x: e.clientX,
+      y: e.clientY,
+    });
     // Eine Karte ueber dem Knopf klappt die zugeklappten Ordner auf. Sonst
     // muesste man den Zug abbrechen, klicken und noch einmal greifen — und
     // zwar genau dann, wenn man schon weiss, wohin die Karte soll. Nur
@@ -336,7 +397,24 @@ export default function PipelineBrett({
     setZiel(null);
     haltAn();
 
-    if (!s?.laeuft || !nach || nach === s.status) return;
+    if (!s?.laeuft || !nach) return;
+
+    /**
+     * Gezogen wird die Markierung, wenn die gezogene Karte dazugehoert.
+     *
+     * Wer eine unmarkierte Karte zieht, meint diese eine — auch dann, wenn
+     * anderswo noch eine Markierung steht. Sonst verschoebe eine vergessene
+     * Markierung Faelle, an die gerade niemand denkt.
+     *
+     * Der Vergleich mit dem alten Ordner faellt bei mehreren weg: In der
+     * Markierung koennen Karten aus verschiedenen Ordnern liegen, und dass
+     * die gezogene schon dort liegt, heisst nichts fuer die uebrigen.
+     */
+    if (markiert.has(s.id) && markiert.size > 1) {
+      verschiebeMarkierte(nach);
+      return;
+    }
+    if (nach === s.status) return;
     verschiebe(s.id, nach);
   }
 
@@ -409,6 +487,70 @@ export default function PipelineBrett({
         >
           Verschieben nicht möglich: {fehler}
         </p>
+      )}
+
+      {/**
+       * Die Leiste der Markierung.
+       *
+       * Sie steht nur da, wenn etwas markiert ist — und sie sagt drei Dinge:
+       * wie viele es sind, wie man sie loswird und wie man sie ohne Maus
+       * verschiebt. Das Auswahlfeld ist kein Beiwerk: Strg-Klick und Ziehen
+       * gibt es nur mit Maus, und ein Brett, das sich ohne Maus nicht
+       * bedienen laesst, ist fuer manche gar kein Brett.
+       */}
+      {markiert.size > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-[14px] border border-accent/40 bg-accent/[0.06] px-3 py-2 text-xs">
+          <span className="font-semibold text-accent">
+            {markiert.size}{" "}
+            {markiert.size === 1 ? "Fall markiert" : "Fälle markiert"}
+          </span>
+          <span className="text-muted">
+            Karte ziehen verschiebt alle markierten.
+          </span>
+
+          <label className="ml-auto flex items-center gap-2">
+            <span className="text-muted">In Ordner legen</span>
+            <select
+              // Der Wert wird nach jedem Zug zurueckgesetzt: Das Feld ist ein
+              // Befehl, kein Zustand. Ohne `value` staende dort danach der
+              // zuletzt gewaehlte Ordner, als laege die Markierung dort.
+              value=""
+              onChange={(e) => {
+                const ziel = e.target.value;
+                if (ziel) verschiebeMarkierte(ziel as StatusId);
+              }}
+              className="rounded-[10px] border border-border bg-surface-2 px-2 py-1 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            >
+              <option value="">Ordner wählen…</option>
+              {nachGruppen(stationen.filter((x) => !x.stillgelegt)).map(
+                (buendel) =>
+                  buendel.gruppe ? (
+                    <optgroup key={buendel.gruppe} label={buendel.gruppe}>
+                      {buendel.ordner.map((x) => (
+                        <option key={x.id} value={x.id}>
+                          {x.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ) : (
+                    buendel.ordner.map((x) => (
+                      <option key={x.id} value={x.id}>
+                        {x.name}
+                      </option>
+                    ))
+                  )
+              )}
+            </select>
+          </label>
+
+          <button
+            type="button"
+            onClick={() => setMarkiert(new Set())}
+            className="rounded-full border border-border px-3 py-1 text-muted transition-colors duration-150 hover:border-border-strong hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          >
+            Markierung aufheben
+          </button>
+        </div>
       )}
 
       {/**
@@ -593,7 +735,15 @@ export default function PipelineBrett({
                     fall={fall}
                     stationen={stationen}
                     darfSchieben={darfSchieben}
-                    inDerLuft={zug?.id === fall.id}
+                    markiert={markiert.has(fall.id)}
+                    onMarkieren={markiereUm}
+                    inDerLuft={
+                      zug !== null &&
+                      (zug.id === fall.id ||
+                        (markiert.has(zug.id) &&
+                          markiert.size > 1 &&
+                          markiert.has(fall.id)))
+                    }
                     onGreifen={greifen}
                     onBewegen={bewegen}
                     onLoslassen={loslassen}
@@ -653,6 +803,8 @@ function Karte({
   fall,
   stationen,
   darfSchieben,
+  markiert,
+  onMarkieren,
   inDerLuft,
   onGreifen,
   onBewegen,
@@ -663,6 +815,8 @@ function Karte({
   fall: BrettFall;
   stationen: BrettStation[];
   darfSchieben: boolean;
+  markiert: boolean;
+  onMarkieren: (id: string) => void;
   inDerLuft: boolean;
   onGreifen: (e: ZeigerEreignis<HTMLElement>, fall: BrettFall) => void;
   onBewegen: (e: ZeigerEreignis<HTMLElement>) => void;
@@ -693,6 +847,19 @@ function Karte({
     // Seite in die Breite: Das CRM liess sich am Telefon seitlich
     // wegschieben, obwohl das Brett fuer sich sauber rollte.
     <li
+      /**
+       * Strg oder Cmd und ein Klick markiert die Karte.
+       *
+       * `preventDefault` haelt den Browser davon ab, den Namen als Verweis in
+       * einem neuen Tab zu oeffnen — auf einem Brett ist Strg-Klick die Geste
+       * fuers Markieren, nicht fuers Oeffnen. Ohne Strg bleibt alles, wie es
+       * war: Der Name fuehrt zum Fall, der Rest der Karte tut nichts.
+       */
+      onClick={(e) => {
+        if (!darfSchieben || !(e.ctrlKey || e.metaKey)) return;
+        e.preventDefault();
+        onMarkieren(fall.id);
+      }}
       onPointerLeave={() => setOffen(false)}
       onFocus={() => setOffen(true)}
       // `relatedTarget` ist das Element, das den Fokus bekommt. Bleibt er auf
@@ -702,10 +869,43 @@ function Karte({
           setOffen(false);
         }
       }}
-      className={`relative flex gap-0.5 rounded-[14px] border border-border bg-surface-2 transition-[opacity,border-color,box-shadow] duration-150 hover:border-border-strong focus-within:border-border-strong ${
-        offen ? "shadow-[0_10px_24px_-14px_rgba(0,0,0,0.9)]" : ""
-      } ${inDerLuft ? "opacity-40" : ""}`}
+      className={`relative flex gap-0.5 rounded-[14px] border bg-surface-2 transition-[opacity,border-color,box-shadow] duration-150 focus-within:border-border-strong ${
+        markiert
+          ? "border-accent/70 ring-1 ring-accent/40"
+          : "border-border hover:border-border-strong"
+      } ${offen ? "shadow-[0_10px_24px_-14px_rgba(0,0,0,0.9)]" : ""} ${
+        inDerLuft ? "opacity-40" : ""
+      }`}
     >
+      {/* Ein Haken in der Ecke sagt, dass die Karte mitgeht — der Rahmen
+          allein ist auf einem Brett aus vierzig Karten zu leise, und Farbe
+          allein liest niemand vor. */}
+      {markiert && (
+        <span
+          aria-label="markiert"
+          // `pointer-events-none`: Der Haken sitzt in der Ecke ueber dem
+          // Griff. Ohne das schluckte er dort die Zeigerereignisse, und die
+          // oberen Pixel des Griffs waeren tot — ausgerechnet an einer
+          // markierten Karte, die man gleich ziehen will.
+          // Innerhalb der Karte statt ueber ihrer Ecke: Die Spalte rollt in
+          // sich und schneidet ab, was oben hinausragt — gemessen sechs Pixel
+          // an der ersten Karte, also genau der halbe Haken.
+          className="pointer-events-none absolute left-0.5 top-0.5 z-10 grid size-4 place-items-center rounded-full bg-accent text-accent-foreground"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={3.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+            className="size-2.5"
+          >
+            <path d="M5 12.5 10 17.5 19 7" />
+          </svg>
+        </span>
+      )}
       {darfSchieben && (
         <span
           // `touch-action: none` nur hier: Der Browser soll diese Geste nicht
