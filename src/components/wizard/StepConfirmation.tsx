@@ -68,6 +68,21 @@ export default function StepConfirmation() {
         </dl>
       </div>
 
+      {/* Die IBAN darf in der Strecke fehlen. Dann muss die Bestätigung sie
+          benennen — sonst liest sich "Antrag erhalten" so, als wäre alles
+          beisammen, und der Anruf des Beraters kommt später als Nachfrage
+          überraschend. */}
+      {data.iban.trim() === "" && (
+        <div className="w-full rounded-[16px] border border-amber-400/30 bg-amber-400/[0.07] p-4 text-left flex flex-col gap-1">
+          <span className="text-xs font-semibold text-amber-100">
+            {wt.confirmation.offenTitel}
+          </span>
+          <span className="text-xs text-muted leading-relaxed">
+            {wt.confirmation.offenIban}
+          </span>
+        </div>
+      )}
+
       <div className="w-full rounded-[16px] border border-border bg-surface-2 p-4 text-left flex flex-col gap-1">
         <span className="text-xs font-semibold">
           {wt.confirmation.disclaimerTitle}

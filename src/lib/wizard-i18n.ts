@@ -192,7 +192,13 @@ export interface WizardTranslations {
     trust: string[];
     iban: string;
     ibanError: string;
+    /** Ueberschrift des Hinweises, solange das IBAN-Feld leer ist. */
+    ibanSpaeterTitel: string;
+    /** Wofuer die IBAN spaeter gebraucht wird. */
+    ibanSpaeterText: string;
     bankname: string;
+    /** Steht unter dem Bankfeld, wenn der Name aus der IBAN kam. */
+    bankErkannt: string;
     kontoinhaber: string;
     /** Der Antrag liess sich nicht uebermitteln — Netz weg oder Server hakt. */
     sendeFehler: string;
@@ -207,6 +213,10 @@ export interface WizardTranslations {
     summaryKreditart: string;
     summaryPersonen: string;
     summaryName: string;
+    /** Ueberschrift, wenn der Antrag ohne IBAN abgeschickt wurde. */
+    offenTitel: string;
+    /** Was deshalb noch aussteht. */
+    offenIban: string;
     disclaimerTitle: string;
     disclaimer: string;
     ctaHome: string;
@@ -490,9 +500,13 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
         "SSL-verschlüsselte Übertragung",
         "Kostenlos und unverbindlich",
       ],
-      iban: "IBAN",
+      iban: "IBAN — optional",
       ibanError: "Bitte eine gültige IBAN eingeben.",
+      ibanSpaeterTitel: "Die IBAN können Sie nachreichen",
+      ibanSpaeterText:
+        "Haben Sie sie gerade nicht zur Hand, lassen Sie das Feld leer. Für die Auszahlung wird sie gebraucht — wir fragen sie im weiteren Verlauf bei Ihnen ab.",
       bankname: "Name der Bank",
+      bankErkannt: "Aus Ihrer IBAN erkannt. Stimmt das nicht, einfach überschreiben.",
       kontoinhaber: "Kontoinhaber",
       sendeFehler:
         "Der Antrag konnte nicht übermittelt werden. Bitte noch einmal versuchen.",
@@ -507,6 +521,9 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       summaryKreditart: "Kreditart",
       summaryPersonen: "Antragsteller",
       summaryName: "Name",
+      offenTitel: "Eines fehlt noch: Ihre IBAN",
+      offenIban:
+        "Ohne IBAN kann eine Bank den Kredit nicht auszahlen. Ihr Berater fragt sie beim ersten Kontakt ab — halten Sie sie dann bitte bereit.",
       disclaimerTitle: "Hinweis zu dieser Demo",
       disclaimer:
         "Dies ist eine Demo-Oberfläche ohne angebundenes Backend. Es wurden keine Daten gespeichert oder an eine Bank übermittelt.",
@@ -775,9 +792,13 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
         "SSL-encrypted transmission",
         "Free and non-binding",
       ],
-      iban: "IBAN",
+      iban: "IBAN — optional",
       ibanError: "Please enter a valid IBAN.",
+      ibanSpaeterTitel: "You can supply your IBAN later",
+      ibanSpaeterText:
+        "If you don't have it to hand, leave the field empty. It is needed for the payout — we will ask you for it later in the process.",
       bankname: "Bank name",
+      bankErkannt: "Recognised from your IBAN. If it's wrong, just overwrite it.",
       kontoinhaber: "Account holder",
       sendeFehler: "The application could not be submitted. Please try again.",
       sendet: "Sending",
@@ -791,6 +812,9 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       summaryKreditart: "Loan type",
       summaryPersonen: "Applicants",
       summaryName: "Name",
+      offenTitel: "One thing is still missing: your IBAN",
+      offenIban:
+        "Without an IBAN a bank cannot pay out the loan. Your advisor will ask for it at first contact — please have it ready then.",
       disclaimerTitle: "About this demo",
       disclaimer:
         "This is a demo interface with no connected backend. No data was stored or transmitted to any bank.",

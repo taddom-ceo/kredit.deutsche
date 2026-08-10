@@ -9,7 +9,8 @@
     "lint": "eslint",
     "crm:benutzer": "node --experimental-strip-types --no-warnings scripts/crm-benutzer.mjs",
     "crm:dummy": "node scripts/crm-dummy.mjs",
-    "plz:index": "node scripts/plz-index.mjs"
+    "plz:index": "node scripts/plz-index.mjs",
+    "blz:index": "node scripts/blz-index.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
@@ -22,6 +23,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "bankdata-germany": "^2.2602.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
     "tailwindcss": "^4",
