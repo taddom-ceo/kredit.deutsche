@@ -8,11 +8,12 @@ import type { StatusId } from "@/lib/crm/pipeline";
  * und dann passten sie nicht mehr auf den Bildschirm. Ein Zeichen braucht
  * zwanzig Pixel statt hundertfünfzig, und der Name steht beim Zeigen darüber.
  *
- * Damit das trägt, müssen die vierzehn auf einen Blick auseinanderzuhalten
+ * Damit das trägt, müssen sie auf einen Blick auseinanderzuhalten
  * sein. Deshalb liegen sie bewusst weit auseinander: Telefon, Tür, Kreispfeil,
- * Kreuz, Liste, Schild, Haken, Stift, drei Kalender, Pause, Auge. Wo zwei
- * einander nahekämen — Ablehnung und Abgebrochen sind beide ein Weggehen —
- * trennt zusätzlich die Farbe des Tons.
+ * Kreuz, Liste, Schild, Haken, Stift, drei Kalender, Pause, Auge, Geldschein,
+ * Ordner. Wo zwei einander nahekämen — Ablehnung und Abgebrochen sind beide
+ * ein Weggehen, After Sale und "Hat sich erledigt" beide ein Ende — trennt
+ * zusätzlich die Farbe des Tons.
  *
  * Gleiches Raster wie die Zweck-Symbole: 24×24, ohne Fläche, Strichstärke 1,8,
  * runde Enden. So sehen die Zeichen im CRM aus wie die auf der Website.
@@ -198,6 +199,34 @@ function Archiv({ className }: IconProps) {
   );
 }
 
+/** Schein mit Pfeil hinaus — der Kredit ist ausgezahlt. */
+function Auszahlung({ className }: IconProps) {
+  return (
+    <svg {...gemeinsam} className={className}>
+      <rect x="2.5" y="7" width="14" height="9" rx="1.8" />
+      <circle cx="9.5" cy="11.5" r="2" />
+      <path d="M18.5 12.5h3" />
+      <path d="M19.8 10.6 21.9 12.5 19.8 14.4" />
+    </svg>
+  );
+}
+
+/**
+ * Ordner mit Haken — abgelegt, ohne dass etwas daraus geworden waere.
+ *
+ * Bewusst nicht noch ein Haken im Kreis: Den gibt es schon fuer "After Sale",
+ * und zwei Haken nebeneinander waeren bei zwanzig Pixeln nicht mehr
+ * auseinanderzuhalten. Der Ordner sagt "abgelegt", der Haken "fertig".
+ */
+function Abgelegt({ className }: IconProps) {
+  return (
+    <svg {...gemeinsam} className={className}>
+      <path d="M3.5 7.2V17a1.6 1.6 0 0 0 1.6 1.6h13.8a1.6 1.6 0 0 0 1.6-1.6V9.4a1.6 1.6 0 0 0-1.6-1.6h-7L9.6 5.4H5.1a1.6 1.6 0 0 0-1.6 1.6z" />
+      <path d="M8.8 13.2 11 15.4l4.2-4.2" />
+    </svg>
+  );
+}
+
 const STATION_ICONS: Partial<Record<StatusId, ComponentType<IconProps>>> = {
   neu: Eingang,
   rueckruf: Rueckruf,
@@ -213,6 +242,8 @@ const STATION_ICONS: Partial<Record<StatusId, ComponentType<IconProps>>> = {
   tag4plus: tagIcon("4"),
   on_hold: Pause,
   watch: Auge,
+  ausgezahlt: Auszahlung,
+  erledigt: Abgelegt,
   papierkorb: Papierkorb,
 };
 

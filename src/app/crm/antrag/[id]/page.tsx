@@ -16,6 +16,7 @@ import {
 import {
   findeStation,
   imPapierkorb,
+  nachGruppen,
   stationOderErsatz,
   STATIONEN,
   TON_KLASSEN,
@@ -801,14 +802,27 @@ export default async function AntragSeite({
                           stumm "Neu", und wer dann "Setzen" drueckt, ohne
                           hinzusehen, verschoebe den Fall, statt ihn zu
                           bestaetigen. */}
-                      {(STATIONEN.some((s) => s.id === antrag.status)
-                        ? STATIONEN
-                        : [station, ...STATIONEN]
-                      ).map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name}
-                        </option>
-                      ))}
+                      {nachGruppen(
+                        STATIONEN.some((s) => s.id === antrag.status)
+                          ? STATIONEN
+                          : [station, ...STATIONEN]
+                      ).map((buendel) =>
+                        buendel.gruppe ? (
+                          <optgroup key={buendel.gruppe} label={buendel.gruppe}>
+                            {buendel.ordner.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ) : (
+                          buendel.ordner.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.name}
+                            </option>
+                          ))
+                        )
+                      )}
                     </select>
                     <button
                       type="submit"

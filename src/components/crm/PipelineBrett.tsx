@@ -14,6 +14,7 @@ import { fallVerschieben } from "@/app/crm/aktionen";
 import { stationIcon } from "@/components/crm/StationIcons";
 import { ZweckZeichen } from "@/components/illustrations/ZweckIcons";
 import {
+  nachGruppen,
   SPAETE_ORDNER,
   TON_KLASSEN,
   type StatusId,
@@ -60,6 +61,8 @@ export type BrettStation = {
   name: string;
   beschreibung: string;
   ton: Ton;
+  /** Ueberordner, unter dem er in der Auswahl steht. */
+  gruppe?: string;
   /**
    * Wohin der Kopf fuehrt: die Liste unten auf diesen Ordner eingeschraenkt.
    * Ist der Ordner schon gewaehlt, hebt derselbe Klick den Filter wieder auf.
@@ -882,13 +885,35 @@ function Karte({
                 {/* Stillgelegte Ordner stehen nicht zur Wahl — man soll da
                     heraus und nicht hinein. Der eigene bleibt drin, sonst
                     zeigte das Feld einen fremden Ordner an. */}
-                {stationen
-                  .filter((s) => !s.stillgelegt || s.id === fall.status)
-                  .map((s) => (
-                    <option key={s.id} value={s.id} className="text-foreground">
-                      {s.name}
-                    </option>
-                  ))}
+                {nachGruppen(
+                  stationen.filter(
+                    (s) => !s.stillgelegt || s.id === fall.status
+                  )
+                ).map((buendel) =>
+                  buendel.gruppe ? (
+                    <optgroup key={buendel.gruppe} label={buendel.gruppe}>
+                      {buendel.ordner.map((s) => (
+                        <option
+                          key={s.id}
+                          value={s.id}
+                          className="text-foreground"
+                        >
+                          {s.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ) : (
+                    buendel.ordner.map((s) => (
+                      <option
+                        key={s.id}
+                        value={s.id}
+                        className="text-foreground"
+                      >
+                        {s.name}
+                      </option>
+                    ))
+                  )
+                )}
               </select>
               {/* Zwei Pfeile hinter dem Feld. `pointer-events-none`, damit der
                   Klick beim Auswahlfeld darunter ankommt. */}
