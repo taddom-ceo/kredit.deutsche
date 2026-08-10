@@ -198,20 +198,27 @@ export const STATIONEN: Station[] = [
 /**
  * Die Ordner, die das Brett zunaechst zusammenklappt.
  *
- * Vierzehn Spalten nebeneinander lassen jeder rund 120 Pixel — genug fuer eine
- * Karte, aber nicht genug, damit sie etwas zeigt. Die drei hinteren sind die,
- * in denen am wenigsten passiert: "Tag 4+" ist der Rest einer Zaehlung, die
- * bei zwei und drei Tagen noch taeglich angesehen wird, und "On Hold" wie
- * "Watch" sind ausdruecklich die Ordner, in denen gerade nichts zu tun ist.
- * Wer sie braucht, klappt sie mit einem Klick auf; wer sie nicht braucht,
- * bekommt die Breite auf die uebrigen verteilt.
+ * Fuenfzehn Spalten nebeneinander lassen jeder rund 120 Pixel — genug fuer
+ * eine Karte, aber nicht genug, damit sie etwas zeigt. Zusammengeklappt sind
+ * deshalb die, an denen nicht taeglich gearbeitet wird: die Tageszaehlung ab
+ * Tag 2, die beiden Wartezustaende und der Papierkorb. Was bleibt, ist die
+ * Strecke, die ein Fall an einem Arbeitstag durchlaeuft — von "Neu" bis "In
+ * Bearbeitung".
  *
  * Zugeklappt heisst nicht verschwunden: Die Zahl der Faelle darin steht am
  * Knopf, und liegt der aufgeschlagene Ordner darunter, klappt das Brett von
  * selbst auf. Ein Ordner, der Faelle schluckt, ohne es zu sagen, waere
- * schlimmer als eine Spalte zu viel.
+ * schlimmer als eine Spalte zu viel. Und wer eine Karte auf den Knopf zieht,
+ * klappt damit auf, ohne die Karte loszulassen.
  */
-export const SPAETE_ORDNER: StatusId[] = ["tag4plus", "on_hold", "watch"];
+export const SPAETE_ORDNER: StatusId[] = [
+  "tag2",
+  "tag3",
+  "tag4plus",
+  "on_hold",
+  "watch",
+  "papierkorb",
+];
 
 /**
  * Der Papierkorb.

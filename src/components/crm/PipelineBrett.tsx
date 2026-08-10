@@ -189,9 +189,9 @@ export default function PipelineBrett({
   /**
    * Ob die hinteren Ordner ausgeklappt sind.
    *
-   * Zugeklappt teilen sich zwoelf statt fuenfzehn Spalten dieselbe Breite, und
-   * aus 120 Pixel je Spalte werden 164 — genug fuer das Zeichen neben dem
-   * Betrag statt nur unter ihm. Ist einer der hinteren Ordner gerade
+   * Zugeklappt teilen sich neun statt fuenfzehn Spalten dieselbe Breite, und
+   * aus 120 Pixel je Spalte werden 176 — genug fuer das Zeichen neben dem
+   * Betrag statt nur unter ihm. Ist einer der zugeklappten Ordner gerade
    * aufgeschlagen, sind sie von Anfang an offen: Sonst zeigte die Liste unten
    * die Faelle eines Ordners, den es oben scheinbar nicht gibt.
    */
@@ -272,6 +272,12 @@ export default function PipelineBrett({
     return (spalte?.dataset.station as StatusId | undefined) ?? null;
   }
 
+  /** Steht der Zeiger ueber dem Knopf fuer die zugeklappten Ordner? */
+  function ueberKnopf(x: number, y: number): boolean {
+    const element = document.elementFromPoint(x, y);
+    return Boolean(element?.closest("[data-spaete-knopf]"));
+  }
+
   function verschiebe(id: string, nach: StatusId) {
     setFehler(null);
     startTransition(async () => {
@@ -307,6 +313,12 @@ export default function PipelineBrett({
       s.laeuft = true;
     }
     setZug({ id: s.id, name: s.name, x: e.clientX, y: e.clientY });
+    // Eine Karte ueber dem Knopf klappt die zugeklappten Ordner auf. Sonst
+    // muesste man den Zug abbrechen, klicken und noch einmal greifen — und
+    // zwar genau dann, wenn man schon weiss, wohin die Karte soll. Nur
+    // aufklappen, nie zu: Zuklappen mitten im Zug zoege dem Zeiger das Ziel
+    // unter der Hand weg.
+    if (!spaeteOffen && ueberKnopf(e.clientX, e.clientY)) setSpaeteOffen(true);
     zielRef.current = ordnerUnter(e.clientX, e.clientY);
     setZiel(zielRef.current);
     setzeRichtung(e.clientX);
@@ -407,9 +419,24 @@ export default function PipelineBrett({
       <div className="flex justify-end">
         <button
           type="button"
+          // Der Griff fuer das Ziehen: `bewegen` sucht diese Kennung unter dem
+          // Zeiger und klappt auf, sobald eine Karte darueber steht.
+          data-spaete-knopf
           onClick={() => setSpaeteOffen((a) => !a)}
           aria-expanded={spaeteOffen}
-          className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-[11px] text-muted transition-colors duration-150 hover:border-border-strong hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          title={
+            spaeteOffen
+              ? undefined
+              : `${versteckt.map((s) => s.name).join(", ")} — beim Ziehen einer Karte hierher klappen sie von selbst auf`
+          }
+          className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] transition-colors duration-150 hover:border-border-strong hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+            zug && !spaeteOffen
+              ? // Waehrend eines Zugs ist der Knopf ein Ziel und sieht auch so
+                // aus — sonst waere er die einzige Flaeche des Bretts, die
+                // etwas tut, ohne es zu zeigen.
+                "border-accent/60 bg-accent/[0.08] text-foreground"
+              : "border-border text-muted"
+          }`}
         >
           <svg
             viewBox="0 0 24 24"
@@ -426,10 +453,10 @@ export default function PipelineBrett({
             <path d="M9 5l7 7-7 7" />
           </svg>
           {spaeteOffen ? (
-            <>Tag 4+, On Hold und Watch ausblenden</>
+            <>Weitere Ordner ausblenden</>
           ) : (
             <>
-              Tag 4+, On Hold und Watch zeigen
+              {versteckt.length} weitere Ordner
               <span className="tabular-nums text-foreground">
                 {verstecktesGewicht}
               </span>
@@ -452,7 +479,7 @@ export default function PipelineBrett({
         className="grid items-start gap-2 overflow-x-auto pb-3"
         /**
          * Gitter statt Reihe, und die Spalten nicht fest, sondern
-         * `minmax(164px, 1fr)`.
+         * `minmax(176px, 1fr)`.
          *
          * Feste Breiten koennen nur eins von beidem: Auf einem breiten Schirm
          * lassen sie rechts Platz liegen, auf einem schmalen laufen sie
@@ -461,13 +488,14 @@ export default function PipelineBrett({
          * traegt, was sie tragen soll, und darunter faengt das Brett an zu
          * rollen, statt die Karten zu zerdruecken.
          *
-         * Woher die 164: Gemessen bleiben davon 118 Pixel im Innern der Karte,
-         * und "92.000 €" braucht neben dem 32 Pixel breiten Zeichen 65 davon.
-         * Bei 150 war der hoechste Betrag abgeschnitten — also gerade der, den
-         * man auf einem Brett zuerst sucht.
+         * Woher die 176: "92.000 €" braucht neben dem 32 Pixel breiten Zeichen
+         * 65 Pixel, und bei 150 stand der hoechste Betrag abgeschnitten da —
+         * also gerade der, den man auf einem Brett zuerst sucht. 164 reichte
+         * dafuer; seit nur noch neun Ordner nebeneinander stehen, ist Platz
+         * fuer etwas mehr Luft, und die Namen brechen seltener ab.
          */
         style={{
-          gridTemplateColumns: `repeat(${sichtbar.length}, minmax(164px, 1fr))`,
+          gridTemplateColumns: `repeat(${sichtbar.length}, minmax(176px, 1fr))`,
         }}
         // Beim Ziehen bewegt sich der Zeiger auch ueber Zwischenraeume. Die
         // Ereignisse landen dank Zeigerfang trotzdem am Griff — hier stehen
