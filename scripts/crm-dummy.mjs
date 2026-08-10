@@ -243,6 +243,25 @@ function ibanFormatiert(iban) {
   return iban.replace(/(.{4})/g, "$1 ").trim();
 }
 
+/**
+ * Aus einem Nettoeinkommen werden drei Monate.
+ *
+ * Die Strecke fragt drei Gehaltseingaenge ab, und im CRM wird der niedrigste
+ * markiert. Testdaten, in denen immer der letzte Monat der niedrigste ist,
+ * pruefen diese Markierung nicht — sie saehe auch dann richtig aus, wenn sie
+ * schlicht die letzte Zeile faerbte. Deshalb wandert der niedrigste Monat
+ * reihum: mal der erste, mal der mittlere, mal der letzte.
+ */
+function gehaelterFuer(netto, nummer) {
+  const grund = Number(netto);
+  const muster = [
+    [0, 180, -140], // niedrigster: der letzte
+    [0, -220, 90], // niedrigster: der mittlere
+    [0, 60, 240], // niedrigster: der erste
+  ][nummer % 3];
+  return muster.map((abweichung) => String(grund + abweichung));
+}
+
 /** Aus einem Eintrag oben wird der Satz, den die Antragsstrecke schicken wuerde. */
 function bauFall(f, nummer) {
   const gemeinsam = {
@@ -277,6 +296,7 @@ function bauFall(f, nummer) {
     arbeitgeber: f.ag,
     beschaeftigtSeit: f.seit,
     nettoeinkommen: f.netto,
+    gehaelter: gehaelterFuer(f.netto, nummer),
     mieteinnahmen: f.miete ? "ja" : "nein",
     mieteinnahmenBetrag: f.miete ?? "",
     wohnnebenkosten: f.nk,

@@ -37,6 +37,7 @@ export function antragNutzlast(data: WizardData) {
     arbeitgeber: data.arbeitgeber,
     beschaeftigtSeit: data.beschaeftigtSeit,
     nettoeinkommen: data.nettoeinkommen,
+    gehaelter: data.gehaelter,
     mieteinnahmen: data.mieteinnahmen,
     mieteinnahmenBetrag: data.mieteinnahmenBetrag,
     wohnnebenkosten: data.wohnnebenkosten,

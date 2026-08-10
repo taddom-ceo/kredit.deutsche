@@ -111,7 +111,10 @@ export default function StepEinkommen() {
     Number(k.restschuld) > 0;
 
   const valid =
-    Number(data.nettoeinkommen) > 0 &&
+    // Alle drei Monate sind Pflicht. Zwei davon waeren eine Auswahl, und wer
+    // auswaehlen darf, laesst den schlechtesten weg — genau den, um den es
+    // geht.
+    data.gehaelter.slice(0, 3).every((g) => Number(g) > 0) &&
     data.mieteinnahmen !== null &&
     (!hatMiete || Number(data.mieteinnahmenBetrag) > 0) &&
     data.hatKredite !== null &&
@@ -130,13 +133,48 @@ export default function StepEinkommen() {
       nextDisabled={!valid}
     >
       <Abschnitt titel={t.einnahmenTitel} text={t.einnahmenText}>
-        <BetragFeld
-          id="nettoeinkommen"
-          label={`${t.nettoeinkommen} (€)`}
-          placeholder="2.800"
-          wert={data.nettoeinkommen}
-          onWert={(z) => update({ nettoeinkommen: z })}
-        />
+        {/**
+          * Drei Monate statt einem.
+          *
+          * Ein einzelner Monat sagt wenig: Urlaubsgeld hebt ihn, Kurzarbeit
+          * senkt ihn. Banken rechnen deshalb mit mehreren Monaten, und im CRM
+          * wird der niedrigste hervorgehoben — das ist die Zahl, die trägt.
+          *
+          * `nettoeinkommen` wird mitgeführt und trägt den zuletzt
+          * ausgezahlten Monat. Es bleibt bestehen, weil Liste, Export und alle
+          * Fälle von vor dieser Änderung es lesen; hier ist es kein zweiter
+          * Wert, sondern eine Kopie des ersten Feldes.
+          */}
+        <div className="flex flex-col gap-2">
+          <span className="text-sm font-medium text-muted">
+            {t.gehaelterTitel}
+          </span>
+          <p className="text-xs text-muted">{t.gehaelterText}</p>
+          {/* Am unteren Rand ausgerichtet: Bricht eine Beschriftung auf
+              schmalen Karten in die zweite Zeile, rutschte sonst nur dieses
+              eine Feld nach unten und die drei stünden auf drei Höhen. */}
+          <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <BetragFeld
+                key={i}
+                id={`gehalt-${i}`}
+                label={t.gehaelterLabels[i]}
+                placeholder={i === 0 ? "2.800" : undefined}
+                wert={data.gehaelter[i] ?? ""}
+                onWert={(z) => {
+                  const naechste = [...data.gehaelter];
+                  while (naechste.length < 3) naechste.push("");
+                  naechste[i] = z;
+                  update(
+                    i === 0
+                      ? { gehaelter: naechste, nettoeinkommen: z }
+                      : { gehaelter: naechste }
+                  );
+                }}
+              />
+            ))}
+          </div>
+        </div>
 
         <div className="flex flex-col gap-2">
           <span id="frage-miete" className="text-sm font-medium text-muted">

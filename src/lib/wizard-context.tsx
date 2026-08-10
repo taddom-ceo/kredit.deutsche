@@ -51,6 +51,8 @@ export interface WizardData {
   beschaeftigtSeitJahr: string;
   beschaeftigtSeit: string;
   nettoeinkommen: string;
+  /** Die drei zuletzt ausgezahlten Nettoeinkommen, neuestes zuerst. */
+  gehaelter: string[];
   // Pflichtangabe im Einkommensschritt. null heisst "noch nicht beantwortet"
   // und haelt den Schritt offen — anders als ein leerer String, der sich von
   // einem bewussten "nein" nicht unterscheiden liesse.
@@ -186,6 +188,7 @@ const initialData: WizardData = {
   beschaeftigtSeitJahr: "",
   beschaeftigtSeit: "",
   nettoeinkommen: "",
+  gehaelter: ["", "", ""],
   mieteinnahmen: null,
   mieteinnahmenBetrag: "",
   wohnnebenkosten: "",
