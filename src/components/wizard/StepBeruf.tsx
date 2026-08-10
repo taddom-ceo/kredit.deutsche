@@ -5,6 +5,7 @@ import { useLanguage } from "@/lib/language-context";
 import {
   BESCHAEFTIGUNG_RENTNER,
   wizardTranslations,
+  type WizardTranslations,
 } from "@/lib/wizard-i18n";
 import { useWizard } from "@/lib/wizard-context";
 import WizardStepLayout from "./WizardStepLayout";
@@ -19,10 +20,105 @@ function composeMonth(year: string, month: string) {
   return `${year}-${month.padStart(2, "0")}`;
 }
 
+/**
+ * Beschaeftigung einer Person — einmal geschrieben, zweimal benutzt.
+ *
+ * Wie bei Name und Geburtsdatum: Bei zwei Kreditnehmern steht derselbe Satz
+ * Felder zweimal auf der Seite, und eine Regel, die an zwei Stellen steht,
+ * wird beim naechsten Mal nur an einer geaendert.
+ */
+function BerufFelder({
+  praefix,
+  wt,
+  werte,
+  aendereArt,
+  aendereArbeitgeber,
+  aendereSeit,
+  months,
+  monthLimit,
+  years,
+}: {
+  praefix: string;
+  wt: WizardTranslations;
+  werte: {
+    beschaeftigungsart: string;
+    arbeitgeber: string;
+    beschaeftigtSeitMonat: string;
+    beschaeftigtSeitJahr: string;
+  };
+  aendereArt: (art: string) => void;
+  aendereArbeitgeber: (wert: string) => void;
+  aendereSeit: (patch: { monat?: string; jahr?: string }) => void;
+  months: { value: string; label: string }[];
+  monthLimit: number;
+  years: number[];
+}) {
+  const t = wt.step6;
+  return (
+    <>
+      <FormSelect
+        id={`${praefix}beschaeftigungsart`}
+        label={t.beschaeftigungsart}
+        value={werte.beschaeftigungsart}
+        onChange={(e) => aendereArt(e.target.value)}
+      >
+        <option value="">{t.beschaeftigungsartPlaceholder}</option>
+        {t.beschaeftigungsartOptions.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </FormSelect>
+      <FormField
+        id={`${praefix}arbeitgeber`}
+        label={t.arbeitgeber}
+        value={werte.arbeitgeber}
+        onChange={(e) => aendereArbeitgeber(e.target.value)}
+      />
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-medium text-muted">
+          {t.beschaeftigtSeit}
+        </span>
+        {/* Nach oben begrenzt, damit das Monatsfeld auf breiten Karten nicht
+            unnötig auseinandergezogen wird, und schrumpffähig fürs Handy. */}
+        <div className="grid grid-cols-[minmax(0,12rem)_5.75rem] gap-3">
+          <FormSelect
+            id={`${praefix}beschaeftigtSeitMonat`}
+            label={t.monat}
+            value={werte.beschaeftigtSeitMonat}
+            onChange={(e) => aendereSeit({ monat: e.target.value })}
+          >
+            <option value="">{t.auswahlPlatzhalter}</option>
+            {months.slice(0, monthLimit).map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </FormSelect>
+          <FormSelect
+            id={`${praefix}beschaeftigtSeitJahr`}
+            label={t.jahr}
+            value={werte.beschaeftigtSeitJahr}
+            onChange={(e) => aendereSeit({ jahr: e.target.value })}
+          >
+            <option value="">{t.auswahlPlatzhalter}</option>
+            {years.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </FormSelect>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function StepBeruf() {
   const { lang } = useLanguage();
   const wt = wizardTranslations[lang];
-  const { data, update, goNext, goBack } = useWizard();
+  const { data, update, updateZweite, goNext, goBack } = useWizard();
+  const zwei = data.personCount === 2;
 
   const now = useMemo(() => new Date(), []);
   const thisYear = now.getFullYear();
@@ -61,6 +157,23 @@ export default function StepBeruf() {
     });
   }
 
+  const zweiteMonthLimit =
+    Number(data.zweitePerson.beschaeftigtSeitJahr) === thisYear ? thisMonth : 12;
+
+  /** Dasselbe fuer den zweiten Kreditnehmer. */
+  function updateZweiteSince(patch: { monat?: string; jahr?: string }) {
+    const p = data.zweitePerson;
+    const month = patch.monat ?? p.beschaeftigtSeitMonat;
+    const year = patch.jahr ?? p.beschaeftigtSeitJahr;
+    const limit = Number(year) === thisYear ? thisMonth : 12;
+    const validMonth = month && Number(month) > limit ? "" : month;
+    updateZweite({
+      beschaeftigtSeitMonat: validMonth,
+      beschaeftigtSeitJahr: year,
+      beschaeftigtSeit: composeMonth(year, validMonth),
+    });
+  }
+
   const rentner = wt.step6.beschaeftigungsartOptions[BESCHAEFTIGUNG_RENTNER];
 
   /**
@@ -91,10 +204,32 @@ export default function StepBeruf() {
     });
   }
 
+  /** Dieselbe Regel — der Traeger als Vorschlag — fuer den zweiten. */
+  function waehleZweiteArt(art: string) {
+    const p = data.zweitePerson;
+    const vorschlagSteht = p.arbeitgeber === wt.step6.rentnerArbeitgeber;
+    updateZweite({
+      beschaeftigungsart: art,
+      arbeitgeber:
+        art === rentner
+          ? wt.step6.rentnerArbeitgeber
+          : vorschlagSteht
+            ? ""
+            : p.arbeitgeber,
+    });
+  }
+
+  const vollstaendig = (p: {
+    beschaeftigungsart: string;
+    arbeitgeber: string;
+    beschaeftigtSeit: string;
+  }) =>
+    p.beschaeftigungsart.trim() !== "" &&
+    p.arbeitgeber.trim() !== "" &&
+    p.beschaeftigtSeit.trim() !== "";
+
   const valid =
-    data.beschaeftigungsart.trim() !== "" &&
-    data.arbeitgeber.trim() !== "" &&
-    data.beschaeftigtSeit.trim() !== "";
+    vollstaendig(data) && (!zwei || vollstaendig(data.zweitePerson));
 
   return (
     <WizardStepLayout
@@ -107,60 +242,36 @@ export default function StepBeruf() {
       onNext={goNext}
       nextDisabled={!valid}
     >
-      <FormSelect
-        id="beschaeftigungsart"
-        label={wt.step6.beschaeftigungsart}
-        value={data.beschaeftigungsart}
-        onChange={(e) => waehleArt(e.target.value)}
-      >
-        <option value="">{wt.step6.beschaeftigungsartPlaceholder}</option>
-        {wt.step6.beschaeftigungsartOptions.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </FormSelect>
-      <FormField
-        id="arbeitgeber"
-        label={wt.step6.arbeitgeber}
-        value={data.arbeitgeber}
-        onChange={(e) => update({ arbeitgeber: e.target.value })}
+      {zwei && <h2 className="text-sm font-semibold">{wt.zweite.ersterTitel}</h2>}
+
+      <BerufFelder
+        praefix=""
+        wt={wt}
+        werte={data}
+        aendereArt={waehleArt}
+        aendereArbeitgeber={(wert) => update({ arbeitgeber: wert })}
+        aendereSeit={updateSince}
+        months={months}
+        monthLimit={monthLimit}
+        years={years}
       />
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-muted">
-          {wt.step6.beschaeftigtSeit}
-        </span>
-        {/* Nach oben begrenzt, damit das Monatsfeld auf breiten Karten nicht
-            unnötig auseinandergezogen wird, und schrumpffähig fürs Handy. */}
-        <div className="grid grid-cols-[minmax(0,12rem)_5.75rem] gap-3">
-          <FormSelect
-            id="beschaeftigtSeitMonat"
-            label={wt.step6.monat}
-            value={data.beschaeftigtSeitMonat}
-            onChange={(e) => updateSince({ monat: e.target.value })}
-          >
-            <option value="">{wt.step6.auswahlPlatzhalter}</option>
-            {months.slice(0, monthLimit).map(({ value, label }) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </FormSelect>
-          <FormSelect
-            id="beschaeftigtSeitJahr"
-            label={wt.step6.jahr}
-            value={data.beschaeftigtSeitJahr}
-            onChange={(e) => updateSince({ jahr: e.target.value })}
-          >
-            <option value="">{wt.step6.auswahlPlatzhalter}</option>
-            {years.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </FormSelect>
+
+      {zwei && (
+        <div className="border-t border-border pt-6 flex flex-col gap-5">
+          <h2 className="text-sm font-semibold">{wt.zweite.zweiterTitel}</h2>
+          <BerufFelder
+            praefix="zweite-"
+            wt={wt}
+            werte={data.zweitePerson}
+            aendereArt={waehleZweiteArt}
+            aendereArbeitgeber={(wert) => updateZweite({ arbeitgeber: wert })}
+            aendereSeit={updateZweiteSince}
+            months={months}
+            monthLimit={zweiteMonthLimit}
+            years={years}
+          />
         </div>
-      </div>
+      )}
     </WizardStepLayout>
   );
 }

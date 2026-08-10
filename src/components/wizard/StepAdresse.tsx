@@ -6,6 +6,7 @@ import { wizardTranslations } from "@/lib/wizard-i18n";
 import { useWizard } from "@/lib/wizard-context";
 import WizardStepLayout from "./WizardStepLayout";
 import { FormField, FormSelect } from "./FormField";
+import { JaNeinWahl } from "./JaNeinWahl";
 import { streetChunkUrl, streetMatches } from "@/lib/streets";
 import { plzBundUrl, plzZuStrasse } from "@/lib/plz-suche";
 
@@ -43,7 +44,11 @@ const plzCache = new Map<string, Record<string, string[]>>();
 export default function StepAdresse() {
   const { lang } = useLanguage();
   const wt = wizardTranslations[lang];
-  const { data, update, goNext, goBack } = useWizard();
+  const { data, update, updateZweite, goNext, goBack } = useWizard();
+  const zwei = data.personCount === 2;
+  const zweite = data.zweitePerson;
+  /** Nur dann steht unten ein zweiter Satz Adressfelder. */
+  const eigeneAnschrift = zwei && zweite.gleicheAnschrift === "nein";
   const [lookup, setLookup] = useState<Lookup>({ status: "idle" });
   const [streets, setStreets] = useState<StreetLookup>({ status: "idle" });
   /** Postleitzahlen, die zur eingetippten Straße passen. */
@@ -216,7 +221,33 @@ export default function StepAdresse() {
         ? wt.step5.strasseUnknown
         : undefined;
 
-  const valid = strasseOk && hausnummerOk && plzOk && ortOk;
+  /**
+   * Die Anschrift des zweiten Kreditnehmers.
+   *
+   * Bewusst ohne Verzeichnisabgleich: Die Suche nach Ort und Strassen haengt
+   * an einer Reihe von Effekten, die auf genau ein Adressfeld zugeschnitten
+   * sind. Sie ein zweites Mal zu fuehren hiesse, zwei Zustandsmaschinen
+   * nebeneinander laufen zu lassen — fuer den selteneren Fall, dass zwei
+   * Kreditnehmer nicht zusammen wohnen. Geprueft wird deshalb nur die Form:
+   * fuenf Ziffern, ein Ortsname, eine Strasse, eine Hausnummer. Der Berater
+   * hat die Adresse ohnehin im Gespraech.
+   */
+  const zweiteVollstaendig =
+    STREET.test(zweite.strasse.trim()) &&
+    HOUSE_NUMBER.test(zweite.hausnummer.trim()) &&
+    /^\d{5}$/.test(zweite.plz.trim()) &&
+    zweite.ort.trim() !== "";
+
+  const valid =
+    strasseOk &&
+    hausnummerOk &&
+    plzOk &&
+    ortOk &&
+    // Bei zwei Kreditnehmern muss die Frage beantwortet sein. "Noch nicht
+    // gefragt" ist keine Anschrift — und ein stillschweigendes "ja" waere
+    // eine Angabe, die niemand gemacht hat.
+    (!zwei || zweite.gleicheAnschrift !== null) &&
+    (!eigeneAnschrift || zweiteVollstaendig);
 
   const plzError =
     lookup.status === "unknown"
@@ -332,6 +363,96 @@ export default function StepAdresse() {
             <option key={street} value={street} />
           ))}
         </datalist>
+      )}
+
+      {zwei && (
+        <div className="border-t border-border pt-6 flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <span id="frage-anschrift" className="text-sm font-medium text-muted">
+              {wt.zweite.anschriftFrage}
+            </span>
+            <JaNeinWahl
+              name="gleicheAnschrift"
+              beschriftetVon="frage-anschrift"
+              wert={zweite.gleicheAnschrift}
+              jaLabel={wt.zweite.ja}
+              neinLabel={wt.zweite.nein}
+              // Ein spaeteres "ja" raeumt die eigene Anschrift mit weg. Sonst
+              // ginge eine Adresse mit, die der Kunde sichtbar zurueckgenommen
+              // hat.
+              onWert={(w) =>
+                updateZweite(
+                  w === "ja"
+                    ? {
+                        gleicheAnschrift: w,
+                        strasse: "",
+                        hausnummer: "",
+                        plz: "",
+                        ort: "",
+                      }
+                    : { gleicheAnschrift: w }
+                )
+              }
+            />
+          </div>
+
+          {eigeneAnschrift && (
+            <>
+              <h2 className="text-sm font-semibold">
+                {wt.zweite.zweiterTitel}
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4">
+                <FormField
+                  id="zweite-strasse"
+                  label={wt.step5.strasse}
+                  value={zweite.strasse}
+                  onChange={(e) => updateZweite({ strasse: e.target.value })}
+                  error={
+                    zweite.strasse.trim() !== "" &&
+                    !STREET.test(zweite.strasse.trim())
+                      ? wt.step5.strasseInvalid
+                      : undefined
+                  }
+                />
+                <FormField
+                  id="zweite-hausnummer"
+                  label={wt.step5.hausnummer}
+                  value={zweite.hausnummer}
+                  onChange={(e) => updateZweite({ hausnummer: e.target.value })}
+                  className="lg:w-28"
+                  error={
+                    zweite.hausnummer.trim() !== "" &&
+                    !HOUSE_NUMBER.test(zweite.hausnummer.trim())
+                      ? wt.step5.hausnummerInvalid
+                      : undefined
+                  }
+                />
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-4">
+                <FormField
+                  id="zweite-plz"
+                  label={wt.step5.plz}
+                  value={zweite.plz}
+                  onChange={(e) =>
+                    updateZweite({
+                      plz: e.target.value.replace(/\D/g, "").slice(0, 5),
+                    })
+                  }
+                  inputMode="numeric"
+                  className="lg:w-28"
+                />
+                {/* Ein Feld statt einer Auswahl: Ohne die Abfrage beim Server
+                    gibt es keine Liste, aus der sich waehlen liesse. */}
+                <FormField
+                  id="zweite-ort"
+                  label={wt.step5.ort}
+                  value={zweite.ort}
+                  onChange={(e) => updateZweite({ ort: e.target.value })}
+                />
+              </div>
+            </>
+          )}
+        </div>
       )}
 
       <p

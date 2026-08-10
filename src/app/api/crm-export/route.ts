@@ -54,6 +54,10 @@ const SPALTEN = [
   "IBAN",
   "Bank",
   "Beschäftigung",
+  // Nur der Name. Wer mehr ueber den zweiten Kreditnehmer wissen will, oeffnet
+  // den Fall — eine Tabelle mit zwei vollstaendigen Personensaetzen je Zeile
+  // liest niemand mehr.
+  "2. Kreditnehmer",
   // Die drei Monate einzeln und die Zahl, mit der gerechnet wird. Sie steht
   // ausgerechnet daneben, weil eine Tabelle sortiert und gefiltert wird — wer
   // nach tragfaehigem Einkommen sortieren will, soll das nicht erst mit einer
@@ -114,6 +118,11 @@ export async function GET(request: Request) {
         ibanVerkuerzt(antrag.iban),
         antrag.bankname,
         antrag.beschaeftigungsart,
+        antrag.zweitePerson
+          ? [antrag.zweitePerson.vorname, antrag.zweitePerson.nachname]
+              .filter(Boolean)
+              .join(" ")
+          : "",
         gehaelter[0] ?? "",
         gehaelter[1] ?? "",
         gehaelter[2] ?? "",

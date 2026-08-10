@@ -82,6 +82,40 @@ export type AntragEingang = {
   iban: string;
   bankname: string;
   kontoinhaber: string;
+  /**
+   * Der zweite Kreditnehmer, oder null bei einem einzelnen Antragsteller.
+   *
+   * Null und nicht ein leerer Satz Felder: "Es gibt keinen zweiten
+   * Kreditnehmer" und "es gibt einen, von dem nichts bekannt ist" sind zwei
+   * verschiedene Auskuenfte, und die Fallakte muss sie auseinanderhalten
+   * koennen. Faelle von vor dieser Aenderung haben ebenfalls null.
+   */
+  zweitePerson: ZweitePersonEingang | null;
+};
+
+/**
+ * Die Angaben des zweiten Kreditnehmers.
+ *
+ * Ohne eigenen Kontakt: E-Mail und Telefonnummer gehoeren zum Antrag, nicht
+ * zur Person. Die Anschrift steht nur da, wenn sie von der des ersten
+ * abweicht — bei `gleicheAnschrift: "ja"` sind die vier Felder leer und es
+ * gilt die Adresse oben.
+ */
+export type ZweitePersonEingang = {
+  vorname: string;
+  zweiterVorname: string;
+  nachname: string;
+  geburtsdatum: string;
+  gleicheAnschrift: string;
+  strasse: string;
+  hausnummer: string;
+  plz: string;
+  ort: string;
+  beschaeftigungsart: string;
+  arbeitgeber: string;
+  beschaeftigtSeit: string;
+  nettoeinkommen: string;
+  gehaelter: string[];
 };
 
 /**
@@ -187,6 +221,35 @@ function gehaelter(wert: unknown): string[] {
   return wert.slice(0, 3).map((e) => text(e, 30));
 }
 
+/**
+ * Der zweite Kreditnehmer, sauber gemacht.
+ *
+ * Alles laeuft durch dieselben Begrenzer wie beim ersten. Kommt nichts oder
+ * etwas anderes als ein Objekt herein, ist das Ergebnis null — die Strecke
+ * schickt das Feld nur bei zwei Antragstellern mit, und ein Fall von vor
+ * dieser Aenderung kennt es gar nicht.
+ */
+function zweitePerson(wert: unknown): ZweitePersonEingang | null {
+  if (!wert || typeof wert !== "object" || Array.isArray(wert)) return null;
+  const p = wert as Record<string, unknown>;
+  return {
+    vorname: text(p.vorname, 80),
+    zweiterVorname: text(p.zweiterVorname, 80),
+    nachname: text(p.nachname, 80),
+    geburtsdatum: text(p.geburtsdatum, 10),
+    gleicheAnschrift: text(p.gleicheAnschrift, 10),
+    strasse: text(p.strasse, 120),
+    hausnummer: text(p.hausnummer, 20),
+    plz: text(p.plz, 10),
+    ort: text(p.ort, 120),
+    beschaeftigungsart: text(p.beschaeftigungsart, 60),
+    arbeitgeber: text(p.arbeitgeber, 120),
+    beschaeftigtSeit: text(p.beschaeftigtSeit, 7),
+    nettoeinkommen: text(p.nettoeinkommen, 30),
+    gehaelter: gehaelter(p.gehaelter),
+  };
+}
+
 /** Grenzen, die auch die Rechner auf der Seite einhalten. */
 const BETRAG_MIN = 1000;
 const BETRAG_MAX = 100000;
@@ -248,6 +311,7 @@ export function pruefeAntrag(
     iban: text(d.iban, 40),
     bankname: text(d.bankname, 120),
     kontoinhaber: text(d.kontoinhaber, 120),
+    zweitePerson: zweitePerson(d.zweitePerson),
   };
 
   // Bewusst grob: Eine Adresse mit @ und einem Punkt dahinter. Strengere
@@ -371,6 +435,10 @@ function mitBankverbindung(
 function ausZeile(zeile: AntragZeile): Antrag {
   return {
     ...mitBankverbindung(zeile.rohdaten, entschluessele),
+    // Faelle von vor dem zweiten Kreditnehmer haben das Feld nicht. Aus
+    // `undefined` wird hier `null`, damit die Anzeige nur einen Fall fuer
+    // "gibt es nicht" kennt und nicht zwei.
+    zweitePerson: zeile.rohdaten.zweitePerson ?? null,
     id: zeile.id,
     eingang:
       zeile.eingang instanceof Date
@@ -1079,6 +1147,15 @@ export function ibanVerkuerzt(iban: string): string {
 }
 
 /**
+ * Alles, was Gehaelter hat: der Antrag selbst und der zweite Kreditnehmer.
+ *
+ * Die drei Funktionen darunter rechnen nur mit diesen beiden Feldern. Sie an
+ * den ganzen Antrag zu binden hiesse, sie fuer den zweiten Kreditnehmer ein
+ * zweites Mal zu schreiben.
+ */
+export type MitGehalt = { gehaelter: string[]; nettoeinkommen: string };
+
+/**
  * Die Gehaelter eines Falls, immer als Liste.
  *
  * Faelle von vor der Umstellung haben nur `nettoeinkommen`. Sie kommen hier
@@ -1091,7 +1168,7 @@ export function ibanVerkuerzt(iban: string): string {
  * unter "Vormonat" und die Akte behauptete etwas, das nie jemand angegeben
  * hat.
  */
-export function gehaltsliste(antrag: Antrag): string[] {
+export function gehaltsliste(antrag: MitGehalt): string[] {
   const liste = [...(antrag.gehaelter ?? [])];
   while (liste.length > 0 && liste[liste.length - 1].trim() === "") liste.pop();
   if (liste.length > 0) return liste.map((g) => g.trim());
@@ -1105,7 +1182,7 @@ export function gehaltsliste(antrag: Antrag): string[] {
  * Was traegt, ist der schlechteste der drei. Gibt es nur einen Monat, ist er
  * es zwangslaeufig; gibt es keinen, kommt null zurueck.
  */
-export function niedrigstesGehalt(antrag: Antrag): number | null {
+export function niedrigstesGehalt(antrag: MitGehalt): number | null {
   const zahlen = gehaltszahlen(antrag).filter((n) => n !== null);
   return zahlen.length > 0 ? Math.min(...(zahlen as number[])) : null;
 }
@@ -1119,7 +1196,7 @@ export function niedrigstesGehalt(antrag: Antrag): number | null {
  * Monate gleich niedrig, gewinnt der erste; zwei Markierungen mit derselben
  * Begruendung wuerden nur fragen lassen, welche denn nun gilt.
  */
-export function niedrigsterGehaltIndex(antrag: Antrag): number {
+export function niedrigsterGehaltIndex(antrag: MitGehalt): number {
   const zahlen = gehaltszahlen(antrag);
   if (zahlen.filter((n) => n !== null).length < 2) return -1;
   let platz = -1;
@@ -1132,7 +1209,7 @@ export function niedrigsterGehaltIndex(antrag: Antrag): number {
 }
 
 /** Die Monate als Zahl, Stelle fuer Stelle — unlesbares wird zu null. */
-function gehaltszahlen(antrag: Antrag): (number | null)[] {
+function gehaltszahlen(antrag: MitGehalt): (number | null)[] {
   return gehaltsliste(antrag).map((g) => {
     const n = Number(g.replace(/\./g, "").replace(",", "."));
     return Number.isFinite(n) && n > 0 ? n : null;

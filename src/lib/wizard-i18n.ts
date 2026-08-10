@@ -12,6 +12,27 @@ export interface WizardTranslations {
     next: string;
     submit: string;
   };
+  /**
+   * Beschriftungen fuer den zweiten Kreditnehmer.
+   *
+   * Nicht bei einem Schritt einsortiert, weil sie durch vier Schritte laufen —
+   * Daten, Anschrift, Beruf, Einkommen. Viermal dieselbe Ueberschrift, an vier
+   * Stellen gepflegt, waere genau die Art Wiederholung, die spaeter
+   * auseinanderlaeuft.
+   */
+  zweite: {
+    /** Ueber dem Abschnitt des ersten Kreditnehmers. */
+    ersterTitel: string;
+    /** Ueber dem Abschnitt des zweiten. */
+    zweiterTitel: string;
+    /** Warum ueberhaupt zweimal gefragt wird — steht einmal, im Datenschritt. */
+    einleitung: string;
+    /** Kontakt und Bankverbindung bleiben beim ersten Kreditnehmer. */
+    kontaktHinweis: string;
+    anschriftFrage: string;
+    ja: string;
+    nein: string;
+  };
   step1: {
     eyebrow: string;
     title: string;
@@ -256,6 +277,17 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       back: "Zurück",
       next: "Weiter",
       submit: "Antrag absenden",
+    },
+    zweite: {
+      ersterTitel: "Erster Kreditnehmer",
+      zweiterTitel: "Zweiter Kreditnehmer",
+      einleitung:
+        "Sie haben zwei Kreditnehmer gewählt. Banken prüfen beide — deshalb fragen wir die Angaben zweimal ab.",
+      kontaktHinweis:
+        "E-Mail, Telefon und Bankverbindung brauchen wir nur einmal: Sie gehören zum Antrag, nicht zur Person.",
+      anschriftFrage: "Wohnt der zweite Kreditnehmer unter derselben Anschrift?",
+      ja: "Ja",
+      nein: "Nein",
     },
     step1: {
       eyebrow: "1/8 · Kreditart",
@@ -551,6 +583,17 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
       back: "Back",
       next: "Next",
       submit: "Submit application",
+    },
+    zweite: {
+      ersterTitel: "First borrower",
+      zweiterTitel: "Second borrower",
+      einleitung:
+        "You chose two borrowers. Banks assess both — that is why we ask for the details twice.",
+      kontaktHinweis:
+        "Email, phone and bank details are needed only once: they belong to the application, not to a person.",
+      anschriftFrage: "Does the second borrower live at the same address?",
+      ja: "Yes",
+      nein: "No",
     },
     step1: {
       eyebrow: "1/8 · Loan type",

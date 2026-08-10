@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useLanguage } from "@/lib/language-context";
-import { wizardTranslations } from "@/lib/wizard-i18n";
+import { wizardTranslations, type WizardTranslations } from "@/lib/wizard-i18n";
 import { useWizard } from "@/lib/wizard-context";
 import WizardStepLayout from "./WizardStepLayout";
 import { FormField, FormSelect } from "./FormField";
@@ -54,10 +54,204 @@ function ageAt(birth: Date, today: Date) {
   return age;
 }
 
+/**
+ * Ob ein Geburtsdatum taugt — und wenn nicht, warum.
+ *
+ * Steht ausserhalb der Komponente, weil es zweimal gebraucht wird: einmal fuer
+ * den ersten Kreditnehmer und einmal fuer den zweiten. Dieselbe Pruefung
+ * zweimal zu schreiben hiesse, sie beim naechsten Mal einmal zu aendern.
+ */
+function pruefeGeburt(
+  iso: string,
+  texte: { zuJung: string; unstimmig: string }
+): { ok: boolean; error?: string } {
+  if (iso.trim() === "") return { ok: false };
+  // Bewusst aus den Bestandteilen als lokales Datum gebaut. new Date("…")
+  // liest die Zeichenkette als UTC, das Alter unten aber lokal — in
+  // westlichen Zeitzonen verschöbe das die 18-Jahres-Grenze um einen Tag.
+  const [y, m, d] = iso.trim().split("-").map(Number);
+  const parsed = new Date(y, m - 1, d);
+  // Ein nicht existierender Tag ergibt kein ungültiges Datum, sondern rutscht
+  // weiter: Aus dem 29.02.1990 wird stillschweigend der 01.03.1990. Der
+  // Rückvergleich deckt das auf, statt ein falsches Geburtsdatum zu
+  // übernehmen. In Schaltjahren besteht der 29. Februar die Prüfung.
+  if (
+    parsed.getFullYear() !== y ||
+    parsed.getMonth() !== m - 1 ||
+    parsed.getDate() !== d
+  ) {
+    return { ok: false, error: texte.unstimmig };
+  }
+  const age = ageAt(parsed, new Date());
+  if (age < MIN_AGE) return { ok: false, error: texte.zuJung };
+  if (age > MAX_AGE) return { ok: false, error: texte.unstimmig };
+  return { ok: true };
+}
+
+/**
+ * Name und Geburtsdatum einer Person — einmal geschrieben, zweimal benutzt.
+ *
+ * Bei zwei Kreditnehmern steht derselbe Satz Felder zweimal auf der Seite.
+ * Sie ein zweites Mal hinzuschreiben hiesse, jede spaetere Aenderung an der
+ * Namensregel, an der Tagesliste oder an der Beschriftung an zwei Stellen zu
+ * machen — und die zweite beim uebernaechsten Mal zu vergessen.
+ */
+function PersonFelder({
+  praefix,
+  wt,
+  werte,
+  aendere,
+  aendereGeburt,
+  months,
+  years,
+  geburtsFehler,
+}: {
+  /** Vorsilbe der Feldkennungen, damit id und label eindeutig bleiben. */
+  praefix: string;
+  wt: WizardTranslations;
+  werte: {
+    vorname: string;
+    zweiterVorname: string;
+    nachname: string;
+    geburtstag: string;
+    geburtsmonat: string;
+    geburtsjahr: string;
+  };
+  aendere: (patch: {
+    vorname?: string;
+    zweiterVorname?: string;
+    nachname?: string;
+  }) => void;
+  aendereGeburt: (patch: {
+    geburtstag?: string;
+    geburtsmonat?: string;
+    geburtsjahr?: string;
+  }) => void;
+  months: { value: string; label: string }[];
+  years: number[];
+  geburtsFehler?: string;
+}) {
+  const t = wt.step4;
+  const vornameOk = NAME.test(werte.vorname.trim());
+  const nachnameOk = NAME.test(werte.nachname.trim());
+  const zweiterVornameOk =
+    werte.zweiterVorname.trim() === "" || NAME.test(werte.zweiterVorname.trim());
+  const fehler = (wert: string, ok: boolean) =>
+    wert.trim() !== "" && !ok ? t.nameInvalid : undefined;
+  const dayCount = maxDaysInMonth(Number(werte.geburtsmonat));
+
+  return (
+    <>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <FormField
+          id={`${praefix}vorname`}
+          label={t.vorname}
+          value={werte.vorname}
+          onChange={(e) => aendere({ vorname: e.target.value })}
+          error={fehler(werte.vorname, vornameOk)}
+        />
+        <FormField
+          id={`${praefix}zweiterVorname`}
+          label={t.zweiterVorname}
+          value={werte.zweiterVorname}
+          onChange={(e) => aendere({ zweiterVorname: e.target.value })}
+          placeholder={t.optionalHint}
+          error={fehler(werte.zweiterVorname, zweiterVornameOk)}
+        />
+        <FormField
+          id={`${praefix}nachname`}
+          label={t.nachname}
+          value={werte.nachname}
+          onChange={(e) => aendere({ nachname: e.target.value })}
+          error={fehler(werte.nachname, nachnameOk)}
+        />
+      </div>
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-medium text-muted">{t.geburtsdatum}</span>
+        {/* Anteile statt fester Breiten: Feste rem-Breiten wachsen mit der
+            Schriftgröße, die Kartenbreite nicht — auf schmalen Bildschirmen
+            ragte das Jahr dadurch über den Rand. Der Monat bekommt den
+            größten Anteil, damit "September" vollständig lesbar bleibt.
+            Auf dem Handy fallen Abstand und Innenabstand knapper aus, weil
+            drei Felder dort sonst keinen Platz für ihren Text lassen. */}
+        <div className="grid grid-cols-[minmax(0,5fr)_minmax(0,10fr)_minmax(0,7fr)] gap-2 sm:gap-3">
+          <FormSelect
+            id={`${praefix}geburtstag`}
+            selectClassName="px-2 sm:px-4"
+            label={t.geburtstag}
+            value={werte.geburtstag}
+            onChange={(e) => aendereGeburt({ geburtstag: e.target.value })}
+          >
+            <option value="">{t.auswahlPlatzhalter}</option>
+            {Array.from({ length: dayCount }, (_, i) => String(i + 1)).map(
+              (day) => (
+                <option key={day} value={day}>
+                  {day}
+                </option>
+              )
+            )}
+          </FormSelect>
+          <FormSelect
+            id={`${praefix}geburtsmonat`}
+            selectClassName="px-2 sm:px-4"
+            label={t.geburtsmonat}
+            value={werte.geburtsmonat}
+            onChange={(e) => aendereGeburt({ geburtsmonat: e.target.value })}
+          >
+            <option value="">{t.auswahlPlatzhalter}</option>
+            {months.map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </FormSelect>
+          <FormSelect
+            id={`${praefix}geburtsjahr`}
+            selectClassName="px-2 sm:px-4"
+            label={t.geburtsjahr}
+            value={werte.geburtsjahr}
+            onChange={(e) => aendereGeburt({ geburtsjahr: e.target.value })}
+          >
+            <option value="">{t.auswahlPlatzhalter}</option>
+            {years.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </FormSelect>
+        </div>
+        {geburtsFehler && (
+          <span className="text-xs text-red-400">{geburtsFehler}</span>
+        )}
+      </div>
+    </>
+  );
+}
+
+/** Ob Name und Geburtsdatum einer Person vollstaendig und stimmig sind. */
+function personVollstaendig(
+  werte: {
+    vorname: string;
+    zweiterVorname: string;
+    nachname: string;
+    geburtsdatum: string;
+  },
+  geburtOk: boolean
+): boolean {
+  return (
+    NAME.test(werte.vorname.trim()) &&
+    NAME.test(werte.nachname.trim()) &&
+    (werte.zweiterVorname.trim() === "" ||
+      NAME.test(werte.zweiterVorname.trim())) &&
+    geburtOk
+  );
+}
+
 export default function StepDaten() {
   const { lang } = useLanguage();
   const wt = wizardTranslations[lang];
-  const { data, update, goNext, goBack } = useWizard();
+  const { data, update, updateZweite, goNext, goBack } = useWizard();
+  const zwei = data.personCount === 2;
 
   // Jahresliste genau im erlaubten Bereich: vom jüngsten zulässigen Jahrgang
   // absteigend bis zum ältesten. Die Randjahrgänge sind nur teilweise gültig
@@ -77,8 +271,6 @@ export default function StepDaten() {
       label: fmt.format(new Date(Date.UTC(2000, i, 1))),
     }));
   }, [lang]);
-
-  const dayCount = maxDaysInMonth(Number(data.geburtsmonat));
 
   // Jede Teiländerung setzt zugleich den zusammengesetzten ISO-Wert neu.
   function updateBirthPart(patch: {
@@ -102,34 +294,41 @@ export default function StepDaten() {
     });
   }
 
-  const birth = data.geburtsdatum.trim();
-  const birthCheck = useMemo(() => {
-    if (birth === "") return { ok: false, error: undefined as string | undefined };
-    // Bewusst aus den Bestandteilen als lokales Datum gebaut. new Date("…")
-    // liest die Zeichenkette als UTC, das Alter unten aber lokal — in
-    // westlichen Zeitzonen verschöbe das die 18-Jahres-Grenze um einen Tag.
-    const [y, m, d] = birth.split("-").map(Number);
-    const parsed = new Date(y, m - 1, d);
-    // Ein nicht existierender Tag ergibt kein ungültiges Datum, sondern rutscht
-    // weiter: Aus dem 29.02.1990 wird stillschweigend der 01.03.1990. Der
-    // Rückvergleich deckt das auf, statt ein falsches Geburtsdatum zu
-    // übernehmen. In Schaltjahren besteht der 29. Februar die Prüfung.
-    if (
-      parsed.getFullYear() !== y ||
-      parsed.getMonth() !== m - 1 ||
-      parsed.getDate() !== d
-    ) {
-      return { ok: false, error: wt.step4.geburtsdatumImplausible };
-    }
-    const age = ageAt(parsed, new Date());
-    if (age < MIN_AGE) {
-      return { ok: false, error: wt.step4.geburtsdatumTooYoung };
-    }
-    if (age > MAX_AGE) {
-      return { ok: false, error: wt.step4.geburtsdatumImplausible };
-    }
-    return { ok: true, error: undefined };
-  }, [birth, wt]);
+  /** Dasselbe fuer den zweiten Kreditnehmer. */
+  function updateZweiteGeburt(patch: {
+    geburtstag?: string;
+    geburtsmonat?: string;
+    geburtsjahr?: string;
+  }) {
+    const p = data.zweitePerson;
+    const day = patch.geburtstag ?? p.geburtstag;
+    const month = patch.geburtsmonat ?? p.geburtsmonat;
+    const year = patch.geburtsjahr ?? p.geburtsjahr;
+    const validDay =
+      day && Number(day) > maxDaysInMonth(Number(month)) ? "" : day;
+    updateZweite({
+      geburtstag: validDay,
+      geburtsmonat: month,
+      geburtsjahr: year,
+      geburtsdatum: composeIsoDate(year, month, validDay),
+    });
+  }
+
+  const geburtsTexte = useMemo(
+    () => ({
+      zuJung: wt.step4.geburtsdatumTooYoung,
+      unstimmig: wt.step4.geburtsdatumImplausible,
+    }),
+    [wt]
+  );
+  const birthCheck = useMemo(
+    () => pruefeGeburt(data.geburtsdatum, geburtsTexte),
+    [data.geburtsdatum, geburtsTexte]
+  );
+  const zweiteGeburt = useMemo(
+    () => pruefeGeburt(data.zweitePerson.geburtsdatum, geburtsTexte),
+    [data.zweitePerson.geburtsdatum, geburtsTexte]
+  );
 
   const countries = useMemo(() => dialCodeOptions(lang), [lang]);
 
@@ -141,21 +340,11 @@ export default function StepDaten() {
   const emailOk = atIndex > 0 && atIndex < email.length - 1;
   const emailError = email !== "" && !emailOk ? wt.step4.emailInvalid : undefined;
 
-  const vornameOk = NAME.test(data.vorname.trim());
-  const nachnameOk = NAME.test(data.nachname.trim());
-  // Der zweite Vorname ist freiwillig — leer ist in Ordnung, gefüllt muss er
-  // aber denselben Anforderungen genügen.
-  const zweiterVornameOk =
-    data.zweiterVorname.trim() === "" || NAME.test(data.zweiterVorname.trim());
-
-  const nameError = (value: string, ok: boolean) =>
-    value.trim() !== "" && !ok ? wt.step4.nameInvalid : undefined;
-
   const valid =
-    vornameOk &&
-    nachnameOk &&
-    zweiterVornameOk &&
-    birthCheck.ok &&
+    personVollstaendig(data, birthCheck.ok) &&
+    // Bei zwei Kreditnehmern gilt fuer den zweiten dasselbe wie fuer den
+    // ersten. Der zweite Vorname bleibt freiwillig, alles andere nicht.
+    (!zwei || personVollstaendig(data.zweitePerson, zweiteGeburt.ok)) &&
     emailOk &&
     data.telefonLand !== "" &&
     data.telefonVorwahl.length >= AREA_CODE_MIN &&
@@ -177,90 +366,30 @@ export default function StepDaten() {
       onNext={goNext}
       nextDisabled={!valid}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <FormField
-          id="vorname"
-          label={wt.step4.vorname}
-          value={data.vorname}
-          onChange={(e) => update({ vorname: e.target.value })}
-          error={nameError(data.vorname, vornameOk)}
-        />
-        <FormField
-          id="zweiterVorname"
-          label={wt.step4.zweiterVorname}
-          value={data.zweiterVorname}
-          onChange={(e) => update({ zweiterVorname: e.target.value })}
-          placeholder={wt.step4.optionalHint}
-          error={nameError(data.zweiterVorname, zweiterVornameOk)}
-        />
-        <FormField
-          id="nachname"
-          label={wt.step4.nachname}
-          value={data.nachname}
-          onChange={(e) => update({ nachname: e.target.value })}
-          error={nameError(data.nachname, nachnameOk)}
-        />
-      </div>
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-muted">
-          {wt.step4.geburtsdatum}
-        </span>
-        {/* Anteile statt fester Breiten: Feste rem-Breiten wachsen mit der
-            Schriftgröße, die Kartenbreite nicht — auf schmalen Bildschirmen
-            ragte das Jahr dadurch über den Rand. Der Monat bekommt den
-            größten Anteil, damit "September" vollständig lesbar bleibt.
-            Auf dem Handy fallen Abstand und Innenabstand knapper aus, weil
-            drei Felder dort sonst keinen Platz für ihren Text lassen. */}
-        <div className="grid grid-cols-[minmax(0,5fr)_minmax(0,10fr)_minmax(0,7fr)] gap-2 sm:gap-3">
-          <FormSelect
-            id="geburtstag"
-            selectClassName="px-2 sm:px-4"
-            label={wt.step4.geburtstag}
-            value={data.geburtstag}
-            onChange={(e) => updateBirthPart({ geburtstag: e.target.value })}
-          >
-            <option value="">{wt.step4.auswahlPlatzhalter}</option>
-            {Array.from({ length: dayCount }, (_, i) => String(i + 1)).map(
-              (day) => (
-                <option key={day} value={day}>
-                  {day}
-                </option>
-              )
-            )}
-          </FormSelect>
-          <FormSelect
-            id="geburtsmonat"
-            selectClassName="px-2 sm:px-4"
-            label={wt.step4.geburtsmonat}
-            value={data.geburtsmonat}
-            onChange={(e) => updateBirthPart({ geburtsmonat: e.target.value })}
-          >
-            <option value="">{wt.step4.auswahlPlatzhalter}</option>
-            {months.map(({ value, label }) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </FormSelect>
-          <FormSelect
-            id="geburtsjahr"
-            selectClassName="px-2 sm:px-4"
-            label={wt.step4.geburtsjahr}
-            value={data.geburtsjahr}
-            onChange={(e) => updateBirthPart({ geburtsjahr: e.target.value })}
-          >
-            <option value="">{wt.step4.auswahlPlatzhalter}</option>
-            {years.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </FormSelect>
+      {/* Nur bei zwei Kreditnehmern eine Ueberschrift. Bei einem waere
+          "Erster Kreditnehmer" eine Ordnung ohne Zweitem — sie erklaerte
+          nichts und faenge an, eine Frage zu stellen, die niemand gestellt
+          hat. */}
+      {zwei && (
+        <div className="flex flex-col gap-1">
+          <p className="text-xs leading-relaxed text-muted">
+            {wt.zweite.einleitung}
+          </p>
+          <h2 className="text-sm font-semibold">{wt.zweite.ersterTitel}</h2>
         </div>
-        {birthCheck.error && (
-          <span className="text-xs text-red-400">{birthCheck.error}</span>
-        )}
-      </div>
+      )}
+
+      <PersonFelder
+        praefix=""
+        wt={wt}
+        werte={data}
+        aendere={update}
+        aendereGeburt={updateBirthPart}
+        months={months}
+        years={years}
+        geburtsFehler={birthCheck.error}
+      />
+
       <FormField
         id="email"
         type="email"
@@ -338,6 +467,31 @@ export default function StepDaten() {
           />
         </div>
       </div>
+
+      {zwei && (
+        <>
+          {/* Der Kontakt steht bewusst beim ersten Kreditnehmer, nicht
+              zwischen den beiden Personen: Er gehoert zum Antrag. Der Hinweis
+              sagt das, damit niemand die zweite E-Mail-Adresse sucht. */}
+          <p className="text-xs leading-relaxed text-muted">
+            {wt.zweite.kontaktHinweis}
+          </p>
+
+          <div className="border-t border-border pt-6 flex flex-col gap-5">
+            <h2 className="text-sm font-semibold">{wt.zweite.zweiterTitel}</h2>
+            <PersonFelder
+              praefix="zweite-"
+              wt={wt}
+              werte={data.zweitePerson}
+              aendere={updateZweite}
+              aendereGeburt={updateZweiteGeburt}
+              months={months}
+              years={years}
+              geburtsFehler={zweiteGeburt.error}
+            />
+          </div>
+        </>
+      )}
     </WizardStepLayout>
   );
 }
