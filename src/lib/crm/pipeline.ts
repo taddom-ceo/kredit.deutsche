@@ -30,6 +30,8 @@ export type StatusId =
   | "tag4plus"
   | "on_hold"
   | "watch"
+  | "erledigt"
+  | "ausgezahlt"
   /* Kein Ordner der Pipeline, sondern der Weg hinaus — siehe unten. */
   | "papierkorb"
   /* Stillgelegt — siehe unten. */
@@ -38,13 +40,12 @@ export type StatusId =
   | "unterlagen_vollstaendig"
   | "bei_bank"
   | "zusage"
-  | "ausgezahlt"
   | "abgebrochen";
 
 /**
- * Die Farbfamilie eines Ordners. Bei vierzehn Spalten nebeneinander ist das
+ * Die Farbfamilie eines Ordners. Bei sechzehn Spalten nebeneinander ist das
  * kein Schmuck: Es ist der Unterschied zwischen "ich sehe, wo etwas liegt" und
- * "ich lese vierzehn Ueberschriften".
+ * "ich lese sechzehn Ueberschriften".
  */
 export type Ton = "neu" | "arbeit" | "warten" | "erfolg" | "weg" | "alt";
 
@@ -56,7 +57,7 @@ export type Ton = "neu" | "arbeit" | "warten" | "erfolg" | "weg" | "alt";
  * `zeichen` faerbt das Symbol ueber der Spalte, `schild` die Plakette im
  * Fall selbst. Seit die Spalten nur noch Symbole tragen, ist die Farbe kein
  * Beiwerk mehr, sondern die zweite Unterscheidung neben der Form: Wer die
- * vierzehn Zeichen noch nicht auswendig kennt, sieht wenigstens sofort, ob
+ * sechzehn Zeichen noch nicht auswendig kennt, sieht wenigstens sofort, ob
  * ein Ordner Arbeit, Warten oder Ende bedeutet.
  */
 export const TON_KLASSEN: Record<Ton, { zeichen: string; schild: string }> = {
@@ -90,6 +91,17 @@ export type Station = {
   id: StatusId;
   name: string;
   /**
+   * Ueberordner, unter dem dieser Ordner steht.
+   *
+   * Das Brett bleibt flach — sechzehn Spalten nebeneinander vertragen keine
+   * zweite Ebene. Ueberall dort, wo die Ordner als Liste erscheinen (die
+   * Auswahl an der Karte, die am Fall, der Filter ueber der Liste), stehen
+   * die Ordner einer Gruppe aber unter ihrer Ueberschrift beieinander. Dafuer
+   * gibt es in HTML `optgroup`, und das ist genau dieser Fall: ein Ordner mit
+   * Unterordnern, ohne dass etwas nachgebaut werden muesste.
+   */
+  gruppe?: string;
+  /**
    * Wofuer der Ordner da ist. Steht im Brett dort, wo sonst die Karten waeren
    * — eine leere Spalte erklaert sich damit selbst, eine volle braucht keine
    * Erklaerung mehr.
@@ -98,14 +110,20 @@ export type Station = {
   ton: Ton;
 };
 
+/** Der Ueberordner der beiden Endstationen. Steht hier, damit ihn niemand
+    an zwei Stellen tippt. */
+export const ERLEDIGT = "Erledigt";
+
 /**
  * Die Pipeline, wie sie im Vertrieb gefahren wird.
  *
- * Alle vierzehn sind gleichberechtigte Ordner: Es gibt keine Endstation, in
+ * Alle sechzehn sind gleichberechtigte Ordner: Es gibt keine Endstation, in
  * die ein Fall faellt und aus der er nicht mehr herauskommt. "Ablehnung" und
  * "Abgebrochen" sind Ablagen, keine Loeschungen — ein abgelehnter Fall wandert
  * spaeter nach "Recall", ein abgebrochener nach "Rückruf", und genau dafuer
- * laesst sich jede Karte in jede Spalte ziehen.
+ * laesst sich jede Karte in jede Spalte ziehen. Das gilt auch fuer "Erledigt":
+ * Ein Kunde, dessen Auszahlung durch ist, kann in einem Jahr wieder ein Thema
+ * sein.
  */
 export const STATIONEN: Station[] = [
   {
@@ -193,6 +211,38 @@ export const STATIONEN: Station[] = [
     beschreibung: "Nichts zu tun, aber nicht aus den Augen verlieren.",
     ton: "warten",
   },
+  /**
+   * "Erledigt" — zwei Ordner, ein Ueberordner.
+   *
+   * Ein Fall endet auf zweierlei Weise, und die beiden sind nicht dasselbe:
+   * Entweder ist der Kredit ausgezahlt, oder die Sache hat sich anders
+   * erledigt — der Kunde hat woanders abgeschlossen, braucht das Geld nicht
+   * mehr, meldet sich nicht wieder. Beides ist abgeschlossen, aber nur eines
+   * davon ist ein Abschluss. In einem gemeinsamen Ordner waere die Frage
+   * "wie viele Faelle sind dieses Jahr durchgegangen" nicht mehr zu
+   * beantworten.
+   *
+   * "Auszahlung" traegt die alte Kennung `ausgezahlt` weiter, statt eine neue
+   * danebenzustellen: Unter ihr liegen moeglicherweise noch Faelle aus der
+   * frueheren Aufteilung, und die bedeuten genau dasselbe. Sie landen damit
+   * im neuen Ordner, statt in einer stillgelegten Spalte zu warten — und es
+   * gibt keine zwei Kennungen, die dasselbe heissen.
+   */
+  {
+    id: "ausgezahlt",
+    name: "Auszahlung",
+    beschreibung: "Der Kredit ist ausgezahlt — der Fall ist durch.",
+    ton: "erfolg",
+    gruppe: ERLEDIGT,
+  },
+  {
+    id: "erledigt",
+    name: "Hat sich erledigt",
+    beschreibung:
+      "Abgeschlossen ohne Auszahlung — anderswo unterschrieben, kein Bedarf mehr, nicht mehr erreichbar.",
+    ton: "weg",
+    gruppe: ERLEDIGT,
+  },
 ];
 
 /**
@@ -217,6 +267,8 @@ export const SPAETE_ORDNER: StatusId[] = [
   "tag4plus",
   "on_hold",
   "watch",
+  "ausgezahlt",
+  "erledigt",
   "papierkorb",
 ];
 
@@ -293,12 +345,6 @@ export const STILLGELEGTE: Station[] = [
     ton: "alt",
   },
   {
-    id: "ausgezahlt",
-    name: "Ausgezahlt",
-    beschreibung: "Aus der früheren Aufteilung — bitte weiterschieben.",
-    ton: "alt",
-  },
-  {
     id: "abgebrochen",
     name: "Abgebrochen (früher)",
     beschreibung: "Aus der früheren Aufteilung — bitte weiterschieben.",
@@ -307,6 +353,29 @@ export const STILLGELEGTE: Station[] = [
 ];
 
 const ALLE = [...STATIONEN, PAPIERKORB, ...STILLGELEGTE];
+
+/**
+ * Ordner fuer ein Auswahlfeld, Gruppen zusammengefasst.
+ *
+ * Die Reihenfolge bleibt, wie sie hereinkommt; nur unmittelbar aufeinander
+ * folgende Ordner derselben Gruppe werden gebuendelt. Damit steht in der
+ * Auswahl "Erledigt" mit seinen beiden Unterordnern darunter, und alles
+ * andere steht wie bisher fuer sich.
+ */
+export function nachGruppen<T extends { gruppe?: string }>(
+  ordner: T[]
+): { gruppe: string | null; ordner: T[] }[] {
+  const buendel: { gruppe: string | null; ordner: T[] }[] = [];
+  for (const eintrag of ordner) {
+    const letzte = buendel[buendel.length - 1];
+    if (letzte && letzte.gruppe === (eintrag.gruppe ?? null)) {
+      letzte.ordner.push(eintrag);
+    } else {
+      buendel.push({ gruppe: eintrag.gruppe ?? null, ordner: [eintrag] });
+    }
+  }
+  return buendel;
+}
 
 export function findeStation(id: string): Station | undefined {
   return ALLE.find((s) => s.id === id);

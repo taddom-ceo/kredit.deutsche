@@ -19,6 +19,7 @@ import { adressName } from "@/lib/crm/db";
 import { schluesselVorhanden } from "@/lib/crm/verschluesselung";
 import { ROLLEN_NAMEN } from "@/lib/crm/benutzer";
 import {
+  nachGruppen,
   PAPIERKORB,
   STATIONEN,
   TON_KLASSEN,
@@ -138,7 +139,7 @@ export default async function CrmSeite({
   const heute = new Date().toISOString().slice(0, 10);
 
   /**
-   * Die Spalten: die vierzehn Ordner der Pipeline, und dahinter jeder weitere
+   * Die Spalten: die sechzehn Ordner der Pipeline, und dahinter jeder weitere
    * Status, auf dem noch Faelle stehen.
    *
    * Der zweite Teil ist die Versicherung gegen lautlosen Verlust. Wird die
@@ -182,6 +183,7 @@ export default async function CrmSeite({
       name: s.name,
       beschreibung: s.beschreibung,
       ton: s.ton,
+      gruppe: s.gruppe,
       href: ordnerAdresse(s.id),
     })),
     // Der Papierkorb steht am Ende, hinter allen Ordnern der Pipeline und vor
@@ -432,11 +434,26 @@ export default async function CrmSeite({
                   className="rounded-[12px] border border-border bg-surface-2 px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                 >
                   <option value="">Alle Ordner</option>
-                  {spalten.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
+                  {/* Ordner einer Gruppe stehen unter ihrer Ueberschrift
+                      beieinander — "Erledigt" mit seinen beiden
+                      Unterordnern. */}
+                  {nachGruppen(spalten).map((buendel) =>
+                    buendel.gruppe ? (
+                      <optgroup key={buendel.gruppe} label={buendel.gruppe}>
+                        {buendel.ordner.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ) : (
+                      buendel.ordner.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))
+                    )
+                  )}
                 </select>
                 <button
                   type="submit"
