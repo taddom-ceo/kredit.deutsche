@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { abfrage, datenbankVorhanden, stelleSchemaSicher } from "./db";
+import { abfrage, datenbankVorhanden, stapel, stelleSchemaSicher } from "./db";
 import { imPapierkorb, type StatusId } from "./pipeline";
 import { entschluessele, verschluessele } from "./verschluesselung";
 
@@ -933,6 +933,35 @@ export async function aktivitaeten(antragId: string): Promise<Aktivitaet[]> {
 }
 
 /**
+ * Lesen, schreiben und vermerken in einer einzigen Anweisung.
+ *
+ * Vorher waren das drei: den Fall holen, den Status setzen, den Verlauf
+ * schreiben. Der HTTP-Treiber macht aus jeder ein eigenes Hin und Her, und
+ * weil sie aufeinander aufbauen, laufen sie nacheinander — beim Schieben
+ * einer Karte war das die spuerbare Wartezeit. Als eine Anweisung ist es
+ * eine Runde statt dreien.
+ *
+ * Datenaendernde CTEs sehen in Postgres alle denselben Stand von vor der
+ * Anweisung. `alt` liest den Status deshalb so, wie er vor dem UPDATE war,
+ * obwohl beide zur selben Anweisung gehoeren — genau das braucht der
+ * Verlaufseintrag.
+ *
+ * `AND status <> $2` haelt den Fall ab, in dem sich nichts aendert: Dann
+ * liefert `geaendert` keine Zeile, und der INSERT traegt nichts ein. Ein
+ * Verlauf voller "Neu → Neu" waere schlimmer als keiner.
+ */
+const STATUS_SQL = `WITH alt AS (
+       SELECT status FROM antrag WHERE id = $1
+     ), geaendert AS (
+       UPDATE antrag SET status = $2
+        WHERE id = $1 AND status <> $2
+       RETURNING id
+     )
+     INSERT INTO aktivitaet (antrag_id, benutzer, art, von_status, nach_status)
+     SELECT $1, $3, 'status', alt.status, $2
+       FROM alt, geaendert`;
+
+/**
  * Status setzen und den Wechsel festhalten.
  *
  * Steht der Fall schon auf dem gewuenschten Status, passiert nichts — sonst
@@ -959,36 +988,41 @@ export async function setzeStatus(
     return;
   }
 
-  /**
-   * Lesen, schreiben und vermerken in einer einzigen Anweisung.
-   *
-   * Vorher waren das drei: den Fall holen, den Status setzen, den Verlauf
-   * schreiben. Der HTTP-Treiber macht aus jeder ein eigenes Hin und Her, und
-   * weil sie aufeinander aufbauen, laufen sie nacheinander — beim Schieben
-   * einer Karte war das die spuerbare Wartezeit. Als eine Anweisung ist es
-   * eine Runde statt dreien.
-   *
-   * Datenaendernde CTEs sehen in Postgres alle denselben Stand von vor der
-   * Anweisung. `alt` liest den Status deshalb so, wie er vor dem UPDATE war,
-   * obwohl beide zur selben Anweisung gehoeren — genau das braucht der
-   * Verlaufseintrag.
-   *
-   * `AND status <> $2` haelt den Fall ab, in dem sich nichts aendert: Dann
-   * liefert `geaendert` keine Zeile, und der INSERT traegt nichts ein. Ein
-   * Verlauf voller "Neu → Neu" waere schlimmer als keiner.
-   */
-  await abfrage(
-    `WITH alt AS (
-       SELECT status FROM antrag WHERE id = $1
-     ), geaendert AS (
-       UPDATE antrag SET status = $2
-        WHERE id = $1 AND status <> $2
-       RETURNING id
-     )
-     INSERT INTO aktivitaet (antrag_id, benutzer, art, von_status, nach_status)
-     SELECT $1, $3, 'status', alt.status, $2
-       FROM alt, geaendert`,
-    [id, status, benutzer]
+  await abfrage(STATUS_SQL, [id, status, benutzer]);
+}
+
+/**
+ * Dasselbe fuer mehrere Faelle auf einmal.
+ *
+ * Auf dem Brett lassen sich Karten markieren und gemeinsam ziehen; dann
+ * wechseln zwanzig Faelle mit einer Geste den Ordner. Zwanzig einzelne
+ * Aufrufe waeren zwanzig Runden uebers Netz — spuerbar lang, und mittendrin
+ * abgebrochen bliebe die Haelfte liegen.
+ *
+ * Deshalb geht dieselbe, schon bewaehrte Anweisung einmal je Fall in einen
+ * Stapel und der Stapel als eine Transaktion hinaus. Eine eigene Anweisung
+ * mit `= ANY($1)` waere kuerzer, muesste aber neu geschrieben und neu
+ * geprueft werden — fuer denselben einen Weg ueber das Netz.
+ */
+export async function setzeStatusMehrere(
+  ids: string[],
+  status: StatusId,
+  benutzer: string
+): Promise<void> {
+  const eindeutig = [...new Set(ids.filter(Boolean))];
+  if (eindeutig.length === 0) return;
+  if (eindeutig.length === 1) {
+    await setzeStatus(eindeutig[0], status, benutzer);
+    return;
+  }
+
+  if (ablageart() === "speicher") {
+    for (const id of eindeutig) await setzeStatus(id, status, benutzer);
+    return;
+  }
+
+  await stapel(
+    eindeutig.map((id) => ({ text: STATUS_SQL, werte: [id, status, benutzer] }))
   );
 }
 

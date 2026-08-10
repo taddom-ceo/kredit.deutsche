@@ -78,6 +78,25 @@ export async function abfrage<T = Record<string, unknown>>(
 }
 
 /**
+ * Mehrere Anweisungen in einer einzigen Runde.
+ *
+ * Der HTTP-Treiber macht aus jeder Abfrage ein eigenes Hin und Her ueber das
+ * Netz. Wer zwanzig Faelle auf einmal verschiebt, wartet damit zwanzigmal.
+ * `transaction` packt sie in eine Anfrage — und in eine Transaktion: Entweder
+ * liegen danach alle zwanzig im neuen Ordner oder keiner, und die Anzeige
+ * muss nicht raten, wie weit sie gekommen ist.
+ */
+export async function stapel(
+  anweisungen: { text: string; werte: unknown[] }[]
+): Promise<void> {
+  if (anweisungen.length === 0) return;
+  const verbindung = sql();
+  await verbindung.transaction(
+    anweisungen.map((a) => verbindung.query(a.text, a.werte))
+  );
+}
+
+/**
  * Die Tabellen, die es geben muss.
  *
  * Bewusst mit IF NOT EXISTS und ohne eigenes Wanderungswerkzeug: Solange das

@@ -10,6 +10,7 @@ import {
   schreibeNotiz,
   setzePruefung,
   setzeStatus,
+  setzeStatusMehrere,
   setzeWiedervorlage,
 } from "@/lib/crm/antraege";
 import {
@@ -111,6 +112,56 @@ export async function fallVerschieben(
 
   aktualisiere(id);
   return { ok: true };
+}
+
+/**
+ * Mehrere markierte Faelle auf einmal.
+ *
+ * Auf dem Brett lassen sich Karten mit Strg und Klick markieren; zieht man
+ * danach eine davon, gehen alle mit. Serverseitig ist das dieselbe Pruefung
+ * wie bei einer einzelnen Karte — die Markierung im Browser sagt nichts
+ * darueber, wer was darf.
+ *
+ * Die Obergrenze ist kein Misstrauen gegen die Oberflaeche, sondern gegen die
+ * Adresse: Der Endpunkt ist offen, und eine Liste mit zehntausend Kennungen
+ * waere eine Transaktion, die alles andere blockiert.
+ */
+const HOECHSTENS_AUF_EINMAL = 200;
+
+export async function faelleVerschieben(
+  ids: string[],
+  station: string
+): Promise<{ ok: true; anzahl: number } | { ok: false; fehler: string }> {
+  const benutzer = await verlangeAnmeldung();
+  if (benutzer.rolle === "lesen") {
+    return { ok: false, fehler: "Dieses Konto darf Fälle nur ansehen." };
+  }
+  const kennungen = [...new Set((ids ?? []).filter(Boolean))];
+  if (kennungen.length === 0) return { ok: false, fehler: "Kein Fall markiert." };
+  if (kennungen.length > HOECHSTENS_AUF_EINMAL) {
+    return {
+      ok: false,
+      fehler: `Höchstens ${HOECHSTENS_AUF_EINMAL} Fälle auf einmal.`,
+    };
+  }
+  if (!findeStation(station)) {
+    return { ok: false, fehler: "Unbekannte Station." };
+  }
+
+  try {
+    await setzeStatusMehrere(kennungen, station as StatusId, benutzer.anzeigename);
+  } catch (ausnahme) {
+    return {
+      ok: false,
+      fehler: ausnahme instanceof Error ? ausnahme.message : String(ausnahme),
+    };
+  }
+
+  // Jede Fallakte einzeln: Sie zeigt den Verlauf, und dort steht jetzt ein
+  // Wechsel mehr. Die Uebersicht kommt dabei mehrfach dran, was nichts
+  // kostet — es ist eine Markierung, keine Berechnung.
+  for (const id of kennungen) aktualisiere(id);
+  return { ok: true, anzahl: kennungen.length };
 }
 
 /**
