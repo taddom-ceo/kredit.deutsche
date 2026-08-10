@@ -127,12 +127,17 @@ export default async function ProtokollSeite() {
                       className="border-b border-border/60 last:border-0"
                     >
                       <td className="px-5 py-3 text-xs whitespace-nowrap tabular-nums">
+                        {/* Auf die Sekunde genau, wie im Verlauf der Fallakte:
+                            Ein Loeschprotokoll ist ein Nachweis, und ein
+                            Nachweis auf die Minute genau reicht nicht, wenn in
+                            derselben Minute mehrere Faelle geloescht wurden. */}
                         {new Date(eintrag.zeit).toLocaleString("de-DE", {
                           day: "2-digit",
                           month: "2-digit",
                           year: "numeric",
                           hour: "2-digit",
                           minute: "2-digit",
+                          second: "2-digit",
                         })}
                       </td>
                       <td className="px-5 py-3 text-xs">{eintrag.benutzer}</td>

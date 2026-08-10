@@ -364,6 +364,15 @@ export function WizardProvider({
    */
   const zuletztGesendet = useRef<string>("");
 
+  /**
+   * Ob in der Strecke ueberhaupt schon etwas eingegeben wurde.
+   *
+   * Ein Ref und kein Zustand: Die Anzeige haengt nicht daran, und ein
+   * zusaetzliches Rendern beim ersten Tastendruck waere nur Unruhe. Gesetzt
+   * wird er ausschliesslich in den Handlern unten, nie beim Rendern.
+   */
+  const beruehrt = useRef(false);
+
   function sichereZwischenstand(stand: WizardData, dringend = false) {
     if (stand.step < SICHERN_AB_SCHRITT) return;
     if (!kontaktVorhanden(stand)) return;
@@ -424,6 +433,39 @@ export function WizardProvider({
       document.removeEventListener("visibilitychange", beimVerlassen);
   }, [data]);
 
+  /**
+   * Nachfragen, bevor die Strecke verlassen wird.
+   *
+   * Der Stand der Strecke liegt im Arbeitsspeicher des Browsers, sonst
+   * nirgends: Wer das Fenster schliesst oder neu laedt, faengt beim ersten
+   * Schritt wieder an. Ein versehentliches Strg+W nach sieben Schritten kostet
+   * damit den ganzen Antrag — und derselbe Mensch tippt ihn kein zweites Mal.
+   *
+   * Der Text ist Absicht ohne Wirkung: Browser zeigen seit Jahren ihre eigene
+   * Formulierung und ignorieren jede eigene, um die Nachfrage nicht als
+   * Druckmittel benutzbar zu machen. `preventDefault` ist das, was zaehlt —
+   * `returnValue` steht daneben fuer aeltere Browser, die nur darauf hoeren.
+   *
+   * Zwei Grenzen, damit die Nachfrage nicht dort steht, wo nichts zu verlieren
+   * ist:
+   *
+   *   · Erst nach der ersten Eingabe. Wer die Seite oeffnet und gleich wieder
+   *     geht, hat nichts eingegeben, was verloren gehen koennte.
+   *   · Nicht mehr auf der Bestaetigungsseite. Dort ist der Antrag abgeschickt
+   *     und liegt im CRM; das Fenster zu schliessen ist dann genau richtig.
+   */
+  useEffect(() => {
+    if (data.step > TOTAL_STEPS) return;
+    function warnen(ereignis: BeforeUnloadEvent) {
+      if (!beruehrt.current) return;
+      ereignis.preventDefault();
+      ereignis.returnValue =
+        "Ihre Angaben gehen verloren und der Antrag muss von vorn begonnen werden.";
+    }
+    window.addEventListener("beforeunload", warnen);
+    return () => window.removeEventListener("beforeunload", warnen);
+  }, [data.step]);
+
   async function sendeFertigenAntrag(): Promise<boolean> {
     // Erst die laufenden Zwischenstaende abwarten. Sonst geht der fertige
     // Antrag ohne Kennung hinaus, weil sie noch unterwegs ist — und im CRM
@@ -438,6 +480,7 @@ export function WizardProvider({
   }
 
   function update(patch: Partial<WizardData>) {
+    beruehrt.current = true;
     setData((prev) => ({ ...prev, ...patch }));
   }
 
@@ -450,6 +493,7 @@ export function WizardProvider({
    * uebrigen Angaben zu loeschen.
    */
   function updateZweite(patch: Partial<ZweitePerson>) {
+    beruehrt.current = true;
     setData((prev) => ({
       ...prev,
       zweitePerson: { ...prev.zweitePerson, ...patch },
@@ -457,6 +501,9 @@ export function WizardProvider({
   }
 
   function goNext() {
+    // Wer weiterblaettert, hat den Schritt hinter sich gebracht — auch wenn er
+    // dabei nur eine Auswahl angeklickt hat, die schon vorbelegt war.
+    beruehrt.current = true;
     // Beim Verlassen der Schritte mit Kontaktdaten den Stand sichern. Der
     // letzte Schritt ist ausgenommen: Dort geht ohnehin der fertige Antrag
     // hinaus, ein Zwischenstand davor waere derselbe Satz zweimal.

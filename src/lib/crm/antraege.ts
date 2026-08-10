@@ -608,6 +608,18 @@ export type AntragFilter = {
   /** Nur Faelle, deren Wiedervorlage heute oder frueher faellig ist. */
   nurFaellig?: boolean;
   /**
+   * Die Kreditsumme von … bis, in Euro. Je Grenze einzeln: "ab 20.000" ist
+   * eine ebenso gewoehnliche Frage wie "zwischen 20.000 und 50.000".
+   */
+  betragVon?: number | null;
+  betragBis?: number | null;
+  /**
+   * Die Zeitspanne des Eingangs, als Tag in der Form JJJJ-MM-TT. Beide Tage
+   * zaehlen mit — wer "bis 31.03." waehlt, meint den 31. einschliesslich.
+   */
+  vonDatum?: string | null;
+  bisDatum?: string | null;
+  /**
    * Den Papierkorb mitnehmen, obwohl nicht nach ihm gefiltert wird.
    *
    * Genau eine Ansicht braucht das: das Brett. Es zeigt alle Ordner
@@ -644,6 +656,14 @@ function passtImSpeicher(antrag: Antrag, filter: AntragFilter): boolean {
     const heute = new Date().toISOString().slice(0, 10);
     if (!antrag.wiedervorlage || antrag.wiedervorlage > heute) return false;
   }
+  if (filter.betragVon != null && antrag.amount < filter.betragVon) return false;
+  if (filter.betragBis != null && antrag.amount > filter.betragBis) return false;
+  // Der Eingang ist eine ISO-Zeichenkette, die mit dem Tag beginnt. Ein
+  // Vergleich der ersten zehn Zeichen ist deshalb ein Vergleich der Tage —
+  // und der Notbehelf antwortet damit auf dieselbe Frage wie die Datenbank.
+  const tag = antrag.eingang.slice(0, 10);
+  if (filter.vonDatum && tag < filter.vonDatum) return false;
+  if (filter.bisDatum && tag > filter.bisDatum) return false;
   const suche = filter.suche?.trim().toLowerCase();
   if (suche) {
     const heuhaufen = [
@@ -705,6 +725,13 @@ const WO = `
   -- weil Liste, Zaehlung und Export dieselbe Zeichenkette benutzen: So kann
   -- keiner von ihnen den Papierkorb versehentlich doch mitzaehlen.
   AND (status <> 'papierkorb' OR $2 = 'papierkorb' OR $4::boolean IS TRUE)
+  AND ($5::integer IS NULL OR betrag >= $5)
+  AND ($6::integer IS NULL OR betrag <= $6)
+  AND ($7::date IS NULL OR eingang >= $7::date)
+  -- Der Bis-Tag zaehlt ganz mit. Ohne das eine hinzugezaehlte Tag vergliche
+  -- man gegen dessen Mitternacht und liesse den gewaehlten Tag selbst weg —
+  -- wer "bis 31.03." einstellt, faende dann nichts vom 31. Maerz.
+  AND ($8::date IS NULL OR eingang < $8::date + 1)
 `;
 
 function filterWerte(filter: AntragFilter): unknown[] {
@@ -714,6 +741,10 @@ function filterWerte(filter: AntragFilter): unknown[] {
     filter.station ?? null,
     filter.nurFaellig === true,
     filter.mitPapierkorb === true,
+    filter.betragVon ?? null,
+    filter.betragBis ?? null,
+    filter.vonDatum || null,
+    filter.bisDatum || null,
   ];
 }
 

@@ -1033,12 +1033,19 @@ export default async function AntragSeite({
                         >
                           {beschreibe(eintrag)}
                         </span>
+                        {/* Mit Sekunde. Zwei Eintraege innerhalb derselben
+                            Minute sind im Verlauf der Normalfall — ein
+                            Statuswechsel und die Notiz dazu, zwei Karten
+                            gemeinsam verschoben. Ohne die Sekunde tragen sie
+                            dieselbe Uhrzeit, und aus dem Verlauf laesst sich
+                            nicht mehr ablesen, was zuerst geschah. */}
                         <span className="shrink-0 text-[11px] text-muted/70 tabular-nums">
                           {new Date(eintrag.zeit).toLocaleString("de-DE", {
                             day: "2-digit",
                             month: "2-digit",
                             hour: "2-digit",
                             minute: "2-digit",
+                            second: "2-digit",
                           })}
                         </span>
                       </div>
