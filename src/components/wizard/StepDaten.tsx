@@ -6,6 +6,7 @@ import { wizardTranslations, type WizardTranslations } from "@/lib/wizard-i18n";
 import { useWizard } from "@/lib/wizard-context";
 import WizardStepLayout from "./WizardStepLayout";
 import { FormField, FormSelect } from "./FormField";
+import { JaNeinWahl } from "./JaNeinWahl";
 import { dialCodeOptions, dialForIso, flagSrc } from "@/lib/country-codes";
 
 // Volljährigkeit ist Voraussetzung für einen Kreditvertrag; die Obergrenze
@@ -228,6 +229,142 @@ function PersonFelder({
   );
 }
 
+/**
+ * E-Mail, Land und Telefonnummer — einmal geschrieben, zweimal benutzt.
+ *
+ * Dieselbe Ueberlegung wie bei Name und Geburtsdatum: Der zweite Kreditnehmer
+ * bekommt denselben Satz Felder, und eine Regel, die an zwei Stellen steht,
+ * wird beim naechsten Mal nur an einer geaendert.
+ */
+function KontaktFelder({
+  praefix,
+  wt,
+  werte,
+  aendere,
+  countries,
+  emailFehler,
+  vorwahlFehler,
+}: {
+  praefix: string;
+  wt: WizardTranslations;
+  werte: {
+    email: string;
+    telefonLand: string;
+    telefonVorwahl: string;
+    telefon: string;
+  };
+  aendere: (patch: {
+    email?: string;
+    telefonLand?: string;
+    telefonVorwahl?: string;
+    telefon?: string;
+  }) => void;
+  countries: { iso: string; name: string }[];
+  emailFehler?: string;
+  vorwahlFehler?: string;
+}) {
+  const t = wt.step4;
+  return (
+    <>
+      <FormField
+        id={`${praefix}email`}
+        type="email"
+        label={t.email}
+        value={werte.email}
+        onChange={(e) => aendere({ email: e.target.value })}
+        error={emailFehler}
+      />
+      <FormSelect
+        id={`${praefix}telefonLand`}
+        label={t.telefonLand}
+        value={werte.telefonLand}
+        onChange={(e) => aendere({ telefonLand: e.target.value })}
+      >
+        {countries.map(({ iso, name }) => (
+          <option key={iso} value={iso}>
+            {name}
+          </option>
+        ))}
+      </FormSelect>
+
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-medium text-muted">
+          {t.telefon}
+        </span>
+        {/* items-end richtet die feste Vorwahl an den Eingabefeldern aus,
+            obwohl sie keine eigene Beschriftung trägt.
+            Auf schmalen Handys reicht die Zeile für drei Felder nicht: Nach
+            Ländervorwahl und Ortsvorwahl bliebe für die Rufnummer zu wenig
+            Platz, ihr Text würde weggescrollt. Dort rutscht die Rufnummer
+            deshalb in eine eigene Zeile über die volle Breite. */}
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] sm:grid-cols-[auto_minmax(0,4fr)_minmax(0,6fr)] gap-3 items-end">
+          <span className="flex items-center gap-2 rounded-[16px] border border-border bg-surface px-3 py-2.5 text-sm text-muted tabular-nums whitespace-nowrap">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={flagSrc(werte.telefonLand)}
+              alt=""
+              width={20}
+              height={15}
+              className="h-[15px] w-5 shrink-0 rounded-[2px] object-cover ring-1 ring-white/15"
+            />
+            {dialForIso(werte.telefonLand)}
+          </span>
+          <FormField
+            id={`${praefix}telefonVorwahl`}
+            type="tel"
+            inputMode="numeric"
+            label={t.telefonVorwahl}
+            value={werte.telefonVorwahl}
+            maxLength={AREA_CODE_MAX}
+            onChange={(e) =>
+              aendere({
+                telefonVorwahl: e.target.value
+                  .replace(/\D/g, "")
+                  .slice(0, AREA_CODE_MAX),
+              })
+            }
+            error={vorwahlFehler}
+          />
+          <FormField
+            id={`${praefix}telefon`}
+            className="col-span-2 sm:col-span-1"
+            type="tel"
+            inputMode="numeric"
+            label={t.telefonNummer}
+            value={werte.telefon}
+            maxLength={SUBSCRIBER_MAX}
+            onChange={(e) =>
+              aendere({
+                telefon: e.target.value
+                  .replace(/\D/g, "")
+                  .slice(0, SUBSCRIBER_MAX),
+              })
+            }
+          />
+        </div>
+      </div>
+    </>
+  );
+}
+
+/** Ob E-Mail und Telefonnummer einer Person vollstaendig sind. */
+function kontaktVollstaendig(werte: {
+  email: string;
+  telefonLand: string;
+  telefonVorwahl: string;
+  telefon: string;
+}): boolean {
+  const email = werte.email.trim();
+  const at = email.lastIndexOf("@");
+  return (
+    at > 0 &&
+    at < email.length - 1 &&
+    werte.telefonLand !== "" &&
+    werte.telefonVorwahl.length >= AREA_CODE_MIN &&
+    werte.telefon.trim() !== ""
+  );
+}
+
 /** Ob Name und Geburtsdatum einer Person vollstaendig und stimmig sind. */
 function personVollstaendig(
   werte: {
@@ -340,15 +477,30 @@ export default function StepDaten() {
   const emailOk = atIndex > 0 && atIndex < email.length - 1;
   const emailError = email !== "" && !emailOk ? wt.step4.emailInvalid : undefined;
 
+  const zweiteEmail = data.zweitePerson.email.trim();
+  const zweiteAt = zweiteEmail.lastIndexOf("@");
+  const zweiteEmailFehler =
+    zweiteEmail !== "" && !(zweiteAt > 0 && zweiteAt < zweiteEmail.length - 1)
+      ? wt.step4.emailInvalid
+      : undefined;
+  const zweiteVorwahlFehler =
+    data.zweitePerson.telefonVorwahl !== "" &&
+    data.zweitePerson.telefonVorwahl.length < AREA_CODE_MIN
+      ? wt.step4.telefonVorwahlTooShort
+      : undefined;
+
   const valid =
     personVollstaendig(data, birthCheck.ok) &&
     // Bei zwei Kreditnehmern gilt fuer den zweiten dasselbe wie fuer den
     // ersten. Der zweite Vorname bleibt freiwillig, alles andere nicht.
     (!zwei || personVollstaendig(data.zweitePerson, zweiteGeburt.ok)) &&
-    emailOk &&
-    data.telefonLand !== "" &&
-    data.telefonVorwahl.length >= AREA_CODE_MIN &&
-    data.telefon.trim() !== "";
+    // Die Frage nach dem Kontakt muss beantwortet sein, und ein eigener
+    // Kontakt muss vollstaendig sein.
+    (!zwei ||
+      (data.zweitePerson.eigenerKontakt !== null &&
+        (data.zweitePerson.eigenerKontakt === "nein" ||
+          kontaktVollstaendig(data.zweitePerson)))) &&
+    kontaktVollstaendig(data);
 
   const areaCodeError =
     data.telefonVorwahl !== "" && data.telefonVorwahl.length < AREA_CODE_MIN
@@ -390,83 +542,15 @@ export default function StepDaten() {
         geburtsFehler={birthCheck.error}
       />
 
-      <FormField
-        id="email"
-        type="email"
-        label={wt.step4.email}
-        value={data.email}
-        onChange={(e) => update({ email: e.target.value })}
-        error={emailError}
+      <KontaktFelder
+        praefix=""
+        wt={wt}
+        werte={data}
+        aendere={update}
+        countries={countries}
+        emailFehler={emailError}
+        vorwahlFehler={areaCodeError}
       />
-      <FormSelect
-        id="telefonLand"
-        label={wt.step4.telefonLand}
-        value={data.telefonLand}
-        onChange={(e) => update({ telefonLand: e.target.value })}
-      >
-        {countries.map(({ iso, name }) => (
-          <option key={iso} value={iso}>
-            {name}
-          </option>
-        ))}
-      </FormSelect>
-
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-muted">
-          {wt.step4.telefon}
-        </span>
-        {/* items-end richtet die feste Vorwahl an den Eingabefeldern aus,
-            obwohl sie keine eigene Beschriftung trägt.
-            Auf schmalen Handys reicht die Zeile für drei Felder nicht: Nach
-            Ländervorwahl und Ortsvorwahl bliebe für die Rufnummer zu wenig
-            Platz, ihr Text würde weggescrollt. Dort rutscht die Rufnummer
-            deshalb in eine eigene Zeile über die volle Breite. */}
-        <div className="grid grid-cols-[auto_minmax(0,1fr)] sm:grid-cols-[auto_minmax(0,4fr)_minmax(0,6fr)] gap-3 items-end">
-          <span className="flex items-center gap-2 rounded-[16px] border border-border bg-surface px-3 py-2.5 text-sm text-muted tabular-nums whitespace-nowrap">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={flagSrc(data.telefonLand)}
-              alt=""
-              width={20}
-              height={15}
-              className="h-[15px] w-5 shrink-0 rounded-[2px] object-cover ring-1 ring-white/15"
-            />
-            {dialForIso(data.telefonLand)}
-          </span>
-          <FormField
-            id="telefonVorwahl"
-            type="tel"
-            inputMode="numeric"
-            label={wt.step4.telefonVorwahl}
-            value={data.telefonVorwahl}
-            maxLength={AREA_CODE_MAX}
-            onChange={(e) =>
-              update({
-                telefonVorwahl: e.target.value
-                  .replace(/\D/g, "")
-                  .slice(0, AREA_CODE_MAX),
-              })
-            }
-            error={areaCodeError}
-          />
-          <FormField
-            id="telefon"
-            className="col-span-2 sm:col-span-1"
-            type="tel"
-            inputMode="numeric"
-            label={wt.step4.telefonNummer}
-            value={data.telefon}
-            maxLength={SUBSCRIBER_MAX}
-            onChange={(e) =>
-              update({
-                telefon: e.target.value
-                  .replace(/\D/g, "")
-                  .slice(0, SUBSCRIBER_MAX),
-              })
-            }
-          />
-        </div>
-      </div>
 
       {zwei && (
         <>
@@ -489,6 +573,53 @@ export default function StepDaten() {
               years={years}
               geburtsFehler={zweiteGeburt.error}
             />
+
+            {/* Erst die Frage, dann die Felder. Meldet sich einer fuer beide,
+                bleibt es bei einem Kontakt; hat der zweite eigene Angaben,
+                sind sie beide Pflicht — eine Telefonnummer ohne E-Mail oder
+                umgekehrt ist ein halber Kontakt, und den sucht spaeter
+                jemand. */}
+            <div className="flex flex-col gap-2">
+              <span
+                id="frage-kontakt"
+                className="text-sm font-medium text-muted"
+              >
+                {wt.zweite.kontaktFrage}
+              </span>
+              <JaNeinWahl
+                name="eigenerKontakt"
+                beschriftetVon="frage-kontakt"
+                wert={data.zweitePerson.eigenerKontakt}
+                jaLabel={wt.zweite.ja}
+                neinLabel={wt.zweite.nein}
+                // Ein spaeteres "nein" raeumt die Angaben mit weg. Sonst ginge
+                // ein Kontakt mit, den der Kunde sichtbar zurueckgenommen hat.
+                onWert={(w) =>
+                  updateZweite(
+                    w === "nein"
+                      ? {
+                          eigenerKontakt: w,
+                          email: "",
+                          telefonVorwahl: "",
+                          telefon: "",
+                        }
+                      : { eigenerKontakt: w }
+                  )
+                }
+              />
+            </div>
+
+            {data.zweitePerson.eigenerKontakt === "ja" && (
+              <KontaktFelder
+                praefix="zweite-"
+                wt={wt}
+                werte={data.zweitePerson}
+                aendere={updateZweite}
+                countries={countries}
+                emailFehler={zweiteEmailFehler}
+                vorwahlFehler={zweiteVorwahlFehler}
+              />
+            )}
           </div>
         </>
       )}
