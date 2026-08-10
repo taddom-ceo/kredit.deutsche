@@ -232,6 +232,12 @@ export default async function CrmSeite({
       ? (findeKreditartNachId(antrag.kreditart)?.de.name ?? null)
       : null,
     kreditart: antrag.kreditart || null,
+    // Die Farbe des Zwecks kommt aus derselben Liste, aus der die
+    // Antragsstrecke sie nimmt. Damit sieht das Zeichen im CRM aus wie das,
+    // das der Kunde angeklickt hat — und nicht wie ein zweites, eigenes.
+    farbe: antrag.kreditart
+      ? (findeKreditartNachId(antrag.kreditart)?.farbe ?? null)
+      : null,
   }));
 
   return (

@@ -7,15 +7,21 @@ import {
   useOptimistic,
   useRef,
   useState,
+  type CSSProperties,
   type PointerEvent as ZeigerEreignis,
 } from "react";
 import { fallVerschieben } from "@/app/crm/aktionen";
 import { stationIcon } from "@/components/crm/StationIcons";
 import { ZweckZeichen } from "@/components/illustrations/ZweckIcons";
-import { TON_KLASSEN, type StatusId, type Ton } from "@/lib/crm/pipeline";
+import {
+  SPAETE_ORDNER,
+  TON_KLASSEN,
+  type StatusId,
+  type Ton,
+} from "@/lib/crm/pipeline";
 
 /**
- * Die Pipeline als Brett: vierzehn Ordner nebeneinander, die Faelle als Karten
+ * Die Pipeline als Brett: die Ordner nebeneinander, die Faelle als Karten
  * darin, und jede Karte laesst sich von Ordner zu Ordner ziehen.
  *
  * Die Spalten tragen nur ein Zeichen und die Anzahl. Mit ausgeschriebenem
@@ -100,6 +106,8 @@ export type BrettFall = {
   art: string | null;
   /** Dessen Kennung — dafuer, welches Zeichen die Karte traegt. */
   kreditart: string | null;
+  /** Und dessen Farbe, dieselbe wie in der Antragsstrecke. */
+  farbe: string | null;
 };
 
 /** Wie weit der Zeiger wandern muss, bis aus einem Klick ein Zug wird. */
@@ -177,6 +185,19 @@ export default function PipelineBrett({
     x: number;
     y: number;
   } | null>(null);
+
+  /**
+   * Ob die hinteren Ordner ausgeklappt sind.
+   *
+   * Zugeklappt teilen sich zwoelf statt fuenfzehn Spalten dieselbe Breite, und
+   * aus 120 Pixel je Spalte werden 164 — genug fuer das Zeichen neben dem
+   * Betrag statt nur unter ihm. Ist einer der hinteren Ordner gerade
+   * aufgeschlagen, sind sie von Anfang an offen: Sonst zeigte die Liste unten
+   * die Faelle eines Ordners, den es oben scheinbar nicht gibt.
+   */
+  const [spaeteOffen, setSpaeteOffen] = useState(
+    gewaehlt !== null && SPAETE_ORDNER.includes(gewaehlt)
+  );
 
   const brett = useRef<HTMLDivElement>(null);
   const start = useRef<{
@@ -346,6 +367,24 @@ export default function PipelineBrett({
     });
   }
 
+  /**
+   * Welche Ordner das Brett gerade zeigt.
+   *
+   * Die hinteren fallen nur weg, solange sie zugeklappt sind. Stillgelegte
+   * Ordner bleiben immer stehen: Sie tauchen ohnehin nur auf, wenn Faelle
+   * darin liegen, und die sollen herausgezogen werden.
+   */
+  const sichtbar = spaeteOffen
+    ? stationen
+    : stationen.filter((s) => !SPAETE_ORDNER.includes(s.id));
+  const versteckt = stationen.filter(
+    (s) => !spaeteOffen && SPAETE_ORDNER.includes(s.id)
+  );
+  const verstecktesGewicht = versteckt.reduce(
+    (summe, s) => summe + nachOrdner(s.id).length,
+    0
+  );
+
   return (
     <div className="flex flex-col gap-3">
       {fehler && (
@@ -356,6 +395,49 @@ export default function PipelineBrett({
           Verschieben nicht möglich: {fehler}
         </p>
       )}
+
+      {/**
+       * Der Knopf fuer die hinteren Ordner.
+       *
+       * Er nennt sie beim Namen und sagt, wie viele Faelle darin liegen —
+       * beides, damit "zugeklappt" nicht mit "leer" verwechselt wird. Liegt
+       * dort etwas, steht die Zahl deutlich da; liegt nichts dort, steht es
+       * ebenso deutlich.
+       */}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setSpaeteOffen((a) => !a)}
+          aria-expanded={spaeteOffen}
+          className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-[11px] text-muted transition-colors duration-150 hover:border-border-strong hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+            className={`size-3 transition-transform duration-150 ${
+              spaeteOffen ? "rotate-90" : ""
+            }`}
+          >
+            <path d="M9 5l7 7-7 7" />
+          </svg>
+          {spaeteOffen ? (
+            <>Tag 4+, On Hold und Watch ausblenden</>
+          ) : (
+            <>
+              Tag 4+, On Hold und Watch zeigen
+              <span className="tabular-nums text-foreground">
+                {verstecktesGewicht}
+              </span>
+              {verstecktesGewicht === 1 ? "Fall" : "Fälle"}
+            </>
+          )}
+        </button>
+      </div>
 
       <div
         ref={brett}
@@ -370,18 +452,22 @@ export default function PipelineBrett({
         className="grid items-start gap-2 overflow-x-auto pb-3"
         /**
          * Gitter statt Reihe, und die Spalten nicht fest, sondern
-         * `minmax(120px, 1fr)`.
+         * `minmax(164px, 1fr)`.
          *
          * Feste Breiten koennen nur eins von beidem: Auf einem breiten Schirm
          * lassen sie rechts Platz liegen, auf einem schmalen laufen sie
          * hinaus. `1fr` verteilt die vorhandene Breite gleichmaessig auf alle
-         * Ordner — auf einem 24-Zoll-Schirm werden daraus rund 160 Pixel je
-         * Spalte, auf einem Notebook rund 120. Die Untergrenze ist der Punkt,
-         * an dem eine Karte noch lesbar ist; darunter faengt das Brett wieder
-         * an zu rollen, statt die Karten zu zerdruecken.
+         * Ordner; die Untergrenze ist der Punkt, an dem eine Karte noch
+         * traegt, was sie tragen soll, und darunter faengt das Brett an zu
+         * rollen, statt die Karten zu zerdruecken.
+         *
+         * Woher die 164: Gemessen bleiben davon 118 Pixel im Innern der Karte,
+         * und "92.000 €" braucht neben dem 32 Pixel breiten Zeichen 65 davon.
+         * Bei 150 war der hoechste Betrag abgeschnitten — also gerade der, den
+         * man auf einem Brett zuerst sucht.
          */
         style={{
-          gridTemplateColumns: `repeat(${stationen.length}, minmax(120px, 1fr))`,
+          gridTemplateColumns: `repeat(${sichtbar.length}, minmax(164px, 1fr))`,
         }}
         // Beim Ziehen bewegt sich der Zeiger auch ueber Zwischenraeume. Die
         // Ereignisse landen dank Zeigerfang trotzdem am Griff — hier stehen
@@ -389,7 +475,7 @@ export default function PipelineBrett({
         onPointerUp={loslassen}
         onPointerCancel={abbrechen}
       >
-        {stationen.map((station) => {
+        {sichtbar.map((station) => {
           const karten = nachOrdner(station.id);
           const ton = TON_KLASSEN[station.ton];
           const aktiv = ziel === station.id && zug !== null;
@@ -553,6 +639,16 @@ function Karte({
   onAbbrechen: () => void;
   onWaehlen: (id: string, nach: StatusId) => void;
 }) {
+  /**
+   * Ob die Vorschau offen ist.
+   *
+   * Aufgeklappt wird sie ueber dem Betrag, zugeklappt beim Verlassen der
+   * ganzen Karte — und dazu ueber die Tastatur, sobald irgendetwas auf der
+   * Karte den Fokus hat. Eine Auskunft, die es nur mit der Maus gibt, gibt es
+   * fuer die Tastatur gar nicht.
+   */
+  const [offen, setOffen] = useState(false);
+
   return (
     // `relative` ist hier kein Schmuck, sondern noetig — und das gilt genauso
     // fuer das `relative` am Auswahlfeld weiter unten: Dessen Beschriftung
@@ -566,9 +662,18 @@ function Karte({
     // Seite in die Breite: Das CRM liess sich am Telefon seitlich
     // wegschieben, obwohl das Brett fuer sich sauber rollte.
     <li
-      className={`group relative flex gap-0.5 rounded-[14px] border border-border bg-surface-2 transition-[opacity,border-color,box-shadow] duration-150 hover:border-border-strong hover:shadow-[0_10px_24px_-14px_rgba(0,0,0,0.9)] focus-within:border-border-strong ${
-        inDerLuft ? "opacity-40" : ""
-      }`}
+      onPointerLeave={() => setOffen(false)}
+      onFocus={() => setOffen(true)}
+      // `relatedTarget` ist das Element, das den Fokus bekommt. Bleibt er auf
+      // der Karte — vom Namen zum Auswahlfeld —, bleibt die Vorschau offen.
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          setOffen(false);
+        }
+      }}
+      className={`relative flex gap-0.5 rounded-[14px] border border-border bg-surface-2 transition-[opacity,border-color,box-shadow] duration-150 hover:border-border-strong focus-within:border-border-strong ${
+        offen ? "shadow-[0_10px_24px_-14px_rgba(0,0,0,0.9)]" : ""
+      } ${inDerLuft ? "opacity-40" : ""}`}
     >
       {darfSchieben && (
         <span
@@ -601,61 +706,83 @@ function Karte({
       {/**
        * Das Auswahlfeld unten statt oben rechts.
        *
-       * In einer 120 Pixel breiten Spalte bleiben nach Griff und Rand rund
-       * neunzig fuer den Inhalt. Sass das Feld oben in der Ecke, nahm es davon
+       * In einer schmalen Spalte bleiben nach Griff und Rand rund hundert
+       * Pixel fuer den Inhalt. Sass das Feld oben in der Ecke, nahm es davon
        * ein Viertel weg — und zwar in der Zeile, in der es am meisten weh tut.
        * Unten teilt es sich die Zeile mit der Wiedervorlage, die ohnehin nur
        * selten da ist.
        */}
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5 py-1.5 pr-1.5">
+      <div className="flex min-w-0 flex-1 flex-col py-1.5 pr-1.5">
+        {/* Das Datum klein oben rechts: Es beantwortet "seit wann liegt das
+            hier", und das ist eine Frage, die man an eine Karte stellt,
+            nachdem man sie gefunden hat. In eigener Zeile, damit es dem
+            Betrag daneben keine Breite wegnimmt. */}
+        <span className="self-end text-[9px] leading-none text-muted/60 tabular-nums">
+          {fall.eingang}
+        </span>
+
         {/**
-         * Der Betrag gross, alles Uebrige klein.
+         * Zeichen gross links, Betrag gross daneben, Name klein darunter.
          *
          * Vorher standen vier gleich grosse Zeilen da — Name, Ort, Betrag,
          * Zweck, Datum —, und ein Brett aus vierzig solchen Karten war eine
          * Wand aus Text, durch die niemand hindurchsah. Auf einem Brett zaehlt
-         * die Frage "wo liegt wie viel", und die beantwortet der Betrag. Der
-         * Name steht darunter: Er sagt, wer es ist, sobald man schon weiss,
-         * welche Karte man ansieht.
+         * die Frage "wo liegt wie viel", und die beantworten Zeichen und
+         * Betrag zusammen, ohne dass man ein Wort lesen muss.
+         *
+         * Das Zeichen ist dasselbe wie in der Antragsstrecke, mit derselben
+         * Farbe und derselben getoenten Flaeche darunter (`zweck-zeichen`).
+         * Der Kunde hat es angeklickt, hier steht es wieder — zwei Ansichten
+         * derselben Sache sollen auch gleich aussehen.
          */}
-        <span className="truncate text-[15px] font-semibold leading-tight tabular-nums">
-          {fall.betrag}
-        </span>
-
-        {/* Der Zweck als Zeichen statt als Wort, und in der Zeile des Namens
-            statt in der des Betrags. Neben dem Betrag gemessen blieben fuer
-            ihn rund achtzig Pixel, und "92.000 €" braucht sie fast alle — die
-            hohen Betraege, also gerade die auffaelligen, standen abgeschnitten
-            da. Neben dem kleineren Namen kostet das Zeichen niemanden etwas.
-            "Modernisierung" dagegen nimmt eine ganze Zeile und wird in einer
-            120 Pixel schmalen Spalte ohnehin abgeschnitten; das Zeichen ist
-            dasselbe, das der Kunde in der Antragsstrecke angeklickt hat. Der
-            ausgeschriebene Name steht beim Zeigen darunter und geht an
-            Vorleseprogramme als Text. */}
-        <div className="flex min-w-0 items-center gap-1">
-          <span className="shrink-0 text-muted/80" title={fall.art ?? undefined}>
-            {fall.kreditart ? (
-              <ZweckZeichen id={fall.kreditart} className="size-3.5" />
-            ) : (
-              <span aria-hidden className="block size-3.5" />
-            )}
+        <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
+          <span
+            className="zweck-zeichen grid size-8 shrink-0 place-items-center rounded-[10px]"
+            style={{ "--zweck": fall.farbe ?? "var(--muted)" } as CSSProperties}
+            title={fall.art ?? undefined}
+          >
+            <ZweckZeichen id={fall.kreditart ?? ""} className="size-5" />
             <span className="sr-only">{fall.art ?? "Verwendung offen"}</span>
           </span>
-          {/* Ruhend abgeschnitten, beim Zeigen ausgeschrieben: In 120 Pixeln
-              hat "Philippa-Charlotte Dummy" keinen Platz, und drei Punkte sind
-              ehrlicher als eine zerquetschte Zeile. Wer den ganzen Namen will,
-              zeigt darauf — dann bricht er um, wie alles andere auch. */}
-          <Link
-            href={`/crm/antrag/${fall.id}`}
-            title={fall.name}
-            className="truncate text-[11px] leading-snug text-muted hover:text-accent group-hover:overflow-visible group-hover:whitespace-normal group-focus-within:overflow-visible group-focus-within:whitespace-normal"
-          >
-            {fall.name}
-          </Link>
+
+          <div className="flex min-w-0 flex-1 flex-col">
+            {/**
+             * Der Betrag ist der Schalter fuer die Vorschau.
+             *
+             * Nicht die ganze Karte: Wer den Zeiger ueber das Brett fuehrt,
+             * um eine Karte zu greifen, streift dabei ein Dutzend andere, und
+             * jede davon klappte auf und schob die darunter weg. Der Betrag
+             * ist klein genug, dass man ihn absichtlich ansteuert.
+             *
+             * Zugeklappt wird erst, wenn der Zeiger die ganze Karte verlaesst
+             * (siehe `onPointerLeave` am `li`). Sonst fiele die Vorschau in
+             * dem Moment zu, in dem man sie zu lesen beginnt.
+             */}
+            <span
+              data-betrag
+              onPointerEnter={() => setOffen(true)}
+              className="w-fit max-w-full cursor-default truncate text-[15px] font-semibold leading-tight tabular-nums"
+            >
+              {fall.betrag}
+            </span>
+
+            {/* Ruhend abgeschnitten, beim Zeigen ausgeschrieben: In einer
+                schmalen Spalte hat "Philippa-Charlotte Dummy" keinen Platz,
+                und drei Punkte sind ehrlicher als eine zerquetschte Zeile. */}
+            <Link
+              href={`/crm/antrag/${fall.id}`}
+              title={fall.name}
+              className={`text-[11px] leading-snug text-muted hover:text-accent ${
+                offen ? "" : "truncate"
+              }`}
+            >
+              {fall.name}
+            </Link>
+          </div>
         </div>
 
         {/**
-         * Beim Zeigen klappt aus, was die Karte sonst weglaesst.
+         * Die Vorschau: was die Karte sonst weglaesst.
          *
          * Kein eingeblendeter Kasten am Zeiger, sondern die Karte selbst wird
          * hoeher. Ein Kasten muesste `fixed` liegen und von Hand ausgerichtet
@@ -664,39 +791,24 @@ function Karte({
          * Ordnern). Waechst die Karte in der Reihe, rollt die Spalte einfach
          * mit.
          *
-         * `focus-within` steht daneben, damit dieselbe Auskunft ueber die
-         * Tastatur zu bekommen ist. Ein Hinweis, den es nur mit der Maus gibt,
-         * gibt es fuer die Tastatur gar nicht.
+         * Ohne Ort: Ein Brett haengt offen im Buero, wird geteilt und
+         * abfotografiert. Der Betrag sagt nichts ueber eine Person, eine
+         * Adresse schon. Wer sie braucht, oeffnet den Fall.
          */}
-        <div
-          lang="de"
-          /* `hyphens-auto` vor `break-words`: Ein Wort, das nicht in 74 Pixel
-             passt, wird sonst irgendwo zerschnitten — "Zahnbehandlu/ng".
-             Mit Silbentrennung bricht es dort, wo es ein Mensch auch braeche,
-             und mit Trennstrich. Kennt der Browser die deutschen Trennregeln
-             nicht, bleibt der harte Umbruch als Rueckfall. */
-          className="hidden flex-col gap-0.5 hyphens-auto break-words pt-1 text-[10px] leading-snug text-muted group-hover:flex group-focus-within:flex"
-        >
-          {/* Eine Angabe je Zeile, nichts abgeschnitten — das ist der Sinn
-              des Aufklappens.
-
-              Nebeneinander geht nicht: Gemessen bleiben in einer 120 Pixel
-              schmalen Spalte 74 Pixel Innenbreite. Steht rechts daneben noch
-              "36 Mon.", bleiben links 25 — und "Zahnbehandlung" ist ein Wort,
-              das sich nicht auf 25 Pixel umbrechen laesst. Es lief dann quer
-              ueber die Laufzeit hinweg, zwei Texte uebereinander.
-
-              Nur Laufzeit und Datum teilen sich eine Zeile, und auch die per
-              `flex-wrap`: Passen sie nebeneinander, stehen sie nebeneinander;
-              passen sie nicht, rutscht das Datum eine Zeile tiefer, statt
-              irgendwo hinauszuragen. */}
-          <span>{fall.ort || "—"}</span>
-          <span>{fall.art ?? "—"}</span>
-          <span className="flex flex-wrap gap-x-1.5 tabular-nums">
-            <span>{fall.laufzeit}</span>
-            <span>{fall.eingang}</span>
-          </span>
-        </div>
+        {offen && (
+          <div
+            lang="de"
+            /* `hyphens-auto` vor `break-words`: Ein Wort, das nicht in die
+               Spalte passt, wird sonst irgendwo zerschnitten —
+               "Zahnbehandlu/ng". Mit Silbentrennung bricht es dort, wo es ein
+               Mensch auch braeche. Kennt der Browser die deutschen
+               Trennregeln nicht, bleibt der harte Umbruch als Rueckfall. */
+            className="flex flex-col gap-0.5 hyphens-auto break-words pt-1.5 text-[10px] leading-snug text-muted"
+          >
+            <span>{fall.art ?? "—"}</span>
+            <span className="tabular-nums">{fall.laufzeit}</span>
+          </div>
+        )}
 
         <div className="mt-0.5 flex min-h-6 items-center justify-between gap-1.5">
           {fall.wiedervorlage ? (
