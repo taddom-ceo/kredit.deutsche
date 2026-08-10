@@ -35,7 +35,8 @@
  *
  *   · Betraege nur in Schritten von 500 (der Regler kennt keine anderen)
  *   · Laufzeiten nur aus DURATIONS in src/lib/loan-calc.ts
- *   · IBANs mit gueltiger Pruefsumme (isValidIban in src/lib/iban.ts)
+ *   · IBANs mit gueltiger Pruefsumme (isValidIban in src/lib/iban.ts) — oder
+ *     gar keine, seit das Feld freiwillig ist; ein Fall laesst sie weg
  *   · Strassen, die im Verzeichnis unter public/streets wirklich stehen
  *   · Kreditarten aus der Liste in wizard-i18n (kreditarten)
  *
@@ -150,7 +151,9 @@ const FAELLE = [
     geb: "18.01.1996", plz: "44135", ort: "Dortmund", str: "Ostenhellweg", nr: "21",
     beruf: "Angestellt", ag: "Stadtwerke Dortmund", seit: "2022-11",
     netto: "2190", nk: "390", unterhalt: "0",
-    iban: "DE44600501011000000685", bank: "Stadtsparkasse München" },
+    // Ohne IBAN abgeschickt. Seit sie in der Strecke freiwillig ist, gibt es
+    // diesen Fall wirklich, und im CRM soll er nachstellbar sein.
+    iban: "", bank: "Sparkasse Dortmund" },
 
   { v: "Franziska", zweck: "moebel", betrag: 9000, monate: 36, personen: 1,
     geb: "05.05.2003", plz: "20095", ort: "Hamburg", str: "Mönckebergstraße", nr: "17",
@@ -304,7 +307,7 @@ function bauFall(f, nummer) {
     unterhalt: f.unterhalt,
     hatKredite: kredite.length > 0 ? "ja" : "nein",
     kredite,
-    iban: ibanFormatiert(f.iban),
+    iban: f.iban ? ibanFormatiert(f.iban) : "",
     bankname: f.bank,
     kontoinhaber: `${f.v} Dummy`,
     abgeschlossen: true,

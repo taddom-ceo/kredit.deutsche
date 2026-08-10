@@ -396,11 +396,30 @@ export default async function AntragSeite({
               Bankverbindung
             </h2>
             <dl className="flex flex-col">
-              <div className="flex items-baseline justify-between gap-3 border-b border-border/60 py-2">
-                <dt className="text-xs text-muted shrink-0">IBAN</dt>
+              {/* Seit die IBAN in der Strecke freiwillig ist, fehlt sie
+                  regelmäßig. Ein Gedankenstrich sähe aus wie jedes andere
+                  leere Feld; hier ist er aber eine Aufgabe fürs Telefonat,
+                  weil ohne IBAN nichts ausgezahlt wird. */}
+              <div
+                className={`flex items-baseline justify-between gap-3 border-b border-border/60 py-2 ${
+                  antrag.iban ? "" : "-mx-2 rounded-[10px] bg-amber-400/[0.07] px-2"
+                }`}
+              >
+                <dt className="text-xs text-muted shrink-0">
+                  IBAN
+                  {!antrag.iban && (
+                    <span className="block text-[10px] leading-tight text-amber-200/70">
+                      im Gespräch erfragen
+                    </span>
+                  )}
+                </dt>
                 <dd className="flex items-center gap-2">
-                  <span className="text-sm text-right tabular-nums break-all">
-                    {antrag.iban || "—"}
+                  <span
+                    className={`text-sm text-right tabular-nums break-all ${
+                      antrag.iban ? "" : "font-semibold text-amber-200"
+                    }`}
+                  >
+                    {antrag.iban || "fehlt"}
                   </span>
                   {antrag.iban && (
                     <IbanKopieren antragId={antrag.id} iban={antrag.iban} />
