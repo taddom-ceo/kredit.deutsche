@@ -231,6 +231,7 @@ export default async function CrmSeite({
     art: antrag.kreditart
       ? (findeKreditartNachId(antrag.kreditart)?.de.name ?? null)
       : null,
+    kreditart: antrag.kreditart || null,
   }));
 
   return (
