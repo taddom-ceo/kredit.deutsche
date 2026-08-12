@@ -47,7 +47,28 @@ export default function WizardStepLayout({
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-      <div className="flex flex-col gap-6">
+      {/*
+        Die linke Spalte laeuft beim Scrollen mit.
+
+        Sie traegt die Zusagen, unter denen jemand seine Einkommens- und
+        Bankdaten eintippt — "kostenlos", "SSL-verschluesselt", "kein
+        Schufa-Eintrag". Genau dort, wo diese Zusagen zaehlen, standen sie
+        bisher nicht mehr im Bild: Die langen Schritte sind hoeher als das
+        Fenster, und wer beim Nettoeinkommen angekommen ist, hat sie schon
+        lange nach oben hinausgescrollt.
+
+        `sticky` und nicht ein zweiter, eingeblendeter Block wie der Aufruf auf
+        der Startseite: Dort geht es darum, einen Knopf nachzureichen, den man
+        nicht mehr sieht. Hier steht der Text ohnehin schon da und soll nur
+        stehen bleiben.
+
+        Nur ab `lg`, weil erst dort zwei Spalten nebeneinander stehen. Darunter
+        liegt der Block ueber dem Formular; klebte er, verdeckte er auf einem
+        Handy die halbe Eingabe. `items-start` am Raster ist die Bedingung
+        dafuer, dass das ueberhaupt wirkt: Eine auf volle Hoehe gestreckte
+        Spalte hat keinen Weg, an dem sie kleben koennte.
+      */}
+      <div className="flex flex-col gap-6 lg:sticky lg:top-8">
         <span className="inline-flex w-fit items-center rounded-full border border-border bg-surface px-3 py-1 text-[11px] font-semibold text-muted tracking-wide">
           {eyebrow}
         </span>

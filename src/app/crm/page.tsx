@@ -15,6 +15,17 @@ import {
   type Antrag,
   type AntragFilter,
 } from "@/lib/crm/antraege";
+import {
+  alsAdresse,
+  alsFilter,
+  angezeigteFaelle,
+  anzahlFilter,
+  ersteRichtung,
+  feinfilterAktiv,
+  filterAktiv as istFilterAktiv,
+  leseAnsicht,
+  type Sortierschluessel,
+} from "@/lib/crm/ansicht";
 import { adressName } from "@/lib/crm/db";
 import { schluesselVorhanden } from "@/lib/crm/verschluesselung";
 import { ROLLEN_NAMEN } from "@/lib/crm/benutzer";
@@ -23,12 +34,12 @@ import {
   PAPIERKORB,
   STATIONEN,
   TON_KLASSEN,
-  findeStation,
   stationOderErsatz,
   type StatusId,
 } from "@/lib/crm/pipeline";
 import {
   bewerte,
+  KLASSEN,
   zeigeWert,
   type Prioritaetsklasse,
 } from "@/lib/crm/priorisierung";
@@ -48,23 +59,12 @@ function einzeln(wert: string | string[] | undefined): string {
   return (Array.isArray(wert) ? wert[0] : wert) ?? "";
 }
 
-/** Adresse mit geaenderten Suchparametern, ohne die uebrigen zu verlieren. */
-function mitParametern(
-  jetzige: AntragFilter,
-  aenderung: Partial<AntragFilter>,
-  sortierung?: string
-): string {
-  const zusammen = { ...jetzige, ...aenderung };
-  const p = new URLSearchParams();
-  if (zusammen.suche) p.set("q", zusammen.suche);
-  if (zusammen.station) p.set("station", zusammen.station);
-  if (zusammen.nurFaellig) p.set("faellig", "1");
-  // Die Sortierung ueberlebt einen Ordnerwechsel: Wer nach Prioritaet sortiert
-  // und dann einen Ordner aufschlaegt, will ihn auch nach Prioritaet sehen.
-  if (sortierung && sortierung !== "eingang") p.set("sortierung", sortierung);
-  const text = p.toString();
-  return text ? `/crm?${text}` : "/crm";
-}
+/** Kennung des Filterformulars — die Felder in der Klappe gehoeren dazu. */
+const FORMULAR = "eingangsfilter";
+
+/** Einheitliches Aussehen fuer die Felder in der Filterklappe. */
+const FELD =
+  "w-28 rounded-[10px] border border-border bg-surface-2 px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40";
 
 /**
  * Die Farbe der Prioritaetsplakette.
@@ -83,6 +83,93 @@ const KLASSEN_KLASSEN: Record<Prioritaetsklasse, string> = {
   P5: "border-border/40 text-muted/50",
 };
 
+/**
+ * Ein Paar Von-Bis-Felder mit Beschriftung darueber.
+ *
+ * Vier Mal derselbe Aufbau in der Filterklappe — einmal beschrieben statt
+ * viermal abgeschrieben. Die Einheit steht hinter den Feldern und nicht in
+ * ihnen: In einem Zahlenfeld waere sie ein Platzhalter, der beim ersten
+ * Tastendruck verschwindet.
+ */
+function Spanne({
+  titel,
+  einheit,
+  hinweis,
+  children,
+}: {
+  titel: string;
+  einheit?: string;
+  hinweis?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-[11px] font-semibold text-muted">
+        {titel}
+        {hinweis && (
+          <span className="ml-1.5 font-normal text-muted/60">{hinweis}</span>
+        )}
+      </span>
+      <div className="flex items-center gap-1.5">
+        {children}
+        {einheit && (
+          <span className="text-[11px] text-muted/70">{einheit}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Eine Spaltenueberschrift, nach der sich sortieren laesst.
+ *
+ * Der Pfeil steht nur an der Spalte, nach der gerade sortiert wird. Ihn blass
+ * an allen anzuzeigen waere ein Angebot, das man nicht braucht: Dass eine
+ * Ueberschrift anklickbar ist, zeigt der Zeiger, und dass sie gerade gilt,
+ * soll auf einen Blick zu sehen sein — nicht durch Vergleichen von vier
+ * Graustufen nebeneinander.
+ */
+function Kopf({
+  titel,
+  href,
+  aktiv,
+  richtung,
+  rechts = false,
+}: {
+  titel: string;
+  href: string;
+  aktiv: boolean;
+  richtung: "auf" | "ab";
+  rechts?: boolean;
+}) {
+  return (
+    <th
+      // Die Auskunft gehoert an die Spalte, nicht an den Verweis darin: Eine
+      // Vorlesehilfe fragt die Zelle, wie die Tabelle sortiert ist.
+      aria-sort={
+        aktiv ? (richtung === "auf" ? "ascending" : "descending") : "none"
+      }
+      className={`font-semibold px-5 py-3 ${rechts ? "text-right" : "text-left"}`}
+    >
+      <Link
+        href={href}
+        // Der Verweis fuehrt auf dieselbe Liste zurueck, damit die Antwort auf
+        // den Klick im Bild bleibt statt oben am Brett zu landen.
+        className={`inline-flex items-center gap-1 whitespace-nowrap transition-colors duration-150 hover:text-foreground ${
+          aktiv ? "text-accent" : ""
+        }`}
+      >
+        {titel}
+        {aktiv && (
+          <span aria-hidden="true" className="text-[9px]">
+            {richtung === "auf" ? "▲" : "▼"}
+          </span>
+        )}
+      </Link>
+    </th>
+  );
+}
+
 /** TT.MM. — mehr traegt eine Karte nicht, ohne unruhig zu werden. */
 function kurzerTag(wert: string): string {
   return new Date(wert).toLocaleDateString("de-DE", {
@@ -99,29 +186,19 @@ export default async function CrmSeite({
   const benutzer = await verlangeAnmeldung("/crm");
   const parameter = await searchParams;
 
-  const gewaehlteStation = einzeln(parameter.station);
-  const filter: AntragFilter = {
-    suche: einzeln(parameter.q).trim(),
-    // Nur Stationen, die es gibt — sonst zeigte eine erfundene Adresse eine
-    // leere Liste, als waere wirklich nichts da.
-    station: findeStation(gewaehlteStation)
-      ? (gewaehlteStation as StatusId)
-      : null,
-    nurFaellig: einzeln(parameter.faellig) === "1",
-  };
-  const filterAktiv = Boolean(
-    filter.suche || filter.station || filter.nurFaellig
-  );
   /**
-   * Wonach die Liste sortiert ist.
+   * Filter und Reihenfolge stehen vollstaendig in der Adresse.
    *
-   * "Eingang" bleibt die Voreinstellung: Es ist die Reihenfolge, in der die
-   * Faelle hereinkommen, und die Datenbank liefert sie ohnehin so.
-   * "Priorität" sortiert die geladenen Zeilen hier — nicht in SQL, weil der
-   * Wert von der Uhr abhaengt und in keiner Spalte steht. Das reicht, solange
-   * die Liste geladen ist, wie sie ist: hoechstens fuenfhundert Zeilen.
+   * Damit ist jede Ansicht ein Lesezeichen und laesst sich weitergeben — "die
+   * offenen Faelle ab 30.000 aus dem letzten Monat" ist ein Link und keine
+   * Anleitung. Ausgelesen wird das an einer Stelle, die Liste, Brett und
+   * Export gemeinsam benutzen; sonst zeigte der Export irgendwann eine andere
+   * Auswahl als die Liste, aus der man ihn angeklickt hat.
    */
-  const sortierung = einzeln(parameter.sortierung) === "prio" ? "prio" : "eingang";
+  const ansicht = leseAnsicht((name) => einzeln(parameter[name]));
+  const filter: AntragFilter = alsFilter(ansicht);
+  const filterAktiv = istFilterAktiv(ansicht);
+  const sortierung = ansicht.sortierung;
 
   /**
    * Das Brett kennt den Ordner-Filter nicht. Es ist die Uebersicht ueber alle
@@ -131,8 +208,8 @@ export default async function CrmSeite({
    * auch dort: Wer nach "Müller" sucht, will Müller im Brett sehen.
    */
   const brettFilter: AntragFilter = {
-    suche: filter.suche,
-    nurFaellig: filter.nurFaellig,
+    ...filter,
+    station: null,
     // Nur hier: Ohne die Karten des Papierkorbs liesse sich aus ihm nichts
     // wieder herausziehen. Liste, Zaehlung und Export lassen ihn weg.
     mitPapierkorb: true,
@@ -221,26 +298,47 @@ export default async function CrmSeite({
    * auf den Klick laege ungesehen unterhalb des Bildschirmrands.
    */
   const ordnerAdresse = (id: StatusId) =>
-    `${mitParametern(
-      filter,
-      { station: filter.station === id ? null : id },
-      sortierung
-    )}#eingang`;
+    `${alsAdresse(ansicht, {
+      station: ansicht.station === id ? null : id,
+    })}#eingang`;
 
   /**
-   * Die Liste in der gewaehlten Reihenfolge.
+   * Die Adresse, die eine Spaltenueberschrift traegt.
    *
-   * Kopiert, nicht an Ort und Stelle sortiert: `antraege` ist das Ergebnis
-   * der Abfrage, und das soll nicht davon abhaengen, was die Anzeige damit
-   * vorhat. Bei gleichem Wert bleibt die Reihenfolge der Abfrage — neueste
-   * zuerst.
+   * Erster Klick: nach dieser Kennzahl sortieren, in der Richtung, die bei ihr
+   * die naheliegende ist. Jeder weitere: die Richtung umdrehen. Dass beides an
+   * derselben Ueberschrift haengt, ist die Bedienung, die man aus jeder
+   * Tabelle kennt — und sie braucht kein Skript, weil es Verweise sind.
    */
-  const listenAntraege =
-    sortierung === "prio"
-      ? [...antraege].sort(
-          (a, b) => bewerte(b, jetzt).score - bewerte(a, jetzt).score
-        )
-      : antraege;
+  const sortierAdresse = (schluessel: Sortierschluessel) =>
+    `${alsAdresse(ansicht, {
+      sortierung: schluessel,
+      richtung:
+        ansicht.sortierung === schluessel
+          ? ansicht.richtung === "auf"
+            ? "ab"
+            : "auf"
+          : ersteRichtung(schluessel),
+    })}#eingang`;
+
+  /**
+   * Die Liste, wie sie angezeigt wird: nachgefiltert und sortiert.
+   *
+   * Beides passiert hier und nicht in SQL, weil Einkommen und Prioritaet in
+   * keiner Spalte stehen — das Einkommen als getippte Zeichenkette im JSON,
+   * die Prioritaet gar nicht, weil sie von der Uhr abhaengt. Das traegt,
+   * solange die Abfrage laedt, was sie laedt: hoechstens fuenfhundert Zeilen.
+   */
+  const listenAntraege = angezeigteFaelle(antraege, ansicht, jetzt);
+
+  /**
+   * Wie viele Faelle die Auswahl trifft.
+   *
+   * Sobald hier nachgefiltert wird, ist die gezaehlte Zahl aus der Datenbank
+   * nicht mehr die Antwort — sie kennt weder Einkommen noch Prioritaet.
+   * Gezaehlt wird dann, was uebrig geblieben ist.
+   */
+  const angezeigt = feinfilterAktiv(ansicht) ? listenAntraege.length : getroffen;
 
   const spalten: BrettStation[] = [
     ...STATIONEN.map((s) => ({
@@ -280,7 +378,11 @@ export default async function CrmSeite({
   /** Der aufgeschlagene Ordner — fuer die Markierung oben und die Ueberschrift unten. */
   const offenerOrdner = filter.station ? stationOderErsatz(filter.station) : null;
 
-  const karten: BrettFall[] = fuersBrett.map((antrag) => ({
+  // Das Brett bekommt dieselbe Auswahl und dieselbe Reihenfolge wie die Liste.
+  // Sonst stuende oben eine Karte, die unten herausgefiltert ist — und die
+  // Zahl an der Spalte, die aus den Karten gezaehlt wird, widerspraeche der
+  // Zahl an der Ueberschrift darunter.
+  const karten: BrettFall[] = angezeigteFaelle(fuersBrett, ansicht, jetzt).map((antrag) => ({
     id: antrag.id,
     status: antrag.status,
     name: vollerName(antrag),
@@ -446,7 +548,7 @@ export default async function CrmSeite({
                     {offenerOrdner.name}
                   </span>
                   <span className="font-normal text-muted">
-                    {getroffen} von {gesamt}
+                    {angezeigt} von {gesamt}
                   </span>
                   <span className="hidden font-normal text-muted sm:inline">
                     · {offenerOrdner.beschreibung}
@@ -457,7 +559,7 @@ export default async function CrmSeite({
                   Eingang
                   {filterAktiv && (
                     <span className="font-normal text-muted">
-                      {getroffen} von {gesamt}
+                      {angezeigt} von {gesamt}
                     </span>
                   )}
                 </>
@@ -467,10 +569,37 @@ export default async function CrmSeite({
             <div className="flex flex-wrap items-center gap-2">
               {/* Ein gewoehnliches Formular ohne Skript: Die Suche steht danach
                   in der Adresse und laesst sich als Lesezeichen ablegen oder
-                  weitergeben. */}
-              <form method="get" action="/crm" className="flex flex-wrap gap-2">
+                  weitergeben.
+                  Die Kennung traegt die Felder in der Filterklappe weiter
+                  unten mit: Sie stehen ueber `form` in demselben Formular,
+                  ohne darin geschachtelt zu sein. Ohne das setzte ein Klick
+                  auf "Suchen" jede eingestellte Spanne zurueck. */}
+              <form
+                id={FORMULAR}
+                method="get"
+                action="/crm"
+                className="flex flex-wrap gap-2"
+              >
                 {filter.nurFaellig && (
                   <input type="hidden" name="faellig" value="1" />
+                )}
+                {/* Die Reihenfolge ueberlebt eine Suche. Sie ist eine
+                    Einstellung der Ansicht und keine Auswahl von Faellen — wer
+                    nach Betrag sortiert und dann sucht, will die Treffer nach
+                    Betrag sehen. */}
+                {ansicht.sortierung !== "eingang" && (
+                  <input
+                    type="hidden"
+                    name="sortierung"
+                    value={ansicht.sortierung}
+                  />
+                )}
+                {ansicht.richtung !== ersteRichtung(ansicht.sortierung) && (
+                  <input
+                    type="hidden"
+                    name="richtung"
+                    value={ansicht.richtung}
+                  />
                 )}
                 {/* `key` an beiden Feldern, und zwar am jeweils gefilterten
                     Wert: `defaultValue` wirkt nur beim ersten Aufbau. Beim
@@ -531,30 +660,27 @@ export default async function CrmSeite({
               {/* Zwei Reihenfolgen, ein Umschalter. Der Eingang ist die
                   Voreinstellung — er ist die Reihenfolge, in der die Faelle
                   hereinkommen. Die Prioritaet ist die Reihenfolge, in der man
-                  sie abarbeiten sollte. */}
+                  sie abarbeiten sollte. Dieselbe Einstellung wie ein Klick auf
+                  die Spalte "Priorität"; beide lesen und schreiben denselben
+                  Wert und koennen sich deshalb nicht widersprechen. */}
               <Link
-                href={mitParametern(
-                  filter,
-                  {},
-                  sortierung === "prio" ? "eingang" : "prio"
-                )}
+                href={alsAdresse(ansicht, {
+                  sortierung: sortierung === "prio" ? "eingang" : "prio",
+                  richtung: ersteRichtung(
+                    sortierung === "prio" ? "eingang" : "prio"
+                  ),
+                })}
                 className={`rounded-[12px] border px-3 py-2 text-xs transition-colors duration-150 ${
                   sortierung === "prio"
                     ? "border-accent/50 bg-accent/10 text-accent"
                     : "border-border bg-surface-2 text-muted hover:text-foreground"
                 }`}
               >
-                {sortierung === "prio"
-                  ? "Nach Priorität"
-                  : "Nach Eingang"}
+                {sortierung === "prio" ? "Nach Priorität" : "Nach Eingang"}
               </Link>
 
               <Link
-                href={mitParametern(
-                  filter,
-                  { nurFaellig: !filter.nurFaellig },
-                  sortierung
-                )}
+                href={alsAdresse(ansicht, { nurFaellig: !ansicht.nurFaellig })}
                 className={`rounded-[12px] border px-3 py-2 text-xs transition-colors duration-150 ${
                   filter.nurFaellig
                     ? "border-amber-400/50 bg-amber-400/10 text-amber-200"
@@ -576,13 +702,183 @@ export default async function CrmSeite({
               {/* Kein Link auf eine Seite, sondern auf den Endpunkt: Der
                   liefert die Datei mit demselben Filter, der gerade gilt. */}
               <a
-                href={`/api/crm-export${mitParametern(filter, {}).slice("/crm".length)}`}
+                href={alsAdresse(ansicht, {}, "/api/crm-export")}
                 className="rounded-[12px] border border-border px-3 py-2 text-xs text-muted transition-colors duration-150 hover:text-foreground"
               >
                 Export
               </a>
             </div>
           </div>
+
+          {/*
+            Die Spannen stehen in einer Klappe und nicht in der Zeile darueber.
+
+            Acht weitere Felder neben Suche und Ordner waeren eine Werkzeugbank
+            und keine Werkzeugleiste — gebraucht werden sie selten, und wer sie
+            braucht, klappt sie auf. Ist etwas eingestellt, steht die Klappe
+            offen und traegt die Zahl der Einschraenkungen: Ein Filter, der
+            wirkt, aber zugeklappt ist, ist die Erklaerung dafuer, warum die
+            Liste "schon wieder leer" ist.
+
+            `details` und nicht ein Knopf mit Zustand: Das Auf- und Zuklappen
+            ist die einzige Bewegung, die es hier gibt, und der Browser kann
+            sie ohne eine Zeile JavaScript.
+          */}
+          <details
+            open={anzahlFilter(ansicht) > 0}
+            className="rounded-[16px] border border-border bg-surface"
+          >
+            <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-2.5 text-xs font-semibold text-muted transition-colors duration-150 hover:text-foreground">
+              <span aria-hidden="true" className="text-[10px]">
+                ▸
+              </span>
+              Filter
+              {anzahlFilter(ansicht) > 0 && (
+                <span className="rounded-full border border-accent/50 bg-accent/10 px-2 py-0.5 text-[10px] text-accent tabular-nums">
+                  {anzahlFilter(ansicht)}
+                </span>
+              )}
+              <span className="font-normal text-muted/70">
+                Kreditsumme, Einkommen, Priorität, Zeitraum
+              </span>
+            </summary>
+
+            <div className="flex flex-wrap items-end gap-x-6 gap-y-4 border-t border-border px-4 py-4">
+              <Spanne titel="Kreditsumme" einheit="€">
+                <input
+                  key={`bv-${ansicht.betragVon}`}
+                  form={FORMULAR}
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={1000}
+                  name="betrag_von"
+                  defaultValue={ansicht.betragVon ?? ""}
+                  placeholder="von"
+                  aria-label="Kreditsumme von"
+                  className={FELD}
+                />
+                <span className="text-muted">–</span>
+                <input
+                  key={`bb-${ansicht.betragBis}`}
+                  form={FORMULAR}
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={1000}
+                  name="betrag_bis"
+                  defaultValue={ansicht.betragBis ?? ""}
+                  placeholder="bis"
+                  aria-label="Kreditsumme bis"
+                  className={FELD}
+                />
+              </Spanne>
+
+              {/* Gemeint ist der niedrigste der angegebenen Monate — dieselbe
+                  Zahl, mit der die Fallakte rechnet und mit der eine Bank
+                  rechnet. Das steht dabei, sonst filtert man nach etwas
+                  anderem als man denkt. */}
+              <Spanne
+                titel="Einkommen"
+                einheit="€ netto"
+                hinweis="niedrigster Monat"
+              >
+                <input
+                  key={`ev-${ansicht.einkommenVon}`}
+                  form={FORMULAR}
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={100}
+                  name="netto_von"
+                  defaultValue={ansicht.einkommenVon ?? ""}
+                  placeholder="von"
+                  aria-label="Einkommen von"
+                  className={FELD}
+                />
+                <span className="text-muted">–</span>
+                <input
+                  key={`eb-${ansicht.einkommenBis}`}
+                  form={FORMULAR}
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={100}
+                  name="netto_bis"
+                  defaultValue={ansicht.einkommenBis ?? ""}
+                  placeholder="bis"
+                  aria-label="Einkommen bis"
+                  className={FELD}
+                />
+              </Spanne>
+
+              <Spanne titel="Priorität">
+                <select
+                  key={`pv-${ansicht.prioVon}`}
+                  form={FORMULAR}
+                  name="prio_von"
+                  defaultValue={ansicht.prioVon ?? ""}
+                  aria-label="Priorität von"
+                  className={FELD}
+                >
+                  <option value="">von</option>
+                  {KLASSEN.map((k, i) => (
+                    <option key={k.klasse} value={i + 1}>
+                      {k.klasse}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-muted">–</span>
+                <select
+                  key={`pb-${ansicht.prioBis}`}
+                  form={FORMULAR}
+                  name="prio_bis"
+                  defaultValue={ansicht.prioBis ?? ""}
+                  aria-label="Priorität bis"
+                  className={FELD}
+                >
+                  <option value="">bis</option>
+                  {KLASSEN.map((k, i) => (
+                    <option key={k.klasse} value={i + 1}>
+                      {k.klasse}
+                    </option>
+                  ))}
+                </select>
+              </Spanne>
+
+              {/* Beide Tage zaehlen mit. Der Zeitraum meint den Eingang und
+                  nicht die Wiedervorlage — danach fragt der Knopf "Fällig". */}
+              <Spanne titel="Eingang" hinweis="Zeitraum">
+                <input
+                  key={`dv-${ansicht.vonDatum}`}
+                  form={FORMULAR}
+                  type="date"
+                  name="von"
+                  defaultValue={ansicht.vonDatum ?? ""}
+                  aria-label="Eingang von"
+                  className={`${FELD} w-36`}
+                />
+                <span className="text-muted">–</span>
+                <input
+                  key={`db-${ansicht.bisDatum}`}
+                  form={FORMULAR}
+                  type="date"
+                  name="bis"
+                  defaultValue={ansicht.bisDatum ?? ""}
+                  aria-label="Eingang bis"
+                  className={`${FELD} w-36`}
+                />
+              </Spanne>
+
+              <button
+                form={FORMULAR}
+                type="submit"
+                className="rounded-[12px] border border-border-strong bg-surface-2 px-3 py-2 text-xs font-semibold text-foreground transition-colors duration-150 hover:bg-surface"
+              >
+                Anwenden
+              </button>
+            </div>
+          </details>
 
           {antraege.length === 0 ? (
             <div className="rounded-[24px] border border-border bg-surface p-8 flex flex-col gap-2 text-center">
@@ -610,31 +906,61 @@ export default async function CrmSeite({
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
+                    {/* Jede Kennzahl ist anklickbar und dreht sich beim
+                        zweiten Klick um. Nicht anklickbar sind die beiden
+                        Spalten, bei denen eine Reihenfolge nichts hergibt:
+                        "Verwendung" und "Ordner" sind Kategorien, und wer nach
+                        ihnen sucht, hat dafuer den Filter und das Brett. */}
                     <tr className="border-b border-border text-[11px] text-muted">
                       {/* Die Kundennummer ganz vorn: Sie ist die Angabe, mit
                           der jemand anruft, und damit die, nach der man in
                           einer Liste sucht. */}
-                      <th className="text-left font-semibold px-5 py-3">Nr.</th>
-                      <th className="text-left font-semibold px-5 py-3">
-                        Eingang
-                      </th>
-                      <th className="text-left font-semibold px-5 py-3">Name</th>
+                      <Kopf
+                        titel="Nr."
+                        href={sortierAdresse("nummer")}
+                        aktiv={sortierung === "nummer"}
+                        richtung={ansicht.richtung}
+                      />
+                      <Kopf
+                        titel="Eingang"
+                        href={sortierAdresse("eingang")}
+                        aktiv={sortierung === "eingang"}
+                        richtung={ansicht.richtung}
+                      />
+                      <Kopf
+                        titel="Name"
+                        href={sortierAdresse("name")}
+                        aktiv={sortierung === "name"}
+                        richtung={ansicht.richtung}
+                      />
                       <th className="text-left font-semibold px-5 py-3">
                         Verwendung
                       </th>
-                      <th className="text-right font-semibold px-5 py-3">
-                        Betrag
-                      </th>
-                      <th className="text-right font-semibold px-5 py-3">
-                        Laufzeit
-                      </th>
+                      <Kopf
+                        titel="Betrag"
+                        href={sortierAdresse("betrag")}
+                        aktiv={sortierung === "betrag"}
+                        richtung={ansicht.richtung}
+                        rechts
+                      />
+                      <Kopf
+                        titel="Laufzeit"
+                        href={sortierAdresse("laufzeit")}
+                        aktiv={sortierung === "laufzeit"}
+                        richtung={ansicht.richtung}
+                        rechts
+                      />
                       {/* Der Prioritaetswert als eigene Spalte. Er steht in
                           der Liste, weil hier entschieden wird, wen man als
                           naechstes anruft — in der Fallakte steht daneben,
                           woraus er sich zusammensetzt. */}
-                      <th className="text-right font-semibold px-5 py-3">
-                        Priorität
-                      </th>
+                      <Kopf
+                        titel="Priorität"
+                        href={sortierAdresse("prio")}
+                        aktiv={sortierung === "prio"}
+                        richtung={ansicht.richtung}
+                        rechts
+                      />
                       {/* Keine IBAN-Spalte. Sie stand hier verkuerzt, aber
                           auch die letzten vier Stellen sind eine
                           Bankverbindung — und diese Liste ist die Ansicht, die
@@ -642,9 +968,12 @@ export default async function CrmSeite({
                           Bildschirm teilt. Wer die IBAN braucht, ruft den Fall
                           auf; dort steht sie vollstaendig, mit Kopierknopf und
                           Vermerk im Verlauf. */}
-                      <th className="text-left font-semibold px-5 py-3">
-                        Wiedervorlage
-                      </th>
+                      <Kopf
+                        titel="Wiedervorlage"
+                        href={sortierAdresse("wiedervorlage")}
+                        aktiv={sortierung === "wiedervorlage"}
+                        richtung={ansicht.richtung}
+                      />
                       <th className="text-left font-semibold px-5 py-3">
                         Ordner
                       </th>

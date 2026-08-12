@@ -4,9 +4,13 @@ import {
   gehaltsliste,
   ibanVerkuerzt,
   niedrigstesGehalt,
-  type AntragFilter,
 } from "@/lib/crm/antraege";
-import { findeStation, type StatusId } from "@/lib/crm/pipeline";
+import {
+  alsFilter,
+  angezeigteFaelle,
+  leseAnsicht,
+} from "@/lib/crm/ansicht";
+import { findeStation } from "@/lib/crm/pipeline";
 import { angemeldeterBenutzer } from "@/lib/crm/zugang";
 import { findeKreditartNachId } from "@/lib/kreditarten";
 
@@ -77,20 +81,23 @@ export async function GET(request: Request) {
     return new NextResponse("Nicht angemeldet", { status: 401 });
   }
 
+  // Dieselbe Ansicht wie die Liste, aus derselben Adresse gelesen. Der Verweis
+  // auf diesen Endpunkt traegt alle Suchparameter mit — die Datei enthaelt
+  // damit genau die Faelle, die man vor dem Klick vor sich hatte, in derselben
+  // Reihenfolge. Alles andere waere eine Tabelle, die richtig aussieht und
+  // etwas anderes zeigt.
   const adresse = new URL(request.url);
-  const station = adresse.searchParams.get("station") ?? "";
-  const filter: AntragFilter = {
-    suche: adresse.searchParams.get("q")?.trim() ?? "",
-    station: findeStation(station) ? (station as StatusId) : null,
-    nurFaellig: adresse.searchParams.get("faellig") === "1",
-  };
+  const ansicht = leseAnsicht(
+    (name) => adresse.searchParams.get(name) ?? ""
+  );
 
   let antraege;
   try {
-    antraege = await alleAntraege(filter);
+    antraege = await alleAntraege(alsFilter(ansicht));
   } catch {
     return new NextResponse("Die Datenbank antwortet nicht", { status: 500 });
   }
+  antraege = angezeigteFaelle(antraege, ansicht, new Date());
 
   const zeilen = [SPALTEN.map(zelle).join(TRENNER)];
   for (const antrag of antraege) {
