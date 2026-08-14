@@ -123,11 +123,17 @@ function Spanne({
 /**
  * Eine Spaltenueberschrift, nach der sich sortieren laesst.
  *
- * Der Pfeil steht nur an der Spalte, nach der gerade sortiert wird. Ihn blass
- * an allen anzuzeigen waere ein Angebot, das man nicht braucht: Dass eine
- * Ueberschrift anklickbar ist, zeigt der Zeiger, und dass sie gerade gilt,
- * soll auf einen Blick zu sehen sein — nicht durch Vergleichen von vier
- * Graustufen nebeneinander.
+ * Ein Dreieck steht an jeder Ueberschrift, nicht nur an der sortierten. Es ist
+ * die Ansage, dass hier ueberhaupt etwas anzuklicken ist — ohne sie muesste
+ * man es raten oder mit der Maus darueberfahren, und auf einem Tastgeraet
+ * faellt beides weg.
+ *
+ * Unterschieden wird ueber die Farbe und nicht ueber die Anwesenheit: Die
+ * sortierte Spalte traegt ihr Dreieck in der Betonungsfarbe, die uebrigen in
+ * einem Grau, das man sieht, wenn man hinsieht, und uebersieht, wenn man
+ * liest. Die Richtung, die das blasse Dreieck zeigt, ist die, in die der erste
+ * Klick sortieren wird — es ist damit keine Behauptung ueber den jetzigen
+ * Zustand, sondern eine ueber den naechsten.
  */
 function Kopf({
   titel,
@@ -139,6 +145,7 @@ function Kopf({
   titel: string;
   href: string;
   aktiv: boolean;
+  /** Bei der aktiven Spalte die geltende Richtung, sonst die des ersten Klicks. */
   richtung: "auf" | "ab";
   rechts?: boolean;
 }) {
@@ -160,11 +167,16 @@ function Kopf({
         }`}
       >
         {titel}
-        {aktiv && (
-          <span aria-hidden="true" className="text-[9px]">
-            {richtung === "auf" ? "▲" : "▼"}
-          </span>
-        )}
+        {/* 60 Prozent und nicht weniger: Bei 40 kam das Dreieck auf 2,2:1
+            gegen den Hintergrund und war damit unter der Grenze, ab der ein
+            Bedienelement als erkennbar gilt. Gemessen, nicht geschaetzt —
+            gegen #0f1c37 sind es so 3,35:1, der Titel daneben hat 6,9:1. */}
+        <span
+          aria-hidden="true"
+          className={`text-[9px] ${aktiv ? "" : "text-muted/60"}`}
+        >
+          {richtung === "auf" ? "▲" : "▼"}
+        </span>
       </Link>
     </th>
   );
@@ -310,6 +322,14 @@ export default async function CrmSeite({
    * derselben Ueberschrift haengt, ist die Bedienung, die man aus jeder
    * Tabelle kennt — und sie braucht kein Skript, weil es Verweise sind.
    */
+  /**
+   * Welche Richtung das Dreieck einer Ueberschrift zeigt: bei der sortierten
+   * Spalte die geltende, bei allen anderen die, in die ihr erster Klick
+   * sortieren wird.
+   */
+  const kopfRichtung = (schluessel: Sortierschluessel) =>
+    sortierung === schluessel ? ansicht.richtung : ersteRichtung(schluessel);
+
   const sortierAdresse = (schluessel: Sortierschluessel) =>
     `${alsAdresse(ansicht, {
       sortierung: schluessel,
@@ -906,11 +926,10 @@ export default async function CrmSeite({
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    {/* Jede Kennzahl ist anklickbar und dreht sich beim
-                        zweiten Klick um. Nicht anklickbar sind die beiden
-                        Spalten, bei denen eine Reihenfolge nichts hergibt:
-                        "Verwendung" und "Ordner" sind Kategorien, und wer nach
-                        ihnen sucht, hat dafuer den Filter und das Brett. */}
+                    {/* Jede Spalte ist anklickbar und dreht sich beim zweiten
+                        Klick um — die Zahlen auf- und absteigend, die Namen
+                        nach Alphabet, der Ordner den Weg der Pipeline entlang
+                        von "Neu" bis zum Papierkorb. */}
                     <tr className="border-b border-border text-[11px] text-muted">
                       {/* Die Kundennummer ganz vorn: Sie ist die Angabe, mit
                           der jemand anruft, und damit die, nach der man in
@@ -919,35 +938,38 @@ export default async function CrmSeite({
                         titel="Nr."
                         href={sortierAdresse("nummer")}
                         aktiv={sortierung === "nummer"}
-                        richtung={ansicht.richtung}
+                        richtung={kopfRichtung("nummer")}
                       />
                       <Kopf
                         titel="Eingang"
                         href={sortierAdresse("eingang")}
                         aktiv={sortierung === "eingang"}
-                        richtung={ansicht.richtung}
+                        richtung={kopfRichtung("eingang")}
                       />
                       <Kopf
                         titel="Name"
                         href={sortierAdresse("name")}
                         aktiv={sortierung === "name"}
-                        richtung={ansicht.richtung}
+                        richtung={kopfRichtung("name")}
                       />
-                      <th className="text-left font-semibold px-5 py-3">
-                        Verwendung
-                      </th>
+                      <Kopf
+                        titel="Verwendung"
+                        href={sortierAdresse("verwendung")}
+                        aktiv={sortierung === "verwendung"}
+                        richtung={kopfRichtung("verwendung")}
+                      />
                       <Kopf
                         titel="Betrag"
                         href={sortierAdresse("betrag")}
                         aktiv={sortierung === "betrag"}
-                        richtung={ansicht.richtung}
+                        richtung={kopfRichtung("betrag")}
                         rechts
                       />
                       <Kopf
                         titel="Laufzeit"
                         href={sortierAdresse("laufzeit")}
                         aktiv={sortierung === "laufzeit"}
-                        richtung={ansicht.richtung}
+                        richtung={kopfRichtung("laufzeit")}
                         rechts
                       />
                       {/* Der Prioritaetswert als eigene Spalte. Er steht in
@@ -958,7 +980,7 @@ export default async function CrmSeite({
                         titel="Priorität"
                         href={sortierAdresse("prio")}
                         aktiv={sortierung === "prio"}
-                        richtung={ansicht.richtung}
+                        richtung={kopfRichtung("prio")}
                         rechts
                       />
                       {/* Keine IBAN-Spalte. Sie stand hier verkuerzt, aber
@@ -972,11 +994,14 @@ export default async function CrmSeite({
                         titel="Wiedervorlage"
                         href={sortierAdresse("wiedervorlage")}
                         aktiv={sortierung === "wiedervorlage"}
-                        richtung={ansicht.richtung}
+                        richtung={kopfRichtung("wiedervorlage")}
                       />
-                      <th className="text-left font-semibold px-5 py-3">
-                        Ordner
-                      </th>
+                      <Kopf
+                        titel="Ordner"
+                        href={sortierAdresse("ordner")}
+                        aktiv={sortierung === "ordner"}
+                        richtung={kopfRichtung("ordner")}
+                      />
                     </tr>
                   </thead>
                   <tbody>

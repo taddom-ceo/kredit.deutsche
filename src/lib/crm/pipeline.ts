@@ -381,6 +381,26 @@ export function findeStation(id: string): Station | undefined {
   return ALLE.find((s) => s.id === id);
 }
 
+/**
+ * Der Platz eines Ordners in der Pipeline.
+ *
+ * Die Reihenfolge der Ordner ist keine alphabetische und keine zufaellige: Sie
+ * ist der Weg, den ein Fall nimmt — von "Neu" ueber die Bearbeitung bis zur
+ * Auszahlung, danach der Papierkorb. Wer die Liste nach dem Ordner sortiert,
+ * meint diese Reihenfolge und nicht die Anfangsbuchstaben; "Abgebrochen" vor
+ * "Neu" waere keine Auskunft ueber irgendetwas.
+ *
+ * Der Papierkorb steht hinter allen Stationen, unbekannte Kennungen dahinter.
+ * Beide sind kein Schritt im Vertrieb und haben deshalb am Anfang nichts
+ * verloren.
+ */
+export function rangDerStation(id: string): number {
+  const platz = STATIONEN.findIndex((s) => s.id === id);
+  if (platz >= 0) return platz;
+  if (id === PAPIERKORB.id) return STATIONEN.length;
+  return STATIONEN.length + 1;
+}
+
 /** Liegt der Fall im Papierkorb? An einer Stelle, damit die Kennung nur hier steht. */
 export function imPapierkorb(status: string): boolean {
   return status === PAPIERKORB.id;

@@ -4,7 +4,6 @@ import type { Antrag } from "./antraege";
 import {
   alsAdresse,
   alsFilter,
-  angezeigteFaelle,
   anzahlFilter,
   ersteRichtung,
   fein,
@@ -307,6 +306,48 @@ test("Betrag auf- und absteigend", () => {
 test("die Voreinstellung ist der Eingang, neueste zuerst", () => {
   assert.deepEqual(reihe(""), ["b", "c", "a"]);
   assert.deepEqual(reihe("sortierung=eingang&richtung=auf"), ["a", "c", "b"]);
+});
+
+test("der Name geht nach Alphabet, mit Umlauten an der richtigen Stelle", () => {
+  const namen = ["Muster", "Müller", "Maier", "Mundt"].map((n) =>
+    fall({ id: n, nachname: n, vorname: "Anna" })
+  );
+  const reihe = sortiere(
+    namen,
+    ausAdresse("sortierung=name&richtung=auf"),
+    JETZT
+  ).map((a) => a.id);
+  // Müller steht zwischen Maier und Mundt — dort, wo man es sucht. Nach der
+  // Zeichenreihenfolge des Rechners stuende es hinter allen anderen.
+  assert.deepEqual(reihe, ["Maier", "Müller", "Mundt", "Muster"]);
+});
+
+test("der Ordner sortiert den Weg der Pipeline entlang, nicht nach Namen", () => {
+  const neu = fall({ id: "neu", status: "neu" });
+  const abbrecher = fall({ id: "abbrecher", status: "abbrecher" });
+  const papierkorb = fall({ id: "papierkorb", status: "papierkorb" });
+  const reihe = sortiere(
+    [papierkorb, abbrecher, neu],
+    ausAdresse("sortierung=ordner&richtung=auf"),
+    JETZT
+  ).map((a) => a.id);
+  // "Neu" ist der erste Ordner der Pipeline, der Papierkorb der letzte.
+  // Alphabetisch stuende "Abgebrochen" vorn — das waere keine Auskunft.
+  assert.equal(reihe[0], "neu");
+  assert.equal(reihe[2], "papierkorb");
+});
+
+test("Fälle ohne Verwendung stehen hinten", () => {
+  const ohne = fall({ id: "ohne", kreditart: null });
+  const mit = fall({ id: "mit", kreditart: "fahrzeug" });
+  for (const richtung of ["auf", "ab"]) {
+    const reihe = sortiere(
+      [ohne, mit],
+      ausAdresse(`sortierung=verwendung&richtung=${richtung}`),
+      JETZT
+    ).map((a) => a.id);
+    assert.deepEqual(reihe, ["mit", "ohne"]);
+  }
 });
 
 test("Name, Nummer und Laufzeit", () => {
