@@ -14,6 +14,11 @@ import {
   kontaktVorhanden,
   sendeAntrag,
 } from "./antrag-senden";
+import {
+  sichereStand,
+  verwirfStand,
+  type GelesenerStand,
+} from "./wizard-speicher";
 
 /**
  * Die Angaben des zweiten Kreditnehmers.
@@ -310,15 +315,66 @@ type WizardContextValue = {
   setDevModus: (an: boolean) => void;
   /** Den fertigen Antrag abschicken. Falsch heisst: nicht angekommen. */
   sendeFertigenAntrag: () => Promise<boolean>;
+  /**
+   * Wann der wiederhergestellte Stand gesichert wurde, oder null. Traegt den
+   * Hinweis oben in der Strecke.
+   */
+  wiederhergestellt: Date | null;
+  /** Den wiederhergestellten Stand wegwerfen und von vorn anfangen. */
+  verwirfWiederherstellung: () => void;
 };
 
 const WizardContext = createContext<WizardContextValue | null>(null);
+
+/**
+ * Der Ausgangszustand: Voreinstellung, darueber der gesicherte Stand, darueber
+ * das, was die Adresse ausdruecklich mitbringt.
+ *
+ * Die Reihenfolge ist die Aussage. Wer auf einer Kreditartseite auf "Autokredit"
+ * klickt, will einen Autokredit — auch wenn im Speicher noch die Umschuldung
+ * von gestern steht. Seine Anschrift, sein Einkommen und seine Beschaeftigung
+ * bleiben trotzdem stehen: Das ist die Arbeit, die er sich gemacht hat, und sie
+ * gilt fuer jeden Zweck gleichermassen.
+ */
+function ausgangslage(
+  gespeichert: GelesenerStand | null,
+  initialAmount?: number,
+  initialMonths?: number,
+  initialKreditart?: string
+): WizardData {
+  const stand: WizardData = {
+    ...initialData,
+    ...(gespeichert?.stand ?? {}),
+    // Der Entwicklermodus wird nie wiederhergestellt: Er ist ein Schalter fuer
+    // die Entwicklung und kein Teil des Antrags.
+    devModus: false,
+  };
+
+  if (initialKreditart) {
+    stand.kreditart = initialKreditart;
+    stand.purpose = initialKreditart;
+  }
+  if (initialAmount !== undefined) stand.amount = initialAmount;
+  if (initialMonths !== undefined) stand.months = initialMonths;
+
+  // Ohne gesicherten Stand gilt die alte Regel: Mit mitgebrachtem Zweck ist
+  // Schritt 1 beantwortet und es geht beim zweiten los. Mit gesichertem Stand
+  // zaehlt, wie weit jemand schon war — dorthin zurueckzuspringen ist der
+  // ganze Zweck der Uebung.
+  if (!gespeichert) {
+    stand.step = initialKreditart ? 2 : initialData.step;
+    stand.maxStep = initialKreditart ? 2 : initialData.maxStep;
+  }
+
+  return stand;
+}
 
 export function WizardProvider({
   children,
   initialAmount,
   initialMonths,
   initialKreditart,
+  gespeichert = null,
 }: {
   children: ReactNode;
   initialAmount?: number;
@@ -330,23 +386,36 @@ export function WizardProvider({
    * Zurückgehen auf einen Schritt, der als nie erreicht gälte.
    */
   initialKreditart?: string;
+  /**
+   * Der Stand aus dem Browserspeicher, falls einer da ist.
+   *
+   * Er kommt als Eigenschaft herein und wird nicht hier gelesen: Auf dem
+   * Server gibt es keinen Speicher, und wer waehrend des Rendern hineinsaehe,
+   * baute eine Seite, die nach dem Laden anders aussieht als vorher. Der
+   * Aufrufer liest ihn nach dem Laden und baut den Anbieter mit einem neuen
+   * `key` neu auf — dann faengt dieser Zustand hier gleich richtig an, statt
+   * sich nachtraeglich selbst zu ueberschreiben.
+   */
+  gespeichert?: GelesenerStand | null;
 }) {
-  const [data, setData] = useState<WizardData>(() => ({
-    ...initialData,
-    amount: initialAmount ?? initialData.amount,
-    months: initialMonths ?? initialData.months,
-    kreditart: initialKreditart ?? initialData.kreditart,
-    purpose: initialKreditart ?? initialData.purpose,
-    step: initialKreditart ? 2 : initialData.step,
-    maxStep: initialKreditart ? 2 : initialData.maxStep,
-  }));
+  const [data, setData] = useState<WizardData>(() =>
+    ausgangslage(gespeichert, initialAmount, initialMonths, initialKreditart)
+  );
+
+  /** Sichtbar, solange der wiederhergestellte Stand nicht verworfen wurde. */
+  const [wiederhergestellt, setWiederhergestellt] = useState<Date | null>(
+    gespeichert?.gesichert ?? null
+  );
 
   /**
    * Kennung des Falls im CRM, sobald er einmal gesendet wurde. Als Ref und
    * nicht als Zustand: Sie aendert nichts an der Anzeige, und ein zusaetzliches
    * Rendern mitten in der Strecke waere nur Unruhe.
+   *
+   * Sie kommt aus dem Speicher mit. Ohne das legte ein Neuladen einen zweiten
+   * Fall fuer denselben Menschen an, und im CRM staende er doppelt.
    */
-  const antragId = useRef<string | null>(null);
+  const antragId = useRef<string | null>(gespeichert?.antragId ?? null);
 
   /**
    * Alle Sendungen haengen an einer Kette.
@@ -434,6 +503,32 @@ export function WizardProvider({
   }, [data]);
 
   /**
+   * Den Stand im Browser sichern, waehrend getippt wird.
+   *
+   * Das ist die Ablage, die einen Neustart ueberlebt — anders als der
+   * Zwischenstand im CRM, der eine Kontaktangabe voraussetzt und erst ab
+   * Schritt 4 hinausgeht. Hier zaehlt jede Eingabe ab dem ersten Schritt.
+   *
+   * Erst nach der ersten Eingabe, damit nicht jeder, der die Seite nur
+   * aufschlaegt, einen Eintrag auf seinem Geraet zurueckbehaelt. Und nicht
+   * mehr auf der Bestaetigungsseite: Dort ist der Antrag draussen, und der
+   * Stand wird ohnehin gerade geloescht.
+   *
+   * Eine kurze Verzoegerung fasst die Tastendruecke zusammen. Ohne sie
+   * schriebe jedes Zeichen in einem Textfeld in den Speicher — auf einem
+   * schwachen Geraet merkt man das beim Tippen.
+   */
+  useEffect(() => {
+    if (!beruehrt.current) return;
+    if (data.step > TOTAL_STEPS) return;
+    const zeitgeber = setTimeout(
+      () => sichereStand(data, antragId.current),
+      400
+    );
+    return () => clearTimeout(zeitgeber);
+  }, [data]);
+
+  /**
    * Nachfragen, bevor die Strecke verlassen wird.
    *
    * Der Stand der Strecke liegt im Arbeitsspeicher des Browsers, sonst
@@ -475,8 +570,34 @@ export function WizardProvider({
     if (ergebnis.id) antragId.current = ergebnis.id;
     // Damit der Zeitgeber danach nicht denselben Satz noch einmal als
     // Zwischenstand hinterherschickt.
-    if (ergebnis.ok) zuletztGesendet.current = JSON.stringify(antragNutzlast(data));
+    if (ergebnis.ok) {
+      zuletztGesendet.current = JSON.stringify(antragNutzlast(data));
+      // Der Antrag ist angekommen und liegt im CRM. Alles, was danach noch
+      // auf dem Geraet liegt, ist eine Kopie personenbezogener Daten, die
+      // niemand mehr braucht — und beim naechsten Aufruf boete sie an, einen
+      // bereits gestellten Antrag "fortzusetzen".
+      verwirfStand();
+    }
     return ergebnis.ok;
+  }
+
+  /**
+   * Von vorn anfangen: den gesicherten Stand wegwerfen und die Strecke auf
+   * ihren Anfang zuruecksetzen.
+   *
+   * Das gehoert zum Hinweis oben dazu. Angaben wiederherzustellen, ohne einen
+   * Weg zurueck anzubieten, hiesse, jemandem ein halb ausgefuelltes Formular
+   * eines anderen Vorhabens aufzudraengen — und auf einem geteilten Geraet
+   * moeglicherweise die Angaben eines anderen Menschen.
+   */
+  function verwirfWiederherstellung() {
+    verwirfStand();
+    beruehrt.current = false;
+    antragId.current = null;
+    zuletztGesendet.current = "";
+    setWiederhergestellt(null);
+    setData(ausgangslage(null, initialAmount, initialMonths, initialKreditart));
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function update(patch: Partial<WizardData>) {
@@ -576,6 +697,8 @@ export function WizardProvider({
         goToStep,
         setDevModus,
         sendeFertigenAntrag,
+        wiederhergestellt,
+        verwirfWiederherstellung,
       }}
     >
       {children}

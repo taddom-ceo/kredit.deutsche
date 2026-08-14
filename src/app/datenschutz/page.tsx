@@ -368,6 +368,21 @@ export default function DatenschutzSeite() {
             verwenden weder Zählpixel noch Fingerprinting noch andere
             Wiedererkennungsverfahren.
           </p>
+          <p>
+            Zusätzlich legt die Antragsstrecke Ihre Eingaben im lokalen Speicher
+            Ihres Browsers ab (<em>localStorage</em>, Eintrag{" "}
+            <code>cresolu.antrag.stand</code>), damit sie beim Neuladen oder
+            beim späteren Aufruf noch da sind und Sie nicht von vorn anfangen
+            müssen. Diese Daten verlassen Ihr Gerät nicht — sie werden nicht an
+            uns übertragen und nicht ausgewertet. Ihre Bankverbindung wird
+            dabei ausdrücklich nicht abgelegt. Der Eintrag wird nach sieben
+            Tagen verworfen und gelöscht, sobald Sie den Antrag abgeschickt
+            haben; über die Schaltfläche „Verwerfen und neu anfangen&ldquo; oben
+            in der Antragsstrecke können Sie ihn jederzeit selbst entfernen.
+            Rechtsgrundlage der Speicherung auf Ihrem Gerät ist § 25 Abs. 2
+            Nr. 2 TDDDG: Sie ist erforderlich, um Ihnen den ausdrücklich
+            gewünschten Dienst — das Ausfüllen des Antrags — bereitzustellen.
+          </p>
         </Abschnitt>
 
         <Abschnitt titel="10. Sicherheit">

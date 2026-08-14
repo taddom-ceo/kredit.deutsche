@@ -8,7 +8,9 @@ import PipelineBrett, {
 import {
   ablageart,
   alleAntraege,
+  absprungVerteilung,
   kundennummer,
+  SCHRITTE,
   vollerName,
   zaehleAntraege,
   zaehleUebersicht,
@@ -899,6 +901,68 @@ export default async function CrmSeite({
               </button>
             </div>
           </details>
+
+          {/*
+            Wo die Leute liegenbleiben — eine Zeile, und nur im Ordner
+            "Abgebrochen".
+
+            Bewusst keine eigene Spalte in der Tabelle: Der erreichte Schritt
+            interessiert bei einem Fall, den man gerade anruft, ueberhaupt
+            nicht — und in vierzehn Zeilen "Schritt 8" untereinander steht er
+            vierzehnmal umsonst. Interessant ist er als Summe, und Summen
+            gehoeren ueber die Liste und nicht in sie.
+
+            Gezaehlt wird, was gerade angezeigt wird. Damit antwortet die Zeile
+            auf die eingestellten Filter mit: "Absprünge im letzten Monat" ist
+            eine andere Frage als "Absprünge insgesamt", und beide lassen sich
+            hier stellen.
+          */}
+          {ansicht.station === "abbrecher" && listenAntraege.length > 0 && (
+            <p className="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-[14px] border border-border bg-surface px-4 py-2.5 text-[11px] text-muted">
+              <span className="font-semibold text-foreground">
+                Abgesprungen bei
+              </span>
+              {absprungVerteilung(listenAntraege).map((eintrag, i, alle) => {
+                // Der groesste Wert steht in der Betonungsfarbe. Er ist der
+                // Schritt, der am meisten kostet — die eine Zahl, wegen der
+                // man diese Zeile ueberhaupt liest.
+                const groesster = Math.max(
+                  ...alle
+                    .filter((e) => e.schritt !== null)
+                    .map((e) => e.anzahl),
+                  0
+                );
+                const spitze =
+                  eintrag.schritt !== null && eintrag.anzahl === groesster;
+                return (
+                  <span
+                    key={eintrag.schritt ?? "ohne"}
+                    className={`flex items-baseline gap-1.5 ${
+                      spitze ? "text-accent" : ""
+                    }`}
+                  >
+                    <span>
+                      {eintrag.schritt === null
+                        ? "ohne Angabe"
+                        : `${eintrag.schritt}. ${SCHRITTE[eintrag.schritt - 1]}`}
+                    </span>
+                    {/* Die Zahl in einem Rahmen: Ohne ihn stuende sie direkt
+                        hinter dem Namen des Schritts und liesse sich lesen,
+                        als gehoerte sie dazu. */}
+                    <span
+                      className={`rounded-full border px-1.5 tabular-nums font-semibold ${
+                        spitze
+                          ? "border-accent/40 bg-accent/10"
+                          : "border-border text-foreground"
+                      }`}
+                    >
+                      {eintrag.anzahl}
+                    </span>
+                  </span>
+                );
+              })}
+            </p>
+          )}
 
           {antraege.length === 0 ? (
             <div className="rounded-[24px] border border-border bg-surface p-8 flex flex-col gap-2 text-center">

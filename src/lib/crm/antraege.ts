@@ -91,7 +91,75 @@ export type AntragEingang = {
    * koennen. Faelle von vor dieser Aenderung haben ebenfalls null.
    */
   zweitePerson: ZweitePersonEingang | null;
+  /**
+   * Der weiteste Schritt der Strecke, den dieser Mensch erreicht hat.
+   *
+   * Ohne ihn weiss das CRM, dass jemand abgebrochen hat, aber nicht wo. Das
+   * ist der Unterschied zwischen "wir verlieren Leute" und "wir verlieren sie
+   * beim Einkommen" — und nur die zweite Auskunft laesst sich beantworten.
+   *
+   * Er kommt aus der Strecke selbst und ist keine Messung ueber den Kunden:
+   * gezaehlt wird ein Schritt, nicht ein Verhalten. Faelle von vor dieser
+   * Aenderung haben null, und null heisst "unbekannt" und nicht "Schritt 1".
+   */
+  erreichterSchritt: number | null;
 };
+
+/** Die acht Schritte der Strecke, so wie die Fortschrittsleiste sie nennt. */
+export const SCHRITTE = [
+  "Kreditart",
+  "Details",
+  "Personen",
+  "Persönliche Daten",
+  "Adresse",
+  "Beruf",
+  "Einkommen",
+  "Bankverbindung",
+] as const;
+
+/**
+ * "Schritt 6 — Beruf", oder null, wenn die Zahl nichts hergibt.
+ *
+ * Faelle von vor der Aenderung haben keinen Schritt. Dort steht dann weiter
+ * der allgemeine Hinweis; eine erfundene Zahl waere schlimmer als keine.
+ */
+export function schrittName(schritt: number | null): string | null {
+  if (schritt === null || schritt < 1 || schritt > SCHRITTE.length) return null;
+  // Klammern und kein Gedankenstrich: Der Name steht mitten in einem Satz, in
+  // dem schon ein Gedankenstrich vorkommt, und zwei davon in einer Zeile
+  // lassen nicht mehr erkennen, was zu was gehoert.
+  return `Schritt ${schritt} (${SCHRITTE[schritt - 1]})`;
+}
+
+export type Absprungzahl = { schritt: number | null; anzahl: number };
+
+/**
+ * Wie viele Faelle bei welchem Schritt liegengeblieben sind.
+ *
+ * Die eine Zahl, wegen der der erreichte Schritt ueberhaupt mitgeschickt
+ * wird. Sie beantwortet nicht "wie viele brechen ab" — das sagt schon die
+ * Zahl am Ordner —, sondern "wo". Das ist der Unterschied zwischen einer
+ * Beobachtung und einer Aufgabe.
+ *
+ * Faelle ohne Angabe kommen als eigener Eintrag ans Ende und werden nicht
+ * unter die anderen gemischt. Sie stammen aus der Zeit vor dieser Aenderung,
+ * und sie unter "Schritt 1" zu fuehren hiesse, eine Auswertung mit einer
+ * erfundenen Spitze am Anfang zu beginnen.
+ */
+export function absprungVerteilung(antraege: Antrag[]): Absprungzahl[] {
+  const gezaehlt = new Map<number | null, number>();
+  for (const antrag of antraege) {
+    const schritt = antrag.erreichterSchritt;
+    gezaehlt.set(schritt, (gezaehlt.get(schritt) ?? 0) + 1);
+  }
+  return [...gezaehlt.entries()]
+    .map(([schritt, anzahl]) => ({ schritt, anzahl }))
+    .sort((a, b) => {
+      if (a.schritt === null) return 1;
+      if (b.schritt === null) return -1;
+      return a.schritt - b.schritt;
+    });
+}
 
 /**
  * Die Angaben des zweiten Kreditnehmers.
@@ -192,6 +260,20 @@ function text(wert: unknown, hoechstens = 200): string {
 function zahl(wert: unknown): number {
   const n = typeof wert === "number" ? wert : Number(wert);
   return Number.isFinite(n) ? n : 0;
+}
+
+/**
+ * Der erreichte Schritt: eine ganze Zahl von 1 bis 8, sonst null.
+ *
+ * Null und nicht 1, wenn nichts ankommt: "Der Browser hat es nicht
+ * mitgeschickt" und "der Kunde ist bei Schritt 1 stehengeblieben" sind zwei
+ * verschiedene Auskuenfte, und eine Auswertung, die sie vermischt, zaehlt
+ * jeden alten Fall als Absprung am Anfang.
+ */
+function schrittZahl(wert: unknown): number | null {
+  const n = typeof wert === "number" ? wert : Number(wert);
+  if (!Number.isInteger(n) || n < 1 || n > SCHRITTE.length) return null;
+  return n;
 }
 
 function kredite(wert: unknown): BestehenderKreditEingang[] {
@@ -321,6 +403,7 @@ export function pruefeAntrag(
     bankname: text(d.bankname, 120),
     kontoinhaber: text(d.kontoinhaber, 120),
     zweitePerson: zweitePerson(d.zweitePerson),
+    erreichterSchritt: schrittZahl(d.erreichterSchritt),
   };
 
   // Bewusst grob: Eine Adresse mit @ und einem Punkt dahinter. Strengere
@@ -448,6 +531,9 @@ function ausZeile(zeile: AntragZeile): Antrag {
     // `undefined` wird hier `null`, damit die Anzeige nur einen Fall fuer
     // "gibt es nicht" kennt und nicht zwei.
     zweitePerson: zeile.rohdaten.zweitePerson ?? null,
+    // Ebenso: Wer vor dieser Aenderung eingegangen ist, hat keinen erreichten
+    // Schritt. Aus `undefined` wird null — "unbekannt", nicht "Schritt 1".
+    erreichterSchritt: zeile.rohdaten.erreichterSchritt ?? null,
     id: zeile.id,
     eingang:
       zeile.eingang instanceof Date
