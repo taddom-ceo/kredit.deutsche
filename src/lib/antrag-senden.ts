@@ -1,4 +1,4 @@
-import type { WizardData } from "./wizard-context";
+import { TOTAL_STEPS, type WizardData } from "./wizard-context";
 
 /**
  * Den Antrag an den Server schicken — einmal als Zwischenstand waehrend der
@@ -12,9 +12,12 @@ import type { WizardData } from "./wizard-context";
  */
 
 /**
- * Nur die Angaben des Antrags, nicht der ganze Zustand: step, maxStep und
- * devModus gehoeren zur Bedienung der Strecke und haben im Fall nichts
- * verloren.
+ * Nur die Angaben des Antrags, nicht der ganze Zustand: `step` und `devModus`
+ * gehoeren zur Bedienung der Strecke und haben im Fall nichts verloren.
+ *
+ * Eine Ausnahme: `maxStep` geht als `erreichterSchritt` mit. Ohne ihn weiss
+ * das CRM, dass jemand abgebrochen hat, aber nicht wo — und "wir verlieren
+ * Leute" ist keine Auskunft, mit der sich etwas anfangen laesst.
  */
 export function antragNutzlast(data: WizardData) {
   return {
@@ -58,6 +61,14 @@ export function antragNutzlast(data: WizardData) {
      * zweiter Kreditnehmer, den es im Antrag nicht gibt.
      */
     zweitePerson: data.personCount === 2 ? data.zweitePerson : null,
+    /**
+     * Der weiteste erreichte Schritt, hoechstens der letzte der Strecke.
+     *
+     * `maxStep` zaehlt die Bestaetigungsseite mit, sobald der Antrag draussen
+     * ist. Ungekuerzt stuende im CRM "Schritt 9" — eine Zahl, die es in der
+     * Strecke nicht gibt.
+     */
+    erreichterSchritt: Math.min(Math.max(data.maxStep, 1), TOTAL_STEPS),
   };
 }
 

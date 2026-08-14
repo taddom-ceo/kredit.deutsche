@@ -4,6 +4,7 @@ import {
   gehaltsliste,
   ibanVerkuerzt,
   niedrigstesGehalt,
+  schrittName,
 } from "@/lib/crm/antraege";
 import {
   alsFilter,
@@ -70,6 +71,11 @@ const SPALTEN = [
   "Gehalt Vormonat",
   "Gehalt davor",
   "Niedrigstes Gehalt",
+  // Der weiteste erreichte Schritt der Strecke. In der Oberflaeche steht er
+  // nur dort, wo er zaehlt — hier steht er an jeder Zeile, weil eine Tabelle
+  // gerade dafuer da ist: Wer die Absprungpunkte ueber Wochen vergleichen
+  // will, braucht die Rohzahl und keine Zusammenfassung.
+  "Erreichter Schritt",
 ];
 
 export async function GET(request: Request) {
@@ -134,6 +140,7 @@ export async function GET(request: Request) {
         gehaelter[1] ?? "",
         gehaelter[2] ?? "",
         niedrigstesGehalt(antrag) ?? "",
+        schrittName(antrag.erreichterSchritt) ?? "",
       ]
         .map(zelle)
         .join(TRENNER)

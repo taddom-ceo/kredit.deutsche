@@ -8,6 +8,7 @@ import {
   geldbetrag,
   kundennummer,
   niedrigsterGehaltIndex,
+  schrittName,
   unvollstaendig,
   type ZweitePersonEingang,
   vollerName,
@@ -217,10 +218,17 @@ export default async function AntragSeite({
           </span>
           {/* Haengt an den Daten, nicht am Ordner: Ein vollstaendiger Antrag,
               den jemand nach "Abgebrochen" zieht, hat seine Angaben ja. */}
+          {/* Steht der erreichte Schritt fest, steht er hier statt der
+              allgemeinen Auskunft. Aus "Angaben ab Schritt 5 fehlen
+              möglicherweise" wird dann "abgesprungen bei Schritt 6 — Beruf":
+              dieselbe Zeile, aber sie sagt, wo das Gespräch anfangen kann.
+              Keine zusätzliche Kachel und keine zweite Zeile — die Auskunft
+              ersetzt eine, die ohnehin dastand. */}
           {abgebrochen && (
             <span className="text-[11px] text-muted">
-              Strecke nicht abgeschlossen — Angaben ab Schritt 5 fehlen
-              möglicherweise.
+              {schrittName(antrag.erreichterSchritt)
+                ? `Strecke nicht abgeschlossen — abgesprungen bei ${schrittName(antrag.erreichterSchritt)}.`
+                : "Strecke nicht abgeschlossen — Angaben ab Schritt 5 fehlen möglicherweise."}
             </span>
           )}
         </div>
