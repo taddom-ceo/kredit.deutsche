@@ -4,8 +4,9 @@ import {
   type Antrag,
   type AntragFilter,
 } from "./antraege";
-import { findeStation, type StatusId } from "./pipeline";
+import { findeStation, rangDerStation, type StatusId } from "./pipeline";
 import { bewerte, KLASSEN, type Prioritaetsklasse } from "./priorisierung";
+import { findeKreditartNachId } from "../kreditarten";
 
 /**
  * Was die Fallliste gerade zeigt: Filter und Reihenfolge, an einem Ort.
@@ -28,15 +29,17 @@ import { bewerte, KLASSEN, type Prioritaetsklasse } from "./priorisierung";
  *     Mal zu schreiben — und die zweite Fassung waere irgendwann die falsche.
  */
 
-/** Wonach die Liste sortiert werden kann. */
+/** Wonach die Liste sortiert werden kann — jede Spalte, die sie zeigt. */
 export const SORTIERSCHLUESSEL = [
   "eingang",
   "nummer",
   "name",
+  "verwendung",
   "betrag",
   "laufzeit",
   "prio",
   "wiedervorlage",
+  "ordner",
 ] as const;
 
 export type Sortierschluessel = (typeof SORTIERSCHLUESSEL)[number];
@@ -56,10 +59,13 @@ const ERSTE_RICHTUNG: Record<Sortierschluessel, Richtung> = {
   eingang: "ab",
   nummer: "ab",
   name: "auf",
+  verwendung: "auf",
   betrag: "ab",
   laufzeit: "ab",
   prio: "ab",
   wiedervorlage: "auf",
+  // Der Ordner sortiert den Weg entlang: "Neu" zuerst, der Papierkorb zuletzt.
+  ordner: "auf",
 };
 
 export function ersteRichtung(schluessel: Sortierschluessel): Richtung {
@@ -376,10 +382,24 @@ export function sortiere(
   });
 }
 
-/** Ob dem Fall die Angabe fehlt, nach der gerade sortiert wird. */
+/**
+ * Ob dem Fall die Angabe fehlt, nach der gerade sortiert wird.
+ *
+ * Wo in der Liste ein Gedankenstrich steht, steht auch hier nichts. Solche
+ * Zeilen gehoeren ans Ende, in beiden Richtungen — sonst fuellen sie beim
+ * Umdrehen den Anfang und schieben genau das aus dem Bild, wonach gerade
+ * sortiert wurde.
+ */
 function ohneWert(antrag: Antrag, schluessel: Sortierschluessel): boolean {
   if (schluessel === "wiedervorlage") return !antrag.wiedervorlage;
+  if (schluessel === "verwendung") return zweckName(antrag) === "";
   return false;
+}
+
+/** Der ausgeschriebene Verwendungszweck, wie ihn die Liste zeigt. */
+function zweckName(antrag: Antrag): string {
+  if (!antrag.kreditart) return "";
+  return findeKreditartNachId(antrag.kreditart)?.de.name ?? "";
 }
 
 function vergleiche(
@@ -392,7 +412,14 @@ function vergleiche(
     case "nummer":
       return (a.nummer ?? 0) - (b.nummer ?? 0);
     case "name":
+      // Nach Alphabet, mit deutscher Sortierung: Sie stellt Umlaute dorthin,
+      // wo man sie sucht — Müller zwischen Muhl und Mundt und nicht hinter Z.
       return vollerName(a).localeCompare(vollerName(b), "de");
+    case "verwendung":
+      return zweckName(a).localeCompare(zweckName(b), "de");
+    case "ordner":
+      // Nach dem Platz in der Pipeline, nicht nach dem Namen des Ordners.
+      return rangDerStation(a.status) - rangDerStation(b.status);
     case "betrag":
       return a.amount - b.amount;
     case "laufzeit":
