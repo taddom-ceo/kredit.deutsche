@@ -227,6 +227,82 @@ function Abgelegt({ className }: IconProps) {
   );
 }
 
+/**
+ * Sprechblase mit Strich — es kam nie ein Gespraech zustande.
+ *
+ * Der Strich laeuft ueber das ganze Feld und nicht nur ueber die Blase: Bei
+ * zwanzig Pixeln verschwindet ein kurzer Strich in der Kontur, und uebrig
+ * bleibt eine Sprechblase, die dann das Gegenteil bedeutet.
+ */
+function KeinKontakt({ className }: IconProps) {
+  return (
+    <svg {...gemeinsam} className={className}>
+      <path d="M20.4 11.8a7.2 7.2 0 0 1-10.4 6.5l-5 1.5 1.5-4.9A7.2 7.2 0 1 1 20.4 11.8z" />
+      <path d="M4.6 4.6 19.4 19.4" />
+    </svg>
+  );
+}
+
+/**
+ * Hoerer mit Strich — es wird nicht angerufen.
+ *
+ * Derselbe Hoerer wie bei "Rückruf", nur ohne den zurueckweisenden Pfeil und
+ * mit Strich. Das ist Absicht: Die beiden gehoeren zusammen und sind das
+ * Gegenteil voneinander, und das soll man an der Form sehen.
+ */
+function KeinAnruf({ className }: IconProps) {
+  return (
+    <svg {...gemeinsam} className={className}>
+      <path d="M8.4 4.6 10.6 8l-1.9 1.9a12 12 0 0 0 5.4 5.4L16 13.4l3.4 2.2v2.6a1.7 1.7 0 0 1-1.9 1.7C10.8 19.2 4.8 13.2 4.1 6.5A1.7 1.7 0 0 1 5.8 4.6z" />
+      <path d="M3.4 3.4 20.6 20.6" />
+    </svg>
+  );
+}
+
+/** Blatt mit Lupe — der Antrag liegt bei der Bank und wird geprueft. */
+function InPruefung({ className }: IconProps) {
+  return (
+    <svg {...gemeinsam} className={className}>
+      <path d="M13 3.6H7A1.6 1.6 0 0 0 5.4 5.2v13.6A1.6 1.6 0 0 0 7 20.4h3.4" />
+      <path d="M13 3.6 18.6 9.2v2.2" />
+      <path d="M8.6 8.4h3.2M8.6 12h4.2" />
+      <circle cx="16.2" cy="15.6" r="3.3" />
+      <path d="m18.6 18 2.4 2.4" />
+    </svg>
+  );
+}
+
+/**
+ * Schein mit Uhr — zugesagt, das Geld ist unterwegs.
+ *
+ * Der Unterschied zu "Ausgezahlt" ist die Uhr statt des Pfeils: dort ist es
+ * heraus, hier laeuft es noch. Zwei Scheine mit verschiedenen Pfeilen waeren
+ * bei dieser Groesse nicht auseinanderzuhalten.
+ */
+function InAuszahlung({ className }: IconProps) {
+  return (
+    <svg {...gemeinsam} className={className}>
+      <rect x="2.6" y="5.6" width="12.6" height="8.4" rx="1.8" />
+      <circle cx="8.9" cy="9.8" r="1.9" />
+      <circle cx="16.6" cy="16.6" r="4.6" />
+      <path d="M16.6 14.2v2.4l1.7 1.1" />
+    </svg>
+  );
+}
+
+/** Muenzstapel mit Haken — abgerechnet und bezahlt. */
+function Provision({ className }: IconProps) {
+  return (
+    <svg {...gemeinsam} className={className}>
+      <ellipse cx="9.4" cy="6.2" rx="5.8" ry="2.4" />
+      <path d="M3.6 6.2v4.6c0 1.3 2.6 2.4 5.8 2.4" />
+      <path d="M15.2 6.2v3" />
+      <path d="M3.6 10.8v4.6c0 1.3 2.6 2.4 5.8 2.4h.6" />
+      <path d="m13.4 17.6 2.3 2.4 4.7-5.2" />
+    </svg>
+  );
+}
+
 const STATION_ICONS: Partial<Record<StatusId, ComponentType<IconProps>>> = {
   neu: Eingang,
   rueckruf: Rueckruf,
@@ -242,8 +318,14 @@ const STATION_ICONS: Partial<Record<StatusId, ComponentType<IconProps>>> = {
   tag4plus: tagIcon("4"),
   on_hold: Pause,
   watch: Auge,
-  ausgezahlt: Auszahlung,
+  // Das zweite Brett.
+  kein_kontakt: KeinKontakt,
   erledigt: Abgelegt,
+  kein_anruf: KeinAnruf,
+  in_pruefung: InPruefung,
+  in_auszahlung: InAuszahlung,
+  ausgezahlt: Auszahlung,
+  provision: Provision,
   papierkorb: Papierkorb,
 };
 
