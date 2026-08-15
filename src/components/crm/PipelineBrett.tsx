@@ -41,14 +41,21 @@ import {
  * ist, ist im Aussendienst keins. `pointerdown/-move/-up` gilt fuer Maus,
  * Finger und Stift gleichermassen.
  *
- * Gezogen wird am Griff links, nicht an der ganzen Karte. Das ist kein
- * Schoenheitsentscheid: Am Finger muss der Griff `touch-action: none` tragen,
- * damit der Browser die Geste nicht als Blaettern deutet und wegnimmt. Truege
- * die ganze Karte das, liesse sich die Spalte am Telefon nicht mehr scrollen.
- * So bleibt die Karte anfassbar zum Blaettern und der Griff zum Schieben.
+ * Gezogen wird die ganze Karte, an jeder Stelle. Frueher gab es dafuer einen
+ * Griff aus sechs Punkten am linken Rand — 24 Pixel, die man treffen musste,
+ * bevor sich etwas bewegte. Auf einem Brett, auf dem man den ganzen Tag Karten
+ * verschiebt, ist das vierundzwanzigmal zielen statt einmal greifen.
+ *
+ * Ein Klick bleibt trotzdem ein Klick: Gezogen wird erst ab ein paar Pixeln
+ * Bewegung, und bis dahin kommt der Klick beim Namen an und oeffnet den Fall.
+ * Am Finger traegt die Karte `touch-action: pan-y` — der Browser behaelt das
+ * senkrechte Blaettern, sonst liesse sich eine volle Spalte nicht mehr rollen.
  *
  * Wer nicht ziehen kann oder will — Tastatur, Vorleseprogramm, ruhige Hand —
- * nimmt das Auswahlfeld am Fuss der Karte. Es fuehrt zur selben Aktion.
+ * markiert Karten und nimmt das Auswahlfeld in der Leiste ueber dem Brett,
+ * oder oeffnet den Fall und aendert den Ordner dort. Auf der Karte selbst
+ * steht dafuer nichts mehr: Ein Auswahlfeld auf jeder einzelnen machte aus
+ * einem Brett eine Formularwand und nahm dem Inhalt noch einmal 24 Pixel.
  *
  * Mehrere auf einmal: Strg oder Cmd und ein Klick markiert eine Karte, ein
  * zweiter nimmt die Markierung wieder weg. Zieht man danach eine markierte
@@ -171,11 +178,11 @@ export default function PipelineBrett({
   const diesesBrett = bretter.find((b) => b.id === brettId) ?? bretter[0];
   const stationen = diesesBrett.stationen;
   /**
-   * Alle Ordner beider Bretter — fuer die Auswahlfelder.
+   * Alle Ordner beider Bretter — fuer das Auswahlfeld in der Leiste.
    *
-   * Verschieben per Tastatur darf nicht am Reiter enden: Wer einen Fall aus
-   * der Pipeline nach "In Prüfung" legen will, soll das aus der Karte heraus
-   * tun koennen, ohne vorher das Brett zu wechseln.
+   * Verschieben per Tastatur darf nicht am Reiter enden: Wer markierte Faelle
+   * aus der Pipeline nach "In Prüfung" legen will, soll das tun koennen, ohne
+   * vorher das Brett zu wechseln.
    */
   const alleStationen = bretter.flatMap((b) => b.stationen);
   /**
@@ -394,7 +401,18 @@ export default function PipelineBrett({
     // Nur die linke Maustaste. Rechtsklick oeffnet das Menue des Browsers,
     // und eine Karte, die daran haengen bliebe, klebte am Zeiger fest.
     if (e.pointerType === "mouse" && e.button !== 0) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
+    /**
+     * Bewusst kein `setPointerCapture`.
+     *
+     * Solange nur der Griff am linken Rand die Ereignisse bekam, war das
+     * noetig: Ohne Fang endeten sie, sobald der Zeiger die 24 Pixel verliess.
+     * Jetzt haengen die Behandler an der ganzen Karte, und waehrend eines Zugs
+     * hoert zusaetzlich das Fenster mit — der Fang bringt nichts mehr und
+     * kostet etwas: Er verschiebt das Ziel des folgenden `click` auf das
+     * fangende Element, und damit gingen Klicks auf den Namen ins Leere. Ein
+     * Brett, auf dem man Faelle nicht mehr oeffnen kann, waere ein teurer
+     * Preis fuer eine Geste.
+     */
     start.current = {
       id: fall.id,
       status: fall.status,
@@ -899,7 +917,6 @@ export default function PipelineBrett({
                   <Karte
                     key={fall.id}
                     fall={fall}
-                    stationen={alleStationen}
                     darfSchieben={darfSchieben}
                     markiert={markiert.has(fall.id)}
                     onMarkieren={markiereUm}
@@ -914,7 +931,6 @@ export default function PipelineBrett({
                     onBewegen={bewegen}
                     onLoslassen={loslassen}
                     onAbbrechen={abbrechen}
-                    onWaehlen={verschiebe}
                   />
                 ))}
               </ul>
@@ -967,7 +983,6 @@ export default function PipelineBrett({
 
 function Karte({
   fall,
-  stationen,
   darfSchieben,
   markiert,
   onMarkieren,
@@ -976,10 +991,8 @@ function Karte({
   onBewegen,
   onLoslassen,
   onAbbrechen,
-  onWaehlen,
 }: {
   fall: BrettFall;
-  stationen: BrettStation[];
   darfSchieben: boolean;
   markiert: boolean;
   onMarkieren: (id: string) => void;
@@ -988,7 +1001,6 @@ function Karte({
   onBewegen: (e: ZeigerEreignis<HTMLElement>) => void;
   onLoslassen: () => void;
   onAbbrechen: () => void;
-  onWaehlen: (id: string, nach: StatusId) => void;
 }) {
   /**
    * Ob die Vorschau offen ist.
@@ -1001,17 +1013,16 @@ function Karte({
   const [offen, setOffen] = useState(false);
 
   return (
-    // `relative` ist hier kein Schmuck, sondern noetig — und das gilt genauso
-    // fuer das `relative` am Auswahlfeld weiter unten: Dessen Beschriftung
-    // steht als `sr-only` da, und das heisst in Tailwind `position: absolute`.
-    // Ohne einen positionierten Vorfahren haengt sie nicht an der Karte,
-    // sondern am Dokument — an der Stelle, an der die Karte laege, wenn das
-    // Brett nicht seitlich gerollt waere. Bei vierzehn Spalten sind das ein
-    // paar tausend Pixel weit rechts, und weil ein absolut positioniertes
-    // Element nicht vom `overflow` eines beliebigen Vorfahren beschnitten
-    // wird, sondern nur innerhalb seines Enthaeltnisblocks, zog es die ganze
-    // Seite in die Breite: Das CRM liess sich am Telefon seitlich
-    // wegschieben, obwohl das Brett fuer sich sauber rollte.
+    // `relative` ist hier kein Schmuck, sondern noetig: Die `sr-only`-Texte
+    // auf der Karte sind in Tailwind `position: absolute`. Ohne einen
+    // positionierten Vorfahren haengen sie nicht an der Karte, sondern am
+    // Dokument — an der Stelle, an der die Karte laege, wenn das Brett nicht
+    // seitlich gerollt waere. Bei vierzehn Spalten sind das ein paar tausend
+    // Pixel weit rechts, und weil ein absolut positioniertes Element nicht vom
+    // `overflow` eines beliebigen Vorfahren beschnitten wird, sondern nur
+    // innerhalb seines Enthaeltnisblocks, zog es die ganze Seite in die
+    // Breite: Das CRM liess sich am Telefon seitlich wegschieben, obwohl das
+    // Brett fuer sich sauber rollte.
     <li
       /**
        * Strg oder Cmd und ein Klick markiert die Karte.
@@ -1026,16 +1037,42 @@ function Karte({
         e.preventDefault();
         onMarkieren(fall.id);
       }}
+      /**
+       * Angefasst wird die ganze Karte.
+       *
+       * Vorher gab es dafuer einen Griff aus sechs Punkten am linken Rand: 24
+       * Pixel, die man treffen musste, bevor sich etwas bewegte. Auf einem
+       * Brett, auf dem man den ganzen Tag Karten verschiebt, ist das
+       * vierundzwanzigmal zielen statt einmal greifen — und die 24 Pixel
+       * fehlten dem Inhalt in jeder Spalte.
+       *
+       * Ein Klick bleibt ein Klick: Gezogen wird erst ab ein paar Pixeln
+       * Bewegung (siehe SCHWELLE), und bis dahin kommt der Klick beim Namen
+       * an und oeffnet den Fall.
+       *
+       * `touch-action: pan-y` statt `none`: Der Browser behaelt das
+       * senkrechte Blaettern — sonst liesse sich die Spalte am Finger nicht
+       * mehr rollen, sobald sie mehr Karten hat als Platz. Waagerechte
+       * Bewegung bleibt uns, und das ist die Richtung, in die eine Karte
+       * ohnehin geht. Entscheidet der Browser sich fuer das Blaettern, kommt
+       * `pointercancel` — und der angefangene Zug wird sauber abgeraeumt.
+       */
+      onPointerDown={darfSchieben ? (e) => onGreifen(e, fall) : undefined}
+      onPointerMove={darfSchieben ? onBewegen : undefined}
+      onPointerUp={darfSchieben ? onLoslassen : undefined}
+      onPointerCancel={darfSchieben ? onAbbrechen : undefined}
       onPointerLeave={() => setOffen(false)}
       onFocus={() => setOffen(true)}
       // `relatedTarget` ist das Element, das den Fokus bekommt. Bleibt er auf
-      // der Karte — vom Namen zum Auswahlfeld —, bleibt die Vorschau offen.
+      // der Karte, bleibt die Vorschau offen.
       onBlur={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
           setOffen(false);
         }
       }}
-      className={`relative flex gap-0.5 rounded-[14px] border bg-surface-2 transition-[opacity,border-color,box-shadow] duration-150 focus-within:border-border-strong ${
+      className={`relative flex select-none rounded-[14px] border bg-surface-2 transition-[opacity,border-color,box-shadow] duration-150 focus-within:border-border-strong ${
+        darfSchieben ? "cursor-grab touch-pan-y active:cursor-grabbing" : ""
+      } ${
         markiert
           ? "border-accent/70 ring-1 ring-accent/40"
           : "border-border hover:border-border-strong"
@@ -1049,10 +1086,10 @@ function Karte({
       {markiert && (
         <span
           aria-label="markiert"
-          // `pointer-events-none`: Der Haken sitzt in der Ecke ueber dem
-          // Griff. Ohne das schluckte er dort die Zeigerereignisse, und die
-          // oberen Pixel des Griffs waeren tot — ausgerechnet an einer
-          // markierten Karte, die man gleich ziehen will.
+          // `pointer-events-none`: Sonst schluckte der Haken dort die
+          // Zeigerereignisse, und die obere linke Ecke der Karte waere tot —
+          // ausgerechnet an einer markierten Karte, die man gleich ziehen
+          // will.
           // Innerhalb der Karte statt ueber ihrer Ecke: Die Spalte rollt in
           // sich und schneidet ab, was oben hinausragt — gemessen sechs Pixel
           // an der ersten Karte, also genau der halbe Haken.
@@ -1072,111 +1109,70 @@ function Karte({
           </svg>
         </span>
       )}
-      {darfSchieben && (
-        <span
-          // `touch-action: none` nur hier: Der Browser soll diese Geste nicht
-          // als Blaettern an sich ziehen. Die Karte daneben bleibt scrollbar.
-          // Die Breite bleibt bei 24 Pixeln, obwohl der Platz in einer
-          // schmalen Spalte knapp ist: Das ist das Mindestmass fuer eine
-          // Flaeche, die man treffen soll (WCAG 2.5.8). Schmaler getestet
-          // liess sich zwar noch ziehen, aber nur mit ruhiger Hand — und der
-          // Griff ist der einzige Weg, eine Karte mit der Maus zu bewegen.
-          className="flex w-6 shrink-0 cursor-grab touch-none select-none items-center justify-center rounded-l-[13px] text-muted/50 hover:bg-surface hover:text-muted active:cursor-grabbing"
-          onPointerDown={(e) => onGreifen(e, fall)}
-          onPointerMove={onBewegen}
-          onPointerUp={onLoslassen}
-          onPointerCancel={onAbbrechen}
-          aria-hidden
-        >
-          {/* Sechs Punkte — das uebliche Zeichen fuer "hier anfassen". */}
-          <svg viewBox="0 0 10 16" className="h-3.5 w-2 fill-current">
-            <circle cx="3" cy="3" r="1.2" />
-            <circle cx="7" cy="3" r="1.2" />
-            <circle cx="3" cy="8" r="1.2" />
-            <circle cx="7" cy="8" r="1.2" />
-            <circle cx="3" cy="13" r="1.2" />
-            <circle cx="7" cy="13" r="1.2" />
-          </svg>
-        </span>
-      )}
-
-      {/**
-       * Das Auswahlfeld unten statt oben rechts.
-       *
-       * In einer schmalen Spalte bleiben nach Griff und Rand rund hundert
-       * Pixel fuer den Inhalt. Sass das Feld oben in der Ecke, nahm es davon
-       * ein Viertel weg — und zwar in der Zeile, in der es am meisten weh tut.
-       * Unten teilt es sich die Zeile mit der Wiedervorlage, die ohnehin nur
-       * selten da ist.
-       */}
-      <div className="flex min-w-0 flex-1 flex-col py-1.5 pr-1.5">
+      <div className="flex min-w-0 flex-1 flex-col items-center px-2 pb-2 pt-1.5 text-center">
         {/* Das Datum klein oben rechts: Es beantwortet "seit wann liegt das
             hier", und das ist eine Frage, die man an eine Karte stellt,
             nachdem man sie gefunden hat. In eigener Zeile, damit es dem
-            Betrag daneben keine Breite wegnimmt. */}
-        <span className="self-end text-[9px] leading-none text-muted/60 tabular-nums">
+            Betrag darunter keine Breite wegnimmt. */}
+        <span className="self-end text-[10px] leading-none text-muted/60 tabular-nums">
           {fall.eingang}
         </span>
 
         {/**
-         * Zeichen gross links, Betrag gross daneben, Name klein darunter.
+         * Zeichen und Betrag untereinander, mittig, und beide gross.
          *
-         * Vorher standen vier gleich grosse Zeilen da — Name, Ort, Betrag,
-         * Zweck, Datum —, und ein Brett aus vierzig solchen Karten war eine
-         * Wand aus Text, durch die niemand hindurchsah. Auf einem Brett zaehlt
-         * die Frage "wo liegt wie viel", und die beantworten Zeichen und
-         * Betrag zusammen, ohne dass man ein Wort lesen muss.
+         * Seit Griff und Auswahlfeld weg sind, gehoert die ganze Breite dem
+         * Inhalt — vorher gingen links 24 und rechts noch einmal 24 Pixel
+         * weg, und der Betrag drueckte sich in den Rest. Nebeneinander waere
+         * der gewonnene Platz gleich wieder verteilt; untereinander bekommt
+         * jedes von beidem die volle Spalte.
          *
          * Das Zeichen ist dasselbe wie in der Antragsstrecke, mit derselben
          * Farbe und derselben getoenten Flaeche darunter (`zweck-zeichen`).
          * Der Kunde hat es angeklickt, hier steht es wieder — zwei Ansichten
          * derselben Sache sollen auch gleich aussehen.
          */}
-        <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
-          <span
-            className="zweck-zeichen grid size-8 shrink-0 place-items-center rounded-[10px]"
-            style={{ "--zweck": fall.farbe ?? "var(--muted)" } as CSSProperties}
-            title={fall.art ?? undefined}
-          >
-            <ZweckZeichen id={fall.kreditart ?? ""} className="size-5" />
-            <span className="sr-only">{fall.art ?? "Verwendung offen"}</span>
-          </span>
+        <span
+          className="zweck-zeichen mt-0.5 grid size-11 shrink-0 place-items-center rounded-[13px]"
+          style={{ "--zweck": fall.farbe ?? "var(--muted)" } as CSSProperties}
+          title={fall.art ?? undefined}
+        >
+          <ZweckZeichen id={fall.kreditart ?? ""} className="size-7" />
+          <span className="sr-only">{fall.art ?? "Verwendung offen"}</span>
+        </span>
 
-          <div className="flex min-w-0 flex-1 flex-col">
-            {/**
-             * Der Betrag ist der Schalter fuer die Vorschau.
-             *
-             * Nicht die ganze Karte: Wer den Zeiger ueber das Brett fuehrt,
-             * um eine Karte zu greifen, streift dabei ein Dutzend andere, und
-             * jede davon klappte auf und schob die darunter weg. Der Betrag
-             * ist klein genug, dass man ihn absichtlich ansteuert.
-             *
-             * Zugeklappt wird erst, wenn der Zeiger die ganze Karte verlaesst
-             * (siehe `onPointerLeave` am `li`). Sonst fiele die Vorschau in
-             * dem Moment zu, in dem man sie zu lesen beginnt.
-             */}
-            <span
-              data-betrag
-              onPointerEnter={() => setOffen(true)}
-              className="w-fit max-w-full cursor-default truncate text-[15px] font-semibold leading-tight tabular-nums"
-            >
-              {fall.betrag}
-            </span>
+        {/**
+         * Der Betrag ist der Schalter fuer die Vorschau.
+         *
+         * Nicht die ganze Karte: Wer den Zeiger ueber das Brett fuehrt, um
+         * eine Karte zu greifen, streift dabei ein Dutzend andere, und jede
+         * davon klappte auf und schob die darunter weg. Der Betrag ist klein
+         * genug, dass man ihn absichtlich ansteuert.
+         *
+         * Zugeklappt wird erst, wenn der Zeiger die ganze Karte verlaesst
+         * (siehe `onPointerLeave` am `li`). Sonst fiele die Vorschau in dem
+         * Moment zu, in dem man sie zu lesen beginnt.
+         */}
+        <span
+          data-betrag
+          onPointerEnter={() => setOffen(true)}
+          className="mt-1.5 max-w-full truncate text-[19px] font-semibold leading-tight tabular-nums"
+        >
+          {fall.betrag}
+        </span>
 
-            {/* Ruhend abgeschnitten, beim Zeigen ausgeschrieben: In einer
-                schmalen Spalte hat "Philippa-Charlotte Dummy" keinen Platz,
-                und drei Punkte sind ehrlicher als eine zerquetschte Zeile. */}
-            <Link
-              href={`/crm/antrag/${fall.id}`}
-              title={fall.name}
-              className={`text-[11px] leading-snug text-muted hover:text-accent ${
-                offen ? "" : "truncate"
-              }`}
-            >
-              {fall.name}
-            </Link>
-          </div>
-        </div>
+        {/* Ruhend abgeschnitten, beim Zeigen ausgeschrieben: In einer schmalen
+            Spalte hat "Philippa-Charlotte Dummy" keinen Platz, und drei Punkte
+            sind ehrlicher als eine zerquetschte Zeile. */}
+        <Link
+          href={`/crm/antrag/${fall.id}`}
+          title={fall.name}
+          className={`mt-0.5 max-w-full text-[12px] leading-snug text-muted hover:text-accent ${
+            offen ? "" : "truncate"
+          }`}
+        >
+          {fall.name}
+        </Link>
 
         {/**
          * Die Vorschau: was die Karte sonst weglaesst.
@@ -1200,99 +1196,25 @@ function Karte({
                "Zahnbehandlu/ng". Mit Silbentrennung bricht es dort, wo es ein
                Mensch auch braeche. Kennt der Browser die deutschen
                Trennregeln nicht, bleibt der harte Umbruch als Rueckfall. */
-            className="flex flex-col gap-0.5 hyphens-auto break-words pt-1.5 text-[10px] leading-snug text-muted"
+            className="mt-1 flex flex-col gap-0.5 hyphens-auto break-words text-[11px] leading-snug text-muted"
           >
             <span>{fall.art ?? "—"}</span>
             <span className="tabular-nums">{fall.laufzeit}</span>
           </div>
         )}
 
-        <div className="mt-0.5 flex min-h-6 items-center justify-between gap-1.5">
-          {fall.wiedervorlage ? (
-            <span
-              className={`truncate rounded-full border px-1.5 py-0.5 text-[10px] tabular-nums ${
-                fall.faellig
-                  ? "border-amber-400/40 bg-amber-400/10 text-amber-200"
-                  : "border-border text-muted"
-              }`}
-            >
-              {fall.faellig ? "fällig " : "WV "}
-              {fall.wiedervorlage}
-            </span>
-          ) : (
-            <span />
-          )}
-
-          {darfSchieben && (
-            /**
-             * Der Weg ohne Ziehen — fuer die Tastatur, fuer Vorleseprogramme
-             * und fuer alle, denen eine Geste ueber vierzehn Spalten zu
-             * fummelig ist.
-             *
-             * Klein und ohne sichtbaren Text: Welcher Ordner das ist, sagt
-             * schon die Spalte, und ein Feld, das ihn auf jeder Karte
-             * wiederholt, macht aus einem Brett eine Formularwand. Die Auswahl
-             * selbst klappt vom Betriebssystem mit voller Beschriftung auf.
-             */
-            <label className="relative shrink-0">
-              <span className="sr-only">
-                {fall.name} in anderen Ordner legen
-              </span>
-              {/* `key` haengt am Status: Nach einem Zug baut React das Feld neu
-                  auf, sonst behielte es seinen alten Eintrag — `defaultValue`
-                  wirkt nur beim ersten Rendern. */}
-              <select
-                key={fall.status}
-                defaultValue={fall.status}
-                title="In anderen Ordner legen"
-                onChange={(e) => onWaehlen(fall.id, e.target.value as StatusId)}
-                className="size-6 cursor-pointer appearance-none rounded-[6px] border border-border bg-surface text-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-              >
-                {/* Stillgelegte Ordner stehen nicht zur Wahl — man soll da
-                    heraus und nicht hinein. Der eigene bleibt drin, sonst
-                    zeigte das Feld einen fremden Ordner an. */}
-                {nachGruppen(
-                  stationen.filter(
-                    (s) => !s.stillgelegt || s.id === fall.status
-                  )
-                ).map((buendel) =>
-                  buendel.gruppe ? (
-                    <optgroup key={buendel.gruppe} label={buendel.gruppe}>
-                      {buendel.ordner.map((s) => (
-                        <option
-                          key={s.id}
-                          value={s.id}
-                          className="text-foreground"
-                        >
-                          {s.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ) : (
-                    buendel.ordner.map((s) => (
-                      <option
-                        key={s.id}
-                        value={s.id}
-                        className="text-foreground"
-                      >
-                        {s.name}
-                      </option>
-                    ))
-                  )
-                )}
-              </select>
-              {/* Zwei Pfeile hinter dem Feld. `pointer-events-none`, damit der
-                  Klick beim Auswahlfeld darunter ankommt. */}
-              <svg
-                viewBox="0 0 10 10"
-                aria-hidden
-                className="pointer-events-none absolute inset-0 m-auto size-3 fill-muted"
-              >
-                <path d="M5 0.6 7.2 3.4H2.8zM5 9.4 2.8 6.6h4.4z" />
-              </svg>
-            </label>
-          )}
-        </div>
+        {fall.wiedervorlage && (
+          <span
+            className={`mt-1.5 max-w-full truncate rounded-full border px-2 py-0.5 text-[11px] tabular-nums ${
+              fall.faellig
+                ? "border-amber-400/40 bg-amber-400/10 text-amber-200"
+                : "border-border text-muted"
+            }`}
+          >
+            {fall.faellig ? "fällig " : "WV "}
+            {fall.wiedervorlage}
+          </span>
+        )}
       </div>
     </li>
   );
