@@ -322,6 +322,36 @@ test("der Name geht nach Alphabet, mit Umlauten an der richtigen Stelle", () => 
   assert.deepEqual(reihe, ["Maier", "Müller", "Mundt", "Muster"]);
 });
 
+/* ------------------------------------------------------------------ */
+/* Der Reiter                                                          */
+/* ------------------------------------------------------------------ */
+
+test("ohne Ordner entscheidet der Parameter über den Reiter", () => {
+  assert.equal(ausAdresse("").brett, "pipeline");
+  assert.equal(ausAdresse("brett=erledigt").brett, "erledigt");
+  assert.equal(ausAdresse("brett=quatsch").brett, "pipeline");
+});
+
+test("mit Ordner entscheidet der Ordner, nicht der Parameter", () => {
+  // Ein Ordner, der unten aufgeschlagen ist, aber oben auf dem anderen Brett
+  // laege, waere ein Widerspruch, den niemand aufloesen kann.
+  assert.equal(ausAdresse("station=ausgezahlt").brett, "erledigt");
+  assert.equal(ausAdresse("station=in_pruefung").brett, "erledigt");
+  assert.equal(ausAdresse("station=neu").brett, "pipeline");
+  assert.equal(ausAdresse("station=neu&brett=erledigt").brett, "pipeline");
+  assert.equal(ausAdresse("station=provision&brett=pipeline").brett, "erledigt");
+});
+
+test("der Reiter steht nur in der Adresse, wenn er nicht aus dem Ordner folgt", () => {
+  assert.match(alsAdresse(ausAdresse("brett=erledigt")), /brett=erledigt/);
+  // Mit Ordner ist er ueberfluessig — derselbe Zustand zweimal.
+  assert.equal(
+    alsAdresse(ausAdresse("station=ausgezahlt")).includes("brett="),
+    false
+  );
+  assert.equal(alsAdresse(ausAdresse("")).includes("brett="), false);
+});
+
 test("der Ordner sortiert den Weg der Pipeline entlang, nicht nach Namen", () => {
   const neu = fall({ id: "neu", status: "neu" });
   const abbrecher = fall({ id: "abbrecher", status: "abbrecher" });

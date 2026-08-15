@@ -4,7 +4,13 @@ import {
   type Antrag,
   type AntragFilter,
 } from "./antraege";
-import { findeStation, rangDerStation, type StatusId } from "./pipeline";
+import {
+  brettDerStation,
+  findeStation,
+  rangDerStation,
+  type BrettId,
+  type StatusId,
+} from "./pipeline";
 import { bewerte, KLASSEN, type Prioritaetsklasse } from "./priorisierung";
 import { findeKreditartNachId } from "../kreditarten";
 
@@ -95,6 +101,14 @@ export type Ansicht = {
   bisDatum: string | null;
   sortierung: Sortierschluessel;
   richtung: Richtung;
+  /**
+   * Welcher Reiter oben offen ist — "Pipeline" oder "Erledigt".
+   *
+   * Er gehoert in die Adresse und nicht in einen Zustand im Browser: Jeder
+   * Klick auf einen Ordner ist eine Navigation, und ein Reiter, der dabei
+   * zurueckspringt, waere ein Reiter, den man nach jedem Klick neu waehlt.
+   */
+  brett: BrettId;
 };
 
 export const LEERE_ANSICHT: Ansicht = {
@@ -111,6 +125,7 @@ export const LEERE_ANSICHT: Ansicht = {
   bisDatum: null,
   sortierung: "eingang",
   richtung: "ab",
+  brett: "pipeline",
 };
 
 /* ------------------------------------------------------------------ */
@@ -149,6 +164,7 @@ function rang(wert: string): number | null {
  */
 export function leseAnsicht(lies: (name: string) => string): Ansicht {
   const station = lies("station");
+  const brett = lies("brett");
   const sortierung = lies("sortierung") as Sortierschluessel;
   const gueltig = SORTIERSCHLUESSEL.includes(sortierung);
   const richtung = lies("richtung");
@@ -189,6 +205,20 @@ export function leseAnsicht(lies: (name: string) => string): Ansicht {
       richtung === "auf" || richtung === "ab"
         ? richtung
         : ersteRichtung(gueltig ? sortierung : "eingang"),
+    /**
+     * Der aufgeschlagene Ordner bestimmt den Reiter, nicht umgekehrt.
+     *
+     * Brett und Liste zeigen dieselbe Auswahl; ein Ordner, der unten
+     * aufgeschlagen ist, aber oben auf dem anderen Brett liegt, waere ein
+     * Widerspruch, den niemand aufloesen kann. Nur wenn kein Ordner gewaehlt
+     * ist, entscheidet der Parameter — dann gibt es nichts, dem der Reiter
+     * folgen koennte.
+     */
+    brett: findeStation(station)
+      ? brettDerStation(station)
+      : brett === "erledigt"
+        ? "erledigt"
+        : "pipeline",
   };
 }
 
@@ -229,6 +259,9 @@ export function alsAdresse(
   // ohnehin gilt, und eine Adresse soll kurz bleiben.
   if (a.sortierung !== "eingang") p.set("sortierung", a.sortierung);
   if (a.richtung !== ersteRichtung(a.sortierung)) p.set("richtung", a.richtung);
+  // Nur ohne Ordner: Mit einem steht der Reiter ohnehin fest, und derselbe
+  // Zustand zweimal in einer Adresse ist einer zu viel.
+  if (!a.station && a.brett !== "pipeline") p.set("brett", a.brett);
   const text = p.toString();
   return text ? `${ziel}?${text}` : ziel;
 }

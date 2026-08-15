@@ -32,8 +32,11 @@ import { adressName } from "@/lib/crm/db";
 import { schluesselVorhanden } from "@/lib/crm/verschluesselung";
 import { ROLLEN_NAMEN } from "@/lib/crm/benutzer";
 import {
+  BRETTER,
+  ERLEDIGT_STATIONEN,
   nachGruppen,
   PAPIERKORB,
+  PIPELINE_STATIONEN,
   STATIONEN,
   TON_KLASSEN,
   stationOderErsatz,
@@ -362,19 +365,25 @@ export default async function CrmSeite({
    */
   const angezeigt = feinfilterAktiv(ansicht) ? listenAntraege.length : getroffen;
 
-  const spalten: BrettStation[] = [
-    ...STATIONEN.map((s) => ({
-      id: s.id,
-      name: s.name,
-      beschreibung: s.beschreibung,
-      ton: s.ton,
-      gruppe: s.gruppe,
-      href: ordnerAdresse(s.id),
-    })),
-    // Der Papierkorb steht am Ende, hinter allen Ordnern der Pipeline und vor
-    // den stillgelegten. Er ist kein Schritt im Vertrieb, sondern der Weg
-    // hinaus — und ganz rechts ist er da, wo man ihn sucht, ohne zwischen den
-    // Arbeitsordnern im Weg zu stehen.
+  /** Ein Ordner, wie das Brett ihn braucht. */
+  const alsSpalte = (s: (typeof STATIONEN)[number]): BrettStation => ({
+    id: s.id,
+    name: s.name,
+    beschreibung: s.beschreibung,
+    ton: s.ton,
+    gruppe: s.gruppe,
+    href: ordnerAdresse(s.id),
+  });
+
+  /**
+   * Papierkorb und stillgelegte Ordner — der Rand des Bretts.
+   *
+   * Sie stehen am Ende der Pipeline und nicht auf dem Brett "Erledigt": Der
+   * Papierkorb ist kein Abschluss, sondern der Weg hinaus, und ein Fall auf
+   * einer vergessenen Kennung soll dort auftauchen, wo taeglich gearbeitet
+   * wird — sonst zieht ihn nie jemand heraus.
+   */
+  const randSpalten: BrettStation[] = [
     {
       id: PAPIERKORB.id,
       name: PAPIERKORB.name,
@@ -395,6 +404,32 @@ export default async function CrmSeite({
         abseits: true,
       };
     }),
+  ];
+
+  const spalten: BrettStation[] = [
+    ...PIPELINE_STATIONEN.map(alsSpalte),
+    ...randSpalten,
+  ];
+
+  /** Die beiden Reiter mit ihren Spalten. */
+  const bretter = BRETTER.map((b) => ({
+    id: b.id,
+    name: b.name,
+    href: alsAdresse(ansicht, { brett: b.id, station: null }),
+    stationen: b.id === "pipeline" ? spalten : ERLEDIGT_STATIONEN.map(alsSpalte),
+  }));
+
+  /**
+   * Alle Ordner fuer die Auswahlfelder — beide Bretter und der Rand.
+   *
+   * Das Auswahlfeld ueber der Liste kennt keine Reiter: Wer die Liste auf
+   * "Ausgezahlt" einschraenken will, soll das tun koennen, ohne vorher oben
+   * das Brett zu wechseln. Der Reiter folgt dann von selbst nach.
+   */
+  const auswahlOrdner: BrettStation[] = [
+    ...PIPELINE_STATIONEN.map(alsSpalte),
+    ...ERLEDIGT_STATIONEN.map(alsSpalte),
+    ...randSpalten,
   ];
 
   /** Der aufgeschlagene Ordner — fuer die Markierung oben und die Ueberschrift unten. */
@@ -525,24 +560,29 @@ export default async function CrmSeite({
             Datenbank schweigt. Die Meldung darueber sagt, was Sache ist. */}
         {!fehler && (
           <section className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <h2 className="text-sm font-semibold">Pipeline</h2>
-              {/* Seit die Spalten nur noch ein Zeichen tragen, gehoert der
-                  Hinweis auf die Fahne hierher: Wer das Brett zum ersten Mal
-                  sieht, kaeme sonst nicht darauf, dass die Namen ueberhaupt
-                  noch irgendwo stehen. */}
-              <span className="text-xs text-muted">
-                Auf ein Symbol zeigen zeigt den Namen, klicken öffnet den
-                Ordner in der Liste darunter.{" "}
-                {benutzer.rolle === "lesen"
-                  ? "Dieses Konto darf Fälle nur ansehen."
-                  : "Karte am Griff links greifen und in einen anderen Ordner ziehen."}{" "}
-                {gesamt} {gesamt === 1 ? "Fall" : "Fälle"} insgesamt
-              </span>
-            </div>
-
+            {/* Der `key` sorgt dafuer, dass das Brett beim Reiterwechsel neu
+                anfaengt: Es haelt den offenen Reiter zusaetzlich als eigenen
+                Zustand, damit man eine Karte auf den anderen Reiter ziehen
+                kann, und der muesste sich nach einer Navigation sonst selbst
+                nachtraeglich korrigieren. */}
             <PipelineBrett
-              stationen={spalten}
+              key={ansicht.brett}
+              bretter={bretter}
+              aktivesBrett={ansicht.brett}
+              /* Seit die Spalten nur noch ein Zeichen tragen, gehoert der
+                 Hinweis auf die Fahne hierher: Wer das Brett zum ersten Mal
+                 sieht, kaeme sonst nicht darauf, dass die Namen ueberhaupt
+                 noch irgendwo stehen. */
+              hinweis={
+                <>
+                  Auf ein Symbol zeigen zeigt den Namen, klicken öffnet den
+                  Ordner in der Liste darunter.{" "}
+                  {benutzer.rolle === "lesen"
+                    ? "Dieses Konto darf Fälle nur ansehen."
+                    : "Karte am Griff links greifen und in einen anderen Ordner ziehen."}{" "}
+                  {gesamt} {gesamt === 1 ? "Fall" : "Fälle"} insgesamt
+                </>
+              }
               faelle={karten}
               darfSchieben={benutzer.rolle !== "lesen"}
               gewaehlt={filter.station ?? null}
@@ -605,6 +645,12 @@ export default async function CrmSeite({
                 {filter.nurFaellig && (
                   <input type="hidden" name="faellig" value="1" />
                 )}
+                {/* Nur ohne gewaehlten Ordner: Mit einem folgt der Reiter dem
+                    Ordner, und wer im Auswahlfeld daneben "Ausgezahlt" waehlt,
+                    landet von selbst auf dem richtigen Brett. */}
+                {!filter.station && ansicht.brett !== "pipeline" && (
+                  <input type="hidden" name="brett" value={ansicht.brett} />
+                )}
                 {/* Die Reihenfolge ueberlebt eine Suche. Sie ist eine
                     Einstellung der Ansicht und keine Auswahl von Faellen — wer
                     nach Betrag sortiert und dann sucht, will die Treffer nach
@@ -653,7 +699,7 @@ export default async function CrmSeite({
                   {/* Ordner einer Gruppe stehen unter ihrer Ueberschrift
                       beieinander — "Erledigt" mit seinen beiden
                       Unterordnern. */}
-                  {nachGruppen(spalten).map((buendel) =>
+                  {nachGruppen(auswahlOrdner).map((buendel) =>
                     buendel.gruppe ? (
                       <optgroup key={buendel.gruppe} label={buendel.gruppe}>
                         {buendel.ordner.map((s) => (

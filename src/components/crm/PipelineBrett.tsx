@@ -9,6 +9,7 @@ import {
   useState,
   type CSSProperties,
   type PointerEvent as ZeigerEreignis,
+  type ReactNode,
 } from "react";
 import { faelleVerschieben, fallVerschieben } from "@/app/crm/aktionen";
 import { stationIcon } from "@/components/crm/StationIcons";
@@ -17,6 +18,7 @@ import {
   nachGruppen,
   SPAETE_ORDNER,
   TON_KLASSEN,
+  type BrettId,
   type StatusId,
   type Ton,
 } from "@/lib/crm/pipeline";
@@ -127,18 +129,55 @@ const SCHWELLE = 6;
 const RANDZONE = 90;
 const ROLLSCHRITT = 16;
 
+/** Ein Reiter: ein Brett mit seinen Spalten und der Adresse dorthin. */
+export type BrettReiter = {
+  id: BrettId;
+  name: string;
+  href: string;
+  stationen: BrettStation[];
+};
+
 export default function PipelineBrett({
-  stationen,
+  bretter,
+  aktivesBrett,
+  hinweis,
   faelle,
   darfSchieben,
   gewaehlt,
 }: {
-  stationen: BrettStation[];
+  bretter: BrettReiter[];
+  /** Welcher Reiter aus der Adresse kommt. */
+  aktivesBrett: BrettId;
+  /** Der Erklaertext rechts neben den Reitern. */
+  hinweis: ReactNode;
   faelle: BrettFall[];
   darfSchieben: boolean;
   /** Der Ordner, auf den die Liste unten gerade eingeschraenkt ist. */
   gewaehlt: StatusId | null;
 }) {
+  /**
+   * Der Reiter, der gerade offen ist.
+   *
+   * Ein eigener Zustand neben der Adresse, und zwar aus genau einem Grund:
+   * Wer eine Karte auf den anderen Reiter zieht, soll dort abladen koennen.
+   * Eine Navigation mitten im Zug wuerde die Geste abbrechen — der Zeiger
+   * haelt dann eine Karte, die es nicht mehr gibt.
+   *
+   * Die Adresse bleibt trotzdem die Wahrheit: Ein Klick auf einen Reiter ist
+   * ein Verweis, und die Seite gibt diesem Brett beim Wechsel einen neuen
+   * `key`, sodass dieser Zustand mit dem richtigen Wert neu anfaengt.
+   */
+  const [brettId, setBrettId] = useState<BrettId>(aktivesBrett);
+  const diesesBrett = bretter.find((b) => b.id === brettId) ?? bretter[0];
+  const stationen = diesesBrett.stationen;
+  /**
+   * Alle Ordner beider Bretter — fuer die Auswahlfelder.
+   *
+   * Verschieben per Tastatur darf nicht am Reiter enden: Wer einen Fall aus
+   * der Pipeline nach "In Prüfung" legen will, soll das aus der Karte heraus
+   * tun koennen, ohne vorher das Brett zu wechseln.
+   */
+  const alleStationen = bretter.flatMap((b) => b.stationen);
   /**
    * Die Karte liegt in der neuen Spalte, sobald man loslaesst — nicht erst,
    * wenn der Server geantwortet hat. Ueber eine Leitung, die auch mal eine
@@ -301,6 +340,13 @@ export default function PipelineBrett({
     return Boolean(element?.closest("[data-spaete-knopf]"));
   }
 
+  /** Ueber welchem Reiter steht der Zeiger — oder ueber keinem? */
+  function reiterUnter(x: number, y: number): BrettId | null {
+    const element = document.elementFromPoint(x, y);
+    const reiter = element?.closest<HTMLElement>("[data-brett]");
+    return (reiter?.dataset.brett as BrettId | undefined) ?? null;
+  }
+
   function verschiebe(id: string, nach: StatusId) {
     setFehler(null);
     startTransition(async () => {
@@ -360,12 +406,16 @@ export default function PipelineBrett({
   }
 
   function bewegen(e: ZeigerEreignis<HTMLElement>) {
+    bewegenBei(e.clientX, e.clientY);
+  }
+
+  function bewegenBei(x: number, y: number) {
     const s = start.current;
     if (!s) return;
     if (!s.laeuft) {
       // Erst ab ein paar Pixeln. Sonst waere jeder Tipper auf den Griff schon
       // ein Zug, und ein leichtes Zittern verschoebe Faelle.
-      if (Math.hypot(e.clientX - s.x, e.clientY - s.y) < SCHWELLE) return;
+      if (Math.hypot(x - s.x, y - s.y) < SCHWELLE) return;
       s.laeuft = true;
     }
     setZug({
@@ -374,18 +424,26 @@ export default function PipelineBrett({
         markiert.has(s.id) && markiert.size > 1
           ? `${markiert.size} Fälle`
           : s.name,
-      x: e.clientX,
-      y: e.clientY,
+      x,
+      y,
     });
     // Eine Karte ueber dem Knopf klappt die zugeklappten Ordner auf. Sonst
     // muesste man den Zug abbrechen, klicken und noch einmal greifen — und
     // zwar genau dann, wenn man schon weiss, wohin die Karte soll. Nur
     // aufklappen, nie zu: Zuklappen mitten im Zug zoege dem Zeiger das Ziel
     // unter der Hand weg.
-    if (!spaeteOffen && ueberKnopf(e.clientX, e.clientY)) setSpaeteOffen(true);
-    zielRef.current = ordnerUnter(e.clientX, e.clientY);
+    if (!spaeteOffen && ueberKnopf(x, y)) setSpaeteOffen(true);
+    // Dasselbe fuer die Reiter: Eine Karte auf "Erledigt" gezogen schaltet
+    // dorthin um, ohne dass man loslassen muss. Ohne das waere jeder Weg vom
+    // einen Brett zum anderen ein Abbruch, ein Klick und ein neues Greifen —
+    // und zwar genau dann, wenn man schon weiss, wohin die Karte soll.
+    // Umgeschaltet wird hier und nicht ueber die Adresse: Eine Navigation
+    // mitten im Zug nimmt dem Zeiger die Karte aus der Hand.
+    const reiter = reiterUnter(x, y);
+    if (reiter && reiter !== brettId) setBrettId(reiter);
+    zielRef.current = ordnerUnter(x, y);
     setZiel(zielRef.current);
-    setzeRichtung(e.clientX);
+    setzeRichtung(x);
   }
 
   function loslassen() {
@@ -434,6 +492,48 @@ export default function PipelineBrett({
 
   const nachOrdner = (id: StatusId) => ansicht.filter((f) => f.status === id);
 
+  /**
+   * Waehrend eines Zugs hoert auch das Fenster mit.
+   *
+   * Der Grund ist der Reiterwechsel: Wer eine Karte auf das andere Brett
+   * zieht, laesst die Spalte verschwinden, in der die gezogene Karte steckt —
+   * und mit ihr das Element, das den Zeiger gefangen hat. Ab da kaeme kein
+   * `pointermove` und kein `pointerup` mehr an, die Karte klebte am Zeiger und
+   * das Loslassen bliebe folgenlos. Am Fenster kann das nicht passieren: Es
+   * verschwindet nicht.
+   *
+   * Die Behandler an der Karte bleiben trotzdem stehen. Sie greifen im
+   * Normalfall zuerst, und beide tun dasselbe — `loslassen` raeumt beim
+   * zweiten Aufruf nichts mehr auf, weil es beim ersten schon alles
+   * zurueckgesetzt hat.
+   *
+   * Die Funktionen liegen in einem Ref, das ein zweiter Effekt nach jedem
+   * Rendern nachzieht: Sonst haetten die Behandler den Zustand vom Anfang des
+   * Zugs in der Hand — welcher Reiter offen ist, was markiert war — und
+   * arbeiteten mit Angaben von vor der Bewegung.
+   */
+  const behandler = useRef({ bewegenBei, loslassen, abbrechen });
+  useEffect(() => {
+    behandler.current = { bewegenBei, loslassen, abbrechen };
+  });
+
+  const zieht = zug !== null;
+  useEffect(() => {
+    if (!zieht) return;
+    const bewegt = (e: PointerEvent) =>
+      behandler.current.bewegenBei(e.clientX, e.clientY);
+    const los = () => behandler.current.loslassen();
+    const weg = () => behandler.current.abbrechen();
+    window.addEventListener("pointermove", bewegt);
+    window.addEventListener("pointerup", los);
+    window.addEventListener("pointercancel", weg);
+    return () => {
+      window.removeEventListener("pointermove", bewegt);
+      window.removeEventListener("pointerup", los);
+      window.removeEventListener("pointercancel", weg);
+    };
+  }, [zieht]);
+
   /* ---------------------------------------------------------------- */
   /* Die Fahne ueber der Spalte                                        */
   /* ---------------------------------------------------------------- */
@@ -477,9 +577,68 @@ export default function PipelineBrett({
     (summe, s) => summe + nachOrdner(s.id).length,
     0
   );
+  /** Ob dieses Brett ueberhaupt Ordner hat, die sich zuklappen lassen. */
+  const hatSpaete = stationen.some((s) => SPAETE_ORDNER.includes(s.id));
 
   return (
     <div className="flex flex-col gap-3">
+      {/**
+       * Die Reiter.
+       *
+       * Verweise und keine Schaltflaechen: Welches Brett offen ist, steht in
+       * der Adresse, laesst sich als Lesezeichen ablegen und ueberlebt jeden
+       * Klick auf einen Ordner. Der offene Reiter leuchtet in der
+       * Betonungsfarbe und traegt einen Strich darunter — Farbe allein
+       * genuegt nicht, wenn jemand sie nicht unterscheiden kann.
+       *
+       * `data-brett` ist zugleich das Ziel beim Ziehen, siehe `bewegen`.
+       */}
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-border">
+        <div className="flex items-end gap-1">
+          {bretter.map((b) => {
+            const offen = b.id === brettId;
+            const anzahl = b.stationen.reduce(
+              (summe, s) => summe + nachOrdner(s.id).length,
+              0
+            );
+            return (
+              <Link
+                key={b.id}
+                href={b.href}
+                data-brett={b.id}
+                aria-current={offen ? "page" : undefined}
+                title={
+                  zug
+                    ? `Karte hierher ziehen öffnet ${b.name}`
+                    : `${b.name} zeigen`
+                }
+                className={`-mb-px flex items-center gap-2 rounded-t-[10px] border-b-2 px-3 py-2 text-sm font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                  offen
+                    ? "border-accent text-accent"
+                    : zug
+                      ? // Waehrend eines Zugs ist der andere Reiter ein Ziel
+                        // und sieht auch so aus.
+                        "border-accent/40 bg-accent/[0.06] text-foreground"
+                      : "border-transparent text-muted hover:text-foreground"
+                }`}
+              >
+                {b.name}
+                <span
+                  className={`rounded-full border px-1.5 text-[11px] tabular-nums font-medium ${
+                    offen
+                      ? "border-accent/40 bg-accent/10"
+                      : "border-border text-muted"
+                  }`}
+                >
+                  {anzahl}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+        <span className="pb-2 text-xs text-muted">{hinweis}</span>
+      </div>
+
       {fehler && (
         <p
           role="alert"
@@ -522,7 +681,7 @@ export default function PipelineBrett({
               className="rounded-[10px] border border-border bg-surface-2 px-2 py-1 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             >
               <option value="">Ordner wählen…</option>
-              {nachGruppen(stationen.filter((x) => !x.stillgelegt)).map(
+              {nachGruppen(alleStationen.filter((x) => !x.stillgelegt)).map(
                 (buendel) =>
                   buendel.gruppe ? (
                     <optgroup key={buendel.gruppe} label={buendel.gruppe}>
@@ -560,7 +719,13 @@ export default function PipelineBrett({
        * beides, damit "zugeklappt" nicht mit "leer" verwechselt wird. Liegt
        * dort etwas, steht die Zahl deutlich da; liegt nichts dort, steht es
        * ebenso deutlich.
+       *
+       * Nur auf Brettern, die ueberhaupt zugeklappte Ordner haben. "Erledigt"
+       * hat sieben Spalten, die alle nebeneinander passen — ein Knopf, der
+       * "0 weitere Ordner" anbietet, waere dort nur eine Frage, auf die man
+       * keine Antwort braucht.
        */}
+      {hatSpaete && (
       <div className="flex justify-end">
         <button
           type="button"
@@ -610,6 +775,7 @@ export default function PipelineBrett({
           )}
         </button>
       </div>
+      )}
 
       <div
         ref={brett}
@@ -733,7 +899,7 @@ export default function PipelineBrett({
                   <Karte
                     key={fall.id}
                     fall={fall}
-                    stationen={stationen}
+                    stationen={alleStationen}
                     darfSchieben={darfSchieben}
                     markiert={markiert.has(fall.id)}
                     onMarkieren={markiereUm}

@@ -30,8 +30,14 @@ export type StatusId =
   | "tag4plus"
   | "on_hold"
   | "watch"
+  /* Die Ordner des zweiten Bretts, "Erledigt". */
+  | "kein_kontakt"
   | "erledigt"
+  | "kein_anruf"
+  | "in_pruefung"
+  | "in_auszahlung"
   | "ausgezahlt"
+  | "provision"
   /* Kein Ordner der Pipeline, sondern der Weg hinaus — siehe unten. */
   | "papierkorb"
   /* Stillgelegt — siehe unten. */
@@ -110,22 +116,22 @@ export type Station = {
   ton: Ton;
 };
 
-/** Der Ueberordner der beiden Endstationen. Steht hier, damit ihn niemand
-    an zwei Stellen tippt. */
+/** Der Name des zweiten Bretts und zugleich der Ueberordner seiner Ordner in
+    jeder Auswahlliste. Steht hier, damit ihn niemand an zwei Stellen tippt. */
 export const ERLEDIGT = "Erledigt";
 
 /**
  * Die Pipeline, wie sie im Vertrieb gefahren wird.
  *
- * Alle sechzehn sind gleichberechtigte Ordner: Es gibt keine Endstation, in
- * die ein Fall faellt und aus der er nicht mehr herauskommt. "Ablehnung" und
+ * Alle sind gleichberechtigte Ordner: Es gibt keine Endstation, in die ein
+ * Fall faellt und aus der er nicht mehr herauskommt. "Ablehnung" und
  * "Abgebrochen" sind Ablagen, keine Loeschungen — ein abgelehnter Fall wandert
  * spaeter nach "Recall", ein abgebrochener nach "Rückruf", und genau dafuer
- * laesst sich jede Karte in jede Spalte ziehen. Das gilt auch fuer "Erledigt":
- * Ein Kunde, dessen Auszahlung durch ist, kann in einem Jahr wieder ein Thema
- * sein.
+ * laesst sich jede Karte in jede Spalte ziehen. Das gilt auch fuer das zweite
+ * Brett: Ein Kunde, dessen Auszahlung durch ist, kann in einem Jahr wieder ein
+ * Thema sein.
  */
-export const STATIONEN: Station[] = [
+export const PIPELINE_STATIONEN: Station[] = [
   {
     id: "neu",
     name: "Neu",
@@ -211,44 +217,115 @@ export const STATIONEN: Station[] = [
     beschreibung: "Nichts zu tun, aber nicht aus den Augen verlieren.",
     ton: "warten",
   },
-  /**
-   * "Erledigt" — zwei Ordner, ein Ueberordner.
-   *
-   * Ein Fall endet auf zweierlei Weise, und die beiden sind nicht dasselbe:
-   * Entweder ist der Kredit ausgezahlt, oder die Sache hat sich anders
-   * erledigt — der Kunde hat woanders abgeschlossen, braucht das Geld nicht
-   * mehr, meldet sich nicht wieder. Beides ist abgeschlossen, aber nur eines
-   * davon ist ein Abschluss. In einem gemeinsamen Ordner waere die Frage
-   * "wie viele Faelle sind dieses Jahr durchgegangen" nicht mehr zu
-   * beantworten.
-   *
-   * "Auszahlung" traegt die alte Kennung `ausgezahlt` weiter, statt eine neue
-   * danebenzustellen: Unter ihr liegen moeglicherweise noch Faelle aus der
-   * frueheren Aufteilung, und die bedeuten genau dasselbe. Sie landen damit
-   * im neuen Ordner, statt in einer stillgelegten Spalte zu warten — und es
-   * gibt keine zwei Kennungen, die dasselbe heissen.
-   */
+];
+
+/**
+ * Das zweite Brett: was nach der Pipeline kommt.
+ *
+ * Warum ein eigenes Brett und keine weiteren Spalten: Die Pipeline ist das,
+ * was an einem Arbeitstag angefasst wird — von "Neu" bis "In Bearbeitung",
+ * mit Nachfassen und Warten dahinter. Was hier steht, ist entweder vorbei
+ * oder laeuft ohne Zutun weiter: eine Pruefung bei der Bank, eine Auszahlung,
+ * eine Provision, auf die man wartet. Beides nebeneinander waeren
+ * zweiundzwanzig Spalten, von denen die Haelfte den ganzen Tag unberuehrt
+ * bleibt — und die sechs, um die es gerade geht, waeren zwischen ihnen kaum
+ * noch zu finden.
+ *
+ * Die Reihenfolge ist nicht der Weg eines Falls, sondern die, in der sie
+ * angesagt wurden. Sie stellt die drei Arten von Ende nach vorn und die
+ * Abschlussstrecke dahinter.
+ *
+ * Zwei Kennungen sind aelter als dieses Brett und werden weitergefuehrt statt
+ * neu vergeben: `erledigt` und `ausgezahlt`. Unter ihnen liegen bereits
+ * Faelle, und die bedeuten genau dasselbe wie die Ordner, die sie jetzt
+ * tragen — sie landen damit im richtigen Ordner, statt in einer stillgelegten
+ * Spalte zu warten. Die angezeigten Namen haben sich geaendert, die Kennungen
+ * nicht; genau dafuer sind sie getrennt.
+ */
+export const ERLEDIGT_STATIONEN: Station[] = [
+  {
+    id: "kein_kontakt",
+    name: "Kein Kontakt",
+    beschreibung: "Mehrfach versucht, niemand erreicht — der Fall ist tot.",
+    ton: "weg",
+    gruppe: ERLEDIGT,
+  },
+  {
+    id: "erledigt",
+    name: "Erledigt allgemein",
+    beschreibung:
+      "Abgeschlossen ohne Auszahlung — anderswo unterschrieben, kein Bedarf mehr.",
+    ton: "weg",
+    gruppe: ERLEDIGT,
+  },
+  {
+    id: "kein_anruf",
+    name: "Kein Anruf",
+    beschreibung: "Kein Anruf gewünscht oder keiner nötig.",
+    ton: "weg",
+    gruppe: ERLEDIGT,
+  },
+  {
+    id: "in_pruefung",
+    name: "In Prüfung",
+    beschreibung: "Liegt bei der Bank — es wird entschieden.",
+    ton: "warten",
+    gruppe: ERLEDIGT,
+  },
+  {
+    id: "in_auszahlung",
+    name: "In Auszahlung",
+    beschreibung: "Zugesagt, das Geld ist unterwegs.",
+    ton: "arbeit",
+    gruppe: ERLEDIGT,
+  },
   {
     id: "ausgezahlt",
-    name: "Auszahlung",
+    name: "Ausgezahlt",
     beschreibung: "Der Kredit ist ausgezahlt — der Fall ist durch.",
     ton: "erfolg",
     gruppe: ERLEDIGT,
   },
   {
-    id: "erledigt",
-    name: "Hat sich erledigt",
-    beschreibung:
-      "Abgeschlossen ohne Auszahlung — anderswo unterschrieben, kein Bedarf mehr, nicht mehr erreichbar.",
-    ton: "weg",
+    id: "provision",
+    name: "Provision erhalten",
+    beschreibung: "Abgerechnet und bezahlt — hier endet der Fall wirklich.",
+    ton: "erfolg",
     gruppe: ERLEDIGT,
   },
 ];
 
 /**
+ * Alle Ordner beider Bretter, in einer Liste.
+ *
+ * Ueberall dort, wo es um "welche Ordner gibt es" geht — die Auswahl am Fall,
+ * der Filter ueber der Liste, die Reihenfolge beim Sortieren —, zaehlt die
+ * Gesamtheit und nicht das gerade sichtbare Brett. Wer einen Fall aus der
+ * Pipeline gleich nach "In Prüfung" legen will, soll das tun koennen, ohne
+ * vorher das Brett zu wechseln.
+ */
+export const STATIONEN: Station[] = [
+  ...PIPELINE_STATIONEN,
+  ...ERLEDIGT_STATIONEN,
+];
+
+/** Die beiden Bretter, zwischen denen die Reiter umschalten. */
+export type BrettId = "pipeline" | "erledigt";
+
+export const BRETTER: { id: BrettId; name: string; stationen: Station[] }[] = [
+  { id: "pipeline", name: "Pipeline", stationen: PIPELINE_STATIONEN },
+  { id: "erledigt", name: ERLEDIGT, stationen: ERLEDIGT_STATIONEN },
+];
+
+/** Auf welchem Brett ein Ordner liegt — fuer den Sprung zum richtigen Reiter. */
+export function brettDerStation(id: string): BrettId {
+  return ERLEDIGT_STATIONEN.some((s) => s.id === id) ? "erledigt" : "pipeline";
+}
+
+/**
  * Die Ordner, die das Brett zunaechst zusammenklappt.
  *
- * Fuenfzehn Spalten nebeneinander lassen jeder rund 120 Pixel — genug fuer
+ * Zu viele Spalten nebeneinander lassen jeder rund 120 Pixel — genug fuer
  * eine Karte, aber nicht genug, damit sie etwas zeigt. Zusammengeklappt sind
  * deshalb die, an denen nicht taeglich gearbeitet wird: die Tageszaehlung ab
  * Tag 2, die beiden Wartezustaende und der Papierkorb. Was bleibt, ist die
@@ -267,8 +344,6 @@ export const SPAETE_ORDNER: StatusId[] = [
   "tag4plus",
   "on_hold",
   "watch",
-  "ausgezahlt",
-  "erledigt",
   "papierkorb",
 ];
 
