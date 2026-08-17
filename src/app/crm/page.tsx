@@ -227,6 +227,12 @@ export default async function CrmSeite({
   const brettFilter: AntragFilter = {
     ...filter,
     station: null,
+    // Und ohne die Einschraenkung auf das offene Brett: Das Brett kann beim
+    // Ziehen einer Karte auf den anderen Reiter umschalten, und dann muessen
+    // dessen Karten schon da sein. Nachzuladen waere mitten in einer Geste
+    // zu spaet.
+    nurStationen: null,
+    ohneStationen: null,
     // Nur hier: Ohne die Karten des Papierkorbs liesse sich aus ihm nichts
     // wieder herausziehen. Liste, Zaehlung und Export lassen ihn weg.
     mitPapierkorb: true,
@@ -617,9 +623,14 @@ export default async function CrmSeite({
                   </span>
                 </>
               ) : (
+                /* Ohne aufgeschlagenen Ordner traegt die Ueberschrift den
+                   Namen des Bretts. "Eingang" ueber einer Liste aus lauter
+                   abgeschlossenen Faellen waere die falsche Auskunft — und der
+                   Wechsel auf den Reiter "Erledigt" bliebe unten ohne
+                   sichtbare Antwort. */
                 <>
-                  Eingang
-                  {filterAktiv && (
+                  {ansicht.brett === "erledigt" ? "Erledigt" : "Eingang"}
+                  {(filterAktiv || ansicht.brett === "erledigt") && (
                     <span className="font-normal text-muted">
                       {angezeigt} von {gesamt}
                     </span>
@@ -1021,14 +1032,18 @@ export default async function CrmSeite({
                   ? `In "${offenerOrdner.name}" liegt kein Fall`
                   : filterAktiv
                     ? "Kein Fall passt zu dieser Suche"
-                    : "Noch kein Antrag eingegangen"}
+                    : ansicht.brett === "erledigt"
+                      ? "Noch kein Fall abgeschlossen"
+                      : "Noch kein Antrag eingegangen"}
               </span>
               <p className="text-xs text-muted leading-relaxed">
                 {offenerOrdner && !filter.suche && !filter.nurFaellig
                   ? `${offenerOrdner.beschreibung} Insgesamt liegen ${gesamt} Fälle vor.`
                   : filterAktiv
                     ? `Insgesamt liegen ${gesamt} Fälle vor.`
-                    : "Sobald jemand die Antragsstrecke abschließt, steht der Fall hier — mit allen Angaben aus den acht Schritten."}
+                    : ansicht.brett === "erledigt"
+                      ? `Hier stehen die Fälle aus den sieben Ordnern von "Erledigt". Insgesamt liegen ${gesamt} Fälle vor.`
+                      : "Sobald jemand die Antragsstrecke abschließt, steht der Fall hier — mit allen Angaben aus den acht Schritten."}
               </p>
             </div>
           ) : (

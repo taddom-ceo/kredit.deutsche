@@ -691,6 +691,20 @@ export type AntragFilter = {
   suche?: string;
   /** Nur diese Station. */
   station?: StatusId | null;
+  /**
+   * Nur beziehungsweise gerade nicht diese Stationen — das Brett, das oben
+   * offen ist.
+   *
+   * Der Reiter ist keine Auswahl eines Ordners, sondern eine ganzer Gruppe:
+   * "Erledigt" meint die sieben Ordner darunter, "Pipeline" alles andere.
+   * Zwei Felder statt einer Liste mit Vorzeichen, weil beide Faelle
+   * verschieden sind: Beim einen ist die Liste vollstaendig, beim anderen
+   * ist alles gemeint, was nicht darin steht — auch Kennungen, die niemand
+   * mehr kennt. Waeren sie nirgends aufgezaehlt, verschwaenden die Faelle
+   * darauf aus beiden Listen.
+   */
+  nurStationen?: StatusId[] | null;
+  ohneStationen?: StatusId[] | null;
   /** Nur Faelle, deren Wiedervorlage heute oder frueher faellig ist. */
   nurFaellig?: boolean;
   /**
@@ -738,6 +752,10 @@ function passtImSpeicher(antrag: Antrag, filter: AntragFilter): boolean {
     return false;
   }
   if (filter.station && antrag.status !== filter.station) return false;
+  if (filter.nurStationen && !filter.nurStationen.includes(antrag.status)) {
+    return false;
+  }
+  if (filter.ohneStationen?.includes(antrag.status)) return false;
   if (filter.nurFaellig) {
     const heute = new Date().toISOString().slice(0, 10);
     if (!antrag.wiedervorlage || antrag.wiedervorlage > heute) return false;
@@ -818,6 +836,9 @@ const WO = `
   -- man gegen dessen Mitternacht und liesse den gewaehlten Tag selbst weg —
   -- wer "bis 31.03." einstellt, faende dann nichts vom 31. Maerz.
   AND ($8::date IS NULL OR eingang < $8::date + 1)
+  -- Das offene Brett. Leere Listen kommen als NULL an und fallen damit weg.
+  AND ($9::text[] IS NULL OR status = ANY($9::text[]))
+  AND ($10::text[] IS NULL OR status <> ALL($10::text[]))
 `;
 
 function filterWerte(filter: AntragFilter): unknown[] {
@@ -831,6 +852,10 @@ function filterWerte(filter: AntragFilter): unknown[] {
     filter.betragBis ?? null,
     filter.vonDatum || null,
     filter.bisDatum || null,
+    // Eine leere Liste hiesse in SQL "nichts trifft zu" und leerte die Liste.
+    // Gemeint ist aber "keine Einschraenkung" — also NULL.
+    filter.nurStationen?.length ? filter.nurStationen : null,
+    filter.ohneStationen?.length ? filter.ohneStationen : null,
   ];
 }
 

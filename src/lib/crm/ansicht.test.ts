@@ -177,6 +177,35 @@ test("die Datenbank bekommt nur, was sie beantworten kann", () => {
   assert.equal("prioVon" in f, false);
 });
 
+test("der Reiter schränkt die Liste auf sein Brett ein", () => {
+  // "Erledigt" zaehlt seine sieben Ordner auf.
+  const erledigt = alsFilter(ausAdresse("brett=erledigt"));
+  assert.deepEqual(erledigt.nurStationen, [
+    "kein_kontakt",
+    "erledigt",
+    "kein_anruf",
+    "in_pruefung",
+    "in_auszahlung",
+    "ausgezahlt",
+    "provision",
+  ]);
+  assert.equal(erledigt.ohneStationen, null);
+
+  // "Pipeline" schliesst dieselben sieben aus, statt die eigenen aufzuzaehlen:
+  // So bleiben Faelle auf stillgelegten und unbekannten Kennungen sichtbar.
+  const pipeline = alsFilter(ausAdresse(""));
+  assert.equal(pipeline.nurStationen, null);
+  assert.deepEqual(pipeline.ohneStationen?.includes("ausgezahlt"), true);
+  assert.deepEqual(pipeline.ohneStationen?.includes("neu"), false);
+});
+
+test("ein aufgeschlagener Ordner sticht den Reiter", () => {
+  const f = alsFilter(ausAdresse("station=ausgezahlt"));
+  assert.equal(f.station, "ausgezahlt");
+  assert.equal(f.nurStationen, null);
+  assert.equal(f.ohneStationen, null);
+});
+
 /* ------------------------------------------------------------------ */
 /* Zählen und melden                                                   */
 /* ------------------------------------------------------------------ */

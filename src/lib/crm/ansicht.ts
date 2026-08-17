@@ -6,6 +6,7 @@ import {
 } from "./antraege";
 import {
   brettDerStation,
+  ERLEDIGT_STATIONEN,
   findeStation,
   rangDerStation,
   type BrettId,
@@ -266,11 +267,32 @@ export function alsAdresse(
   return text ? `${ziel}?${text}` : ziel;
 }
 
-/** Die Haelfte der Ansicht, die die Datenbank uebernimmt. */
+/**
+ * Die Haelfte der Ansicht, die die Datenbank uebernimmt.
+ *
+ * Der Reiter geht mit: Die Liste unten zeigt, was auf dem Brett darueber
+ * liegt. Wer auf "Erledigt" wechselt, will die erledigten Faelle sehen und
+ * nicht den Eingang — das Brett zeigt sieben Ordner, und die Liste darunter
+ * zeigte bisher trotzdem alles.
+ *
+ * Ist ein einzelner Ordner aufgeschlagen, zaehlt nur der. Die zusaetzliche
+ * Einschraenkung waere dann bestenfalls ueberfluessig und schlimmstenfalls
+ * widerspruechlich.
+ *
+ * "Pipeline" wird als Ausschluss formuliert und nicht als Aufzaehlung: So
+ * bleiben Faelle sichtbar, die auf einer stillgelegten oder unbekannten
+ * Kennung stehen. Waeren beide Bretter Aufzaehlungen, fielen sie aus beiden
+ * Listen heraus und niemand zoege sie je wieder hervor.
+ */
 export function alsFilter(ansicht: Ansicht): AntragFilter {
+  const erledigt = ERLEDIGT_STATIONEN.map((s) => s.id);
   return {
     suche: ansicht.suche,
     station: ansicht.station,
+    nurStationen:
+      !ansicht.station && ansicht.brett === "erledigt" ? erledigt : null,
+    ohneStationen:
+      !ansicht.station && ansicht.brett === "pipeline" ? erledigt : null,
     nurFaellig: ansicht.nurFaellig,
     betragVon: ansicht.betragVon,
     betragBis: ansicht.betragBis,
