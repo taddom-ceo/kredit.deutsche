@@ -8,6 +8,7 @@ import Fussbereich from "@/components/Fussbereich";
 import KreditartenRaster from "@/components/KreditartenRaster";
 import MitlaufenderCta from "@/components/MitlaufenderCta";
 import Reveal from "@/components/Reveal";
+import VersionsWechsel from "@/components/VersionsWechsel";
 import VisibilityGate from "@/components/VisibilityGate";
 import PartnerLaufband from "@/components/PartnerLaufband";
 import { KREDITARTEN, KREDITART_TEXTE } from "@/lib/kreditarten";
@@ -49,6 +50,7 @@ export default function Home() {
   return (
     <>
       <Header />
+      <VersionsWechsel />
 
       <main className="flex-1">
         {/* Hero. Der Aufruf steht über der Falz und wird auf dem Handy zuerst
@@ -196,6 +198,12 @@ export default function Home() {
             gesamten Laenge und lenkte ab. */}
         <section>
           <PartnerLaufband label={l.partnerLabel} />
+          {/* Solange die Anbindung laeuft, stehen dort Beispielnamen. Das
+              gehoert dazugeschrieben: Wer "Vertrauensbank" sucht und nichts
+              findet, glaubt ab da auch "Schufa-neutral" nicht mehr. */}
+          <p className="mx-auto max-w-6xl px-4 sm:px-6 pb-2 text-center text-[11px] text-muted/70">
+            {l.partnerHinweis}
+          </p>
         </section>
 
         {/* Kennzahlen als eigene Karten mit Symbol — als schlichte Zeile gingen
@@ -381,6 +389,12 @@ export default function Home() {
               <h2 className="text-3xl lg:text-4xl font-bold tracking-[-0.02em]">
                 {l.stimmenTitle}
               </h2>
+              {/* Erfundene Bewertungen sind seit der UWG-Novelle ausdruecklich
+                  verboten und werden abgemahnt. Solange keine echten da sind,
+                  steht wenigstens dabei, was diese hier sind. */}
+              <p className="text-[11px] text-muted/70 leading-relaxed">
+                {l.stimmenHinweis}
+              </p>
             </Reveal>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               {l.stimmen.map((stimme, i) => (

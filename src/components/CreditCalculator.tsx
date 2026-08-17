@@ -30,10 +30,20 @@ export default function CreditCalculator({
   zweck,
   startBetrag = 20000,
   startMonate = 72,
+  ctaText,
 }: {
   zweck?: string;
   startBetrag?: number;
   startMonate?: number;
+  /**
+   * Beschriftung des Knopfs, wenn die uebliche nicht passt.
+   *
+   * "Mit anderen Angeboten vergleichen" stimmt dort, wo der Rechner mitten
+   * auf der Seite steht und schon ein Angebot daneben. Im Aufmacher der
+   * zweiten Fassung ist er der einzige Aufruf der Seite, und dann muss er
+   * sagen, was als Naechstes passiert, statt worauf er sich bezieht.
+   */
+  ctaText?: string;
 } = {}) {
   const { t } = useLanguage();
   const [amount, setAmount] = useState(startBetrag);
@@ -130,7 +140,7 @@ export default function CreditCalculator({
           }`}
           className="w-full text-center rounded-[16px] bg-accent text-accent-foreground font-semibold px-4 py-3.5 text-sm shadow-[0_8px_24px_-6px_rgba(52,211,153,0.45)] transition-all duration-200 hover:bg-accent-strong hover:shadow-[0_10px_30px_-6px_rgba(52,211,153,0.55)] hover:-translate-y-px active:translate-y-0 active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
         >
-          {t.calculator.cta}
+          {ctaText ?? t.calculator.cta}
         </Link>
         <p className="text-[11px] leading-relaxed text-muted">
           {t.calculator.disclaimer}

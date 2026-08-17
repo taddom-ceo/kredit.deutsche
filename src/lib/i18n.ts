@@ -43,6 +43,10 @@ export interface Translations {
     heroBeispielHinweis: string[];
     trustBadges: string[];
     partnerLabel: string;
+    /** Hinweis darauf, dass die Namen darunter Beispiele sind. */
+    partnerHinweis: string;
+    /** Dasselbe fuer die Kundenstimmen. */
+    stimmenHinweis: string;
     kennzahlen: { wert: string; label: string }[];
     ablaufEyebrow: string;
     ablaufTitle: string;
@@ -169,6 +173,10 @@ export const translations: Record<Language, Translations> = {
         "DSGVO-konform",
       ],
       partnerLabel: "Unsere Partnerbanken",
+      partnerHinweis:
+        "Beispielhafte Darstellung — die Namen stehen fest, sobald die Anbindung der Partnerbanken abgeschlossen ist.",
+      stimmenHinweis:
+        "Beispielhafte Darstellung. Echte Bewertungen zeigen wir, sobald die ersten Kunden ihre Auszahlung erhalten haben.",
       kennzahlen: [
         { wert: "20+", label: "Banken im Vergleich" },
         { wert: "2,89 %", label: "eff. Jahreszins ab" },
@@ -361,6 +369,10 @@ export const translations: Record<Language, Translations> = {
         "GDPR-compliant",
       ],
       partnerLabel: "Our partner banks",
+      partnerHinweis:
+        "Illustrative only — the names will be final once the partner banks are connected.",
+      stimmenHinweis:
+        "Illustrative only. We will show real reviews once the first customers have received their payout.",
       kennzahlen: [
         { wert: "20+", label: "banks compared" },
         { wert: "2.89%", label: "effective annual rate" },

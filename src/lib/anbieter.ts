@@ -61,6 +61,43 @@ export const ANBIETER: Anbieter = {
   datenschutzAufsicht: "",
 };
 
+/**
+ * Der Mensch, der zurueckruft.
+ *
+ * Steht auf der zweiten Fassung der Startseite, weil eine Kreditseite ohne
+ * Gesicht wie ein Zwischenhaendler wirkt — und weil das CRM ohnehin darauf
+ * gebaut ist, dass ein Berater anruft. Wer sich meldet, soll vorher mit Namen
+ * dastehen.
+ *
+ * Leer wie die uebrigen Angaben, und erfunden wird hier nichts: Solange Name
+ * und Durchwahl fehlen, bleibt der Abschnitt einfach weg. Ein ausgedachter
+ * Ansprechpartner waere genau die Art Vertrauen, die beim ersten Anruf
+ * zusammenfaellt.
+ */
+export type Ansprechpartner = {
+  name: string;
+  /** Was unter dem Namen steht, etwa "Kreditberatung". */
+  rolle: string;
+  /** Durchwahl in lesbarer Form, etwa "0821 1234567". */
+  telefon: string;
+  /** Wann erreichbar, etwa "Mo–Fr 9–18 Uhr". */
+  zeiten: string;
+};
+
+export const ANSPRECHPARTNER: Ansprechpartner = {
+  name: "",
+  rolle: "",
+  telefon: "",
+  zeiten: "",
+};
+
+/** Ob genug dasteht, um den Abschnitt ueberhaupt zu zeigen. */
+export function ansprechpartnerVorhanden(): boolean {
+  return (
+    ANSPRECHPARTNER.name.trim() !== "" && ANSPRECHPARTNER.telefon.trim() !== ""
+  );
+}
+
 /** Ob ueberhaupt schon etwas eingetragen wurde. */
 export function anbieterUnvollstaendig(): boolean {
   return Object.entries(ANBIETER).some(
