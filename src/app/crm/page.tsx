@@ -585,7 +585,7 @@ export default async function CrmSeite({
                   Ordner in der Liste darunter.{" "}
                   {benutzer.rolle === "lesen"
                     ? "Dieses Konto darf Fälle nur ansehen."
-                    : "Karte an beliebiger Stelle greifen und in einen anderen Ordner ziehen."}{" "}
+                    : "Karte anklicken öffnet den Fall, greifen und ziehen verschiebt ihn."}{" "}
                   {gesamt} {gesamt === 1 ? "Fall" : "Fälle"} insgesamt
                 </>
               }

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   startTransition,
   useEffect,
@@ -8,6 +9,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type MouseEvent as MausEreignis,
   type PointerEvent as ZeigerEreignis,
   type ReactNode,
 } from "react";
@@ -47,9 +49,10 @@ import {
  * verschiebt, ist das vierundzwanzigmal zielen statt einmal greifen.
  *
  * Ein Klick bleibt trotzdem ein Klick: Gezogen wird erst ab ein paar Pixeln
- * Bewegung, und bis dahin kommt der Klick beim Namen an und oeffnet den Fall.
- * Am Finger traegt die Karte `touch-action: pan-y` — der Browser behaelt das
- * senkrechte Blaettern, sonst liesse sich eine volle Spalte nicht mehr rollen.
+ * Bewegung, und ein Klick ohne Bewegung oeffnet den Fall — an jeder Stelle der
+ * Karte, nicht nur auf dem Namen. Am Finger traegt die Karte
+ * `touch-action: pan-y`; der Browser behaelt damit das senkrechte Blaettern,
+ * sonst liesse sich eine volle Spalte nicht mehr rollen.
  *
  * Wer nicht ziehen kann oder will — Tastatur, Vorleseprogramm, ruhige Hand —
  * markiert Karten und nimmt das Auswahlfeld in der Leiste ueber dem Brett,
@@ -162,6 +165,7 @@ export default function PipelineBrett({
   /** Der Ordner, auf den die Liste unten gerade eingeschraenkt ist. */
   gewaehlt: StatusId | null;
 }) {
+  const router = useRouter();
   /**
    * Der Reiter, der gerade offen ist.
    *
@@ -386,6 +390,51 @@ export default function PipelineBrett({
     });
   }
 
+  /**
+   * Ob der letzte Zeigerablauf ein Zug war.
+   *
+   * Der Browser schickt nach einem Zug, der auf derselben Karte endet, noch
+   * einen `click` hinterher — wer eine Karte zehn Pixel hin und her schiebt,
+   * bekaeme sonst am Ende die Fallakte aufgemacht, obwohl er verschieben
+   * wollte. Als Ref und nicht als Zustand: Zwischen Loslassen und Klick liegt
+   * kein Rendern, und ein Zustand waere zu spaet gesetzt.
+   */
+  const zugEben = useRef(false);
+
+  /**
+   * Ein Klick auf die Karte oeffnet den Fall.
+   *
+   * Vorher tat das nur der Name — zwoelf Pixel hoher Text am unteren Rand
+   * einer Karte, die inzwischen 160 mal 130 Pixel misst. Der Rest der Flaeche
+   * sah aus wie etwas, das man anklicken kann, und tat nichts.
+   *
+   * Drei Faelle gehen vorher ab:
+   *
+   *   · Strg oder Cmd markiert, statt zu oeffnen. Das ist die Geste des
+   *     Bretts, und ein Fall, der sich beim Markieren oeffnet, waere kein
+   *     Markieren.
+   *   · Nach einem Zug passiert nichts. Siehe oben.
+   *   · Klicks auf einen Verweis oder ein Bedienelement laufen von selbst.
+   *     Der Name ist weiterhin ein `a` — er soll sich in einem neuen Tab
+   *     oeffnen lassen, und das kann nur ein echter Verweis.
+   */
+  function karteAnklicken(e: MausEreignis<HTMLElement>, fall: BrettFall) {
+    if (darfSchieben && (e.ctrlKey || e.metaKey)) {
+      // Haelt den Browser davon ab, den Namen in einem neuen Tab zu oeffnen.
+      e.preventDefault();
+      markiereUm(fall.id);
+      return;
+    }
+    if (zugEben.current) {
+      zugEben.current = false;
+      return;
+    }
+    if ((e.target as HTMLElement).closest("a, button, select, input, label")) {
+      return;
+    }
+    router.push(`/crm/antrag/${fall.id}`);
+  }
+
   /** Strg-Klick auf eine Karte: markieren oder Markierung wieder wegnehmen. */
   function markiereUm(id: string) {
     setMarkiert((vorher) => {
@@ -401,6 +450,9 @@ export default function PipelineBrett({
     // Nur die linke Maustaste. Rechtsklick oeffnet das Menue des Browsers,
     // und eine Karte, die daran haengen bliebe, klebte am Zeiger fest.
     if (e.pointerType === "mouse" && e.button !== 0) return;
+    // Ein neuer Ablauf faengt ohne Gedaechtnis an: Der Merker unten gilt nur
+    // fuer den einen Klick, der einem Zug unmittelbar folgt.
+    zugEben.current = false;
     /**
      * Bewusst kein `setPointerCapture`.
      *
@@ -473,7 +525,11 @@ export default function PipelineBrett({
     setZiel(null);
     haltAn();
 
-    if (!s?.laeuft || !nach) return;
+    if (!s?.laeuft) return;
+    // Gezogen wurde — der `click`, den der Browser gleich hinterherschickt,
+    // soll die Fallakte nicht oeffnen.
+    zugEben.current = true;
+    if (!nach) return;
 
     /**
      * Gezogen wird die Markierung, wenn die gezogene Karte dazugehoert.
@@ -919,7 +975,7 @@ export default function PipelineBrett({
                     fall={fall}
                     darfSchieben={darfSchieben}
                     markiert={markiert.has(fall.id)}
-                    onMarkieren={markiereUm}
+                    onKlick={karteAnklicken}
                     inDerLuft={
                       zug !== null &&
                       (zug.id === fall.id ||
@@ -985,7 +1041,7 @@ function Karte({
   fall,
   darfSchieben,
   markiert,
-  onMarkieren,
+  onKlick,
   inDerLuft,
   onGreifen,
   onBewegen,
@@ -995,7 +1051,7 @@ function Karte({
   fall: BrettFall;
   darfSchieben: boolean;
   markiert: boolean;
-  onMarkieren: (id: string) => void;
+  onKlick: (e: MausEreignis<HTMLElement>, fall: BrettFall) => void;
   inDerLuft: boolean;
   onGreifen: (e: ZeigerEreignis<HTMLElement>, fall: BrettFall) => void;
   onBewegen: (e: ZeigerEreignis<HTMLElement>) => void;
@@ -1025,18 +1081,11 @@ function Karte({
     // Brett fuer sich sauber rollte.
     <li
       /**
-       * Strg oder Cmd und ein Klick markiert die Karte.
-       *
-       * `preventDefault` haelt den Browser davon ab, den Namen als Verweis in
-       * einem neuen Tab zu oeffnen — auf einem Brett ist Strg-Klick die Geste
-       * fuers Markieren, nicht fuers Oeffnen. Ohne Strg bleibt alles, wie es
-       * war: Der Name fuehrt zum Fall, der Rest der Karte tut nichts.
+       * Ein Klick oeffnet den Fall, Strg-Klick markiert. Was davon gilt und
+       * wann gar nichts passiert, entscheidet das Brett — es weiss als
+       * einziges, ob gerade gezogen wurde.
        */
-      onClick={(e) => {
-        if (!darfSchieben || !(e.ctrlKey || e.metaKey)) return;
-        e.preventDefault();
-        onMarkieren(fall.id);
-      }}
+      onClick={(e) => onKlick(e, fall)}
       /**
        * Angefasst wird die ganze Karte.
        *
@@ -1071,7 +1120,9 @@ function Karte({
         }
       }}
       className={`relative flex select-none rounded-[14px] border bg-surface-2 transition-[opacity,border-color,box-shadow] duration-150 focus-within:border-border-strong ${
-        darfSchieben ? "cursor-grab touch-pan-y active:cursor-grabbing" : ""
+        darfSchieben
+          ? "cursor-pointer touch-pan-y active:cursor-grabbing"
+          : "cursor-pointer"
       } ${
         markiert
           ? "border-accent/70 ring-1 ring-accent/40"
