@@ -23,6 +23,13 @@ export type V2Texte = {
   rechnerUeber: string;
   /** Beschriftung des einen Aufrufs der Seite. */
   rechnerCta: string;
+  /* --- nur die dritte Fassung: Handy mit mitrechnender Plakette --- */
+  /** Was unter der Ersparnis steht. */
+  ersparnisLabel: string;
+  /** Die Fussnote der Plakette. Nennt den Vergleichszins. */
+  ersparnisFuss: string;
+  /** Ueberschrift der Zeichnung im Ablaufabschnitt. */
+  ablaufBildTitel: string;
   /** Der Weg fuer die, die erst lesen wollen — als Textverweis, nicht als Knopf. */
   ablaufVerweis: string;
   /**
@@ -103,6 +110,10 @@ export const V2_TEXTE: Record<Language, V2Texte> = {
     ],
     rechnerUeber: "Ihre Rate berechnen",
     rechnerCta: "Angebote vergleichen",
+    ersparnisLabel: "weniger Zinsen als beim teuersten Angebot",
+    ersparnisFuss:
+      "Gesamtkosten im Vergleich zu 8,50 % eff. Jahreszins, bei gleichem Betrag und gleicher Laufzeit.",
+    ablaufBildTitel: "So sieht das auf Ihrem Telefon aus",
     ablaufVerweis: "Wie das genau abläuft",
     beispielTitel: "Repräsentatives Beispiel",
     beispielText:
@@ -214,6 +225,10 @@ export const V2_TEXTE: Record<Language, V2Texte> = {
     ],
     rechnerUeber: "Calculate your rate",
     rechnerCta: "Compare offers",
+    ersparnisLabel: "less interest than the most expensive offer",
+    ersparnisFuss:
+      "Total cost compared with an 8.50 % APR, at the same amount and term.",
+    ablaufBildTitel: "This is how it looks on your phone",
     ablaufVerweis: "How it works in detail",
     beispielTitel: "Representative example",
     beispielText:
