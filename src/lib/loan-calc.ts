@@ -4,6 +4,17 @@
 // into an effective 2.93 % and make the displayed number wrong.
 export const SAMPLE_ANNUAL_RATE = 0.0289;
 
+/**
+ * Der teure Vergleichszins, gegen den die Ersparnis gerechnet wird.
+ *
+ * Er stand bisher nur als Text im Aufmacher ("Ersparnis = Differenz der
+ * Gesamtkosten gegenueber 8,50 % eff."), waehrend die genannte Ersparnis von
+ * Hand ausgerechnet war. Sobald eine Zahl mitrechnet, muss der Zins dahinter
+ * dieselbe Konstante sein wie im Hinweis darunter — sonst behauptet die
+ * Plakette etwas, das die Fussnote widerlegt.
+ */
+export const VERGLEICHS_ANNUAL_RATE = 0.085;
+
 export const AMOUNT_MIN = 1000;
 export const AMOUNT_MAX = 100000;
 export const AMOUNT_STEP = 500;
