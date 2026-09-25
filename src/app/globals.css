@@ -32,7 +32,12 @@
   --color-accent-strong: var(--accent-strong);
   --color-accent-foreground: var(--accent-foreground);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Der Rueckfall ist nicht bloss Vorsicht: Die Schrift wird nur noch im
+     CRM geladen (siehe src/app/crm/layout.tsx). Ausserhalb davon ist
+     --font-geist-mono nicht gesetzt, und ohne zweite Angabe faende der
+     Browser gar keine Schrift. */
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo,
+    monospace;
 }
 
 /* Feste Design-Bühne: Ab 1024px ist das Layout auf exakt 1440px ausgelegt und

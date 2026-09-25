@@ -15,7 +15,7 @@ export default function Home() {
       <Header />
       <BankMarquee />
 
-      <main className="flex-1">
+      <main id="inhalt" className="flex-1">
         <section className="mx-auto max-w-6xl px-6 py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="flex flex-col gap-6">
             <h1 className="text-4xl lg:text-5xl font-bold leading-[1.08] tracking-[-0.02em]">

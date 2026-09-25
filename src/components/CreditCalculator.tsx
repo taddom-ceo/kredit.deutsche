@@ -72,6 +72,9 @@ export default function CreditCalculator({
             max={AMOUNT_MAX}
             step={AMOUNT_STEP}
             value={amount}
+            // Ohne diese Angabe liest eine Vorlesehilfe "25000" vor. Mit ihr
+            // steht dort, was auch auf dem Bildschirm steht.
+            aria-valuetext={formatEuro(amount)}
             onChange={(e) => setAmount(Number(e.target.value))}
           />
           <div className="flex justify-between text-xs text-muted">
@@ -123,6 +126,22 @@ export default function CreditCalculator({
             {(SAMPLE_ANNUAL_RATE * 100).toFixed(2).replace(".", ",")} %
           </span>
         </div>
+
+        {/* Die Rate aendert sich, wenn jemand den Schieber bewegt — aber nur
+            sichtbar. Wer die Seite vorlesen laesst, hoerte bisher die neue
+            Zahl nicht; das ist ausgerechnet die eine Zahl, um die der ganze
+            Rechner gebaut ist.
+            Als eigener, unsichtbarer Bereich und nicht als `aria-live` am
+            Kasten oben: Darin steht ein Eingabefeld, und eine Ansage waehrend
+            des Tippens spraeche jedem Tastendruck hinterher.
+            Die ungerundeten Werte, nicht die laufende Animation — angesagt
+            wird das Ergebnis, nicht der Weg dorthin. */}
+        <p aria-live="polite" className="sr-only">
+          {t.calculator.ansage
+            .replace("{rate}", formatEuro(payment))
+            .replace("{betrag}", formatEuro(amount))
+            .replace("{monate}", String(months))}
+        </p>
 
         <Link
           href={`/antrag?amount=${amount}&months=${months}${

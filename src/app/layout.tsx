@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist } from "next/font/google";
 import { LanguageProvider } from "@/lib/language-context";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
@@ -27,6 +22,28 @@ export const metadata: Metadata = {
   description:
     "Ein Antrag, über 20 Banken im Vergleich: Rate berechnen und Schufa-neutral sehen, welches Angebot am wenigsten kostet. Kostenlos und unverbindlich.",
   alternates: { canonical: "/" },
+  // Wie der Link aussieht, wenn ihn jemand verschickt. Ohne diese Angaben
+  // steht in der Vorschau nur die nackte Adresse.
+  //
+  // Ein Vorschaubild fehlt bewusst: Solange die Seite hinter dem
+  // Seitenpasswort liegt, kommt kein fremder Dienst an eine Bilddatei heran
+  // — er bekommt die Anmeldemaske. Der Text dagegen kostet nichts und steht
+  // bereit, sobald der Betreiber die Tuer oeffnet.
+  openGraph: {
+    type: "website",
+    locale: "de_DE",
+    siteName: "cresolu.de",
+    url: "/",
+    title: "cresolu.de — Kredite vergleichen, Schufa-neutral",
+    description:
+      "Ein Antrag, über 20 Banken im Vergleich: Rate berechnen und Schufa-neutral sehen, welches Angebot am wenigsten kostet.",
+  },
+  twitter: {
+    card: "summary",
+    title: "cresolu.de — Kredite vergleichen, Schufa-neutral",
+    description:
+      "Ein Antrag, über 20 Banken im Vergleich: Rate berechnen und Schufa-neutral sehen, welches Angebot am wenigsten kostet.",
+  },
 };
 
 export default function RootLayout({
@@ -37,7 +54,7 @@ export default function RootLayout({
   return (
     <html
       lang="de"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} h-full antialiased`}
     >
       <head>
         <script
@@ -47,6 +64,16 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full">
+        {/* Sprunglink. Zehn Abschnitte und eine Kopfzeile mit Navigation
+            liegen vor dem eigentlichen Inhalt — wer mit der Tastatur
+            bedient, tabbt sie sonst auf jeder Seite einzeln durch.
+            Nur sichtbar, solange er den Fokus hat. */}
+        <a
+          href="#inhalt"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-[12px] focus:bg-accent focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-accent-foreground"
+        >
+          Zum Inhalt springen
+        </a>
         <div id="stage" className="flex flex-col">
           <LanguageProvider>{children}</LanguageProvider>
         </div>

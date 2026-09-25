@@ -191,7 +191,7 @@ export default async function AntragSeite({
   const bewertung = bewerte(antrag);
 
   return (
-    <main className="min-h-screen bg-background">
+    <main id="inhalt" className="min-h-screen bg-background">
       <header className="border-b border-border">
         <div className="w-full px-6 lg:px-10 py-5 flex flex-wrap items-center gap-x-4 gap-y-2">
           <Link

@@ -473,7 +473,7 @@ export default async function CrmSeite({
   }));
 
   return (
-    <main className="min-h-screen bg-background">
+    <main id="inhalt" className="min-h-screen bg-background">
       <header className="border-b border-border">
         {/* Umbrechend und mit truncate: Auf schmalen Geraeten schob der Name
             sonst den Abmelden-Knopf ueber den Rand hinaus. */}

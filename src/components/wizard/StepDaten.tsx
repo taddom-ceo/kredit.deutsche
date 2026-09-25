@@ -133,6 +133,15 @@ function PersonFelder({
   geburtsFehler?: string;
 }) {
   const t = wt.step4;
+  // Ohne `autocomplete` bietet der Browser nichts an: Safari auf dem iPhone
+  // zeigt die Karte "Kontakt einsetzen" gar nicht erst, Chrome fuellt nicht
+  // vor. Das kostet auf dem Geraet, auf dem Tippen am meisten weh tut.
+  //
+  // Der zweite Kreditnehmer braucht dabei eine eigene Gruppe. Sonst fuellt der
+  // Browser beide Namen mit derselben Person — die Kennzeichen sind fuer ihn
+  // dieselben, nur die id unterscheidet sich, und die sieht er nicht an.
+  // `section-*` ist genau dafuer vorgesehen.
+  const bereich = praefix ? "section-zweite " : "";
   const vornameOk = NAME.test(werte.vorname.trim());
   const nachnameOk = NAME.test(werte.nachname.trim());
   const zweiterVornameOk =
@@ -146,6 +155,7 @@ function PersonFelder({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <FormField
           id={`${praefix}vorname`}
+          autoComplete={`${bereich}given-name`}
           label={t.vorname}
           value={werte.vorname}
           onChange={(e) => aendere({ vorname: e.target.value })}
@@ -153,6 +163,7 @@ function PersonFelder({
         />
         <FormField
           id={`${praefix}zweiterVorname`}
+          autoComplete={`${bereich}additional-name`}
           label={t.zweiterVorname}
           value={werte.zweiterVorname}
           onChange={(e) => aendere({ zweiterVorname: e.target.value })}
@@ -161,6 +172,7 @@ function PersonFelder({
         />
         <FormField
           id={`${praefix}nachname`}
+          autoComplete={`${bereich}family-name`}
           label={t.nachname}
           value={werte.nachname}
           onChange={(e) => aendere({ nachname: e.target.value })}
@@ -178,6 +190,7 @@ function PersonFelder({
         <div className="grid grid-cols-[minmax(0,5fr)_minmax(0,10fr)_minmax(0,7fr)] gap-2 sm:gap-3">
           <FormSelect
             id={`${praefix}geburtstag`}
+            autoComplete={`${bereich}bday-day`}
             selectClassName="px-2 sm:px-4"
             label={t.geburtstag}
             value={werte.geburtstag}
@@ -194,6 +207,7 @@ function PersonFelder({
           </FormSelect>
           <FormSelect
             id={`${praefix}geburtsmonat`}
+            autoComplete={`${bereich}bday-month`}
             selectClassName="px-2 sm:px-4"
             label={t.geburtsmonat}
             value={werte.geburtsmonat}
@@ -208,6 +222,7 @@ function PersonFelder({
           </FormSelect>
           <FormSelect
             id={`${praefix}geburtsjahr`}
+            autoComplete={`${bereich}bday-year`}
             selectClassName="px-2 sm:px-4"
             label={t.geburtsjahr}
             value={werte.geburtsjahr}
@@ -264,11 +279,14 @@ function KontaktFelder({
   vorwahlFehler?: string;
 }) {
   const t = wt.step4;
+  // Dieselbe Trennung wie bei Name und Geburtsdatum.
+  const bereich = praefix ? "section-zweite " : "";
   return (
     <>
       <FormField
         id={`${praefix}email`}
         type="email"
+        autoComplete={`${bereich}email`}
         label={t.email}
         value={werte.email}
         onChange={(e) => aendere({ email: e.target.value })}
@@ -312,6 +330,7 @@ function KontaktFelder({
           <FormField
             id={`${praefix}telefonVorwahl`}
             type="tel"
+            autoComplete={`${bereich}tel-area-code`}
             inputMode="numeric"
             label={t.telefonVorwahl}
             value={werte.telefonVorwahl}
@@ -329,6 +348,7 @@ function KontaktFelder({
             id={`${praefix}telefon`}
             className="col-span-2 sm:col-span-1"
             type="tel"
+            autoComplete={`${bereich}tel-local`}
             inputMode="numeric"
             label={t.telefonNummer}
             value={werte.telefon}

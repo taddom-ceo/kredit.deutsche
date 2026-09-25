@@ -19,7 +19,7 @@ export function RechtstextSeite({
   children: React.ReactNode;
 }) {
   return (
-    <main className="flex-1">
+    <main id="inhalt" className="flex-1">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 py-16 lg:py-20 flex flex-col gap-8">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl lg:text-4xl font-bold tracking-[-0.02em]">

@@ -5,6 +5,16 @@ import { useLanguage } from "@/lib/language-context";
 import { wizardTranslations } from "@/lib/wizard-i18n";
 import { TOTAL_STEPS, useWizard } from "@/lib/wizard-context";
 
+/**
+ * Wie lange ein Schritt dauert, in Sekunden.
+ *
+ * Eine halbe Minute ist keine Messung, sondern die Annahme, mit der das
+ * Versprechen der Startseite und die Zahl der Schritte zusammenpassen:
+ * 8 x 30 s = 4 Minuten. Aendert sich die Zahl der Schritte, aendert sich die
+ * Restzeit von selbst mit — dann muss nur noch die Startseite hinterher.
+ */
+const SEKUNDEN_JE_SCHRITT = 30;
+
 export default function StepProgress({ current }: { current: number }) {
   const { lang } = useLanguage();
   const wt = wizardTranslations[lang];
@@ -15,6 +25,25 @@ export default function StepProgress({ current }: { current: number }) {
     .replace("{gesamt}", String(TOTAL_STEPS));
   const aktuellerTitel = wt.progress.stepLabels[current - 1] ?? "";
   const anteil = ((current - 1) / (TOTAL_STEPS - 1)) * 100;
+
+  // Restzeit statt fester Angabe.
+  //
+  // Die Startseite verspricht vier Minuten. Damit das zusammenpasst, sind
+  // acht Schritte mit einer halben Minute gerechnet — auf Schritt 1 stehen
+  // dort also genau die versprochenen vier Minuten, und von da laeuft es
+  // herunter. Vorher stand auf jedem Schritt dieselbe Zahl; wer auf Schritt 7
+  // noch "Ca. 4 Min. verbleibend" liest, glaubt die Angabe nicht mehr — und
+  // danach auch den Rest der Seite nicht.
+  const offeneSchritte = TOTAL_STEPS - current + 1;
+  const restMinuten = Math.ceil((offeneSchritte * SEKUNDEN_JE_SCHRITT) / 60);
+  // "Weniger als eine Minute" erst auf dem letzten Schritt. Bei zwei offenen
+  // Schritten rundet die Rechnung zwar auch auf eine Minute, aber wer das auf
+  // Schritt 7 liest und dann noch zwei Formulare vor sich hat, faengt an, die
+  // Angabe zu pruefen statt ihr zu glauben.
+  const restzeit =
+    offeneSchritte <= 1
+      ? wt.progress.timeRemainingLast
+      : wt.progress.timeRemaining.replace("{min}", String(restMinuten));
 
   // Zustand eines Schritts. Erreichbar sind alle bereits besuchten — auch
   // vorwärts, wenn man zwischendurch zurückgegangen ist.
@@ -41,7 +70,7 @@ export default function StepProgress({ current }: { current: number }) {
             <span className="text-muted"> · {aktuellerTitel}</span>
           </span>
           <span className="text-xs font-medium text-muted">
-            {wt.progress.timeRemaining}
+            {restzeit}
           </span>
         </div>
 
@@ -112,7 +141,7 @@ export default function StepProgress({ current }: { current: number }) {
               {zaehler} · {aktuellerTitel}
             </span>
             <span className="text-[11px] text-muted shrink-0">
-              {wt.progress.timeRemaining}
+              {restzeit}
             </span>
           </div>
           <div className="flex items-center justify-between gap-1">
