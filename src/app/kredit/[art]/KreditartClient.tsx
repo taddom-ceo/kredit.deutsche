@@ -59,7 +59,7 @@ export default function KreditartClient({ slug }: { slug: string }) {
     <>
       <Header />
 
-      <main className="flex-1">
+      <main id="inhalt" className="flex-1">
         {/* Aufmacher: Aussage links, Rechner rechts. Auf dem Handy rutscht der
             Rechner darunter — die Überschrift muss zuerst klarmachen, worum
             es geht, sonst rechnet man etwas aus, ohne es einordnen zu

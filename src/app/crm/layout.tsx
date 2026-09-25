@@ -1,4 +1,15 @@
 import type { Metadata } from "next";
+import { Geist_Mono } from "next/font/google";
+
+/**
+ * Die Schreibmaschinenschrift wird an genau einer Stelle gebraucht: in der
+ * Kennungsspalte des Protokolls. Im Wurzel-Layout geladen haette sie jede
+ * Seite mitgeschleppt, auch die Startseite, die sie nie zeichnet.
+ */
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: "CRM",
@@ -19,5 +30,9 @@ export default function CrmLayout({
   // sie ihre feste Breite von 1440px hier aufgeben soll — siehe globals.css.
   // Es steht am Layout und nicht an den einzelnen Seiten, damit keine neue
   // CRM-Seite es vergessen kann.
-  return <div data-vollbreite>{children}</div>;
+  return (
+    <div data-vollbreite className={geistMono.variable}>
+      {children}
+    </div>
+  );
 }

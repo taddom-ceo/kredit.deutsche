@@ -55,7 +55,7 @@ function AntragShell() {
       {data.step >= 1 && data.step <= TOTAL_STEPS && (
         <StepProgress current={data.step} />
       )}
-      <main className="flex-1">
+      <main id="inhalt" className="flex-1">
         <ActiveStep />
       </main>
       {/* Gerade hier gehoert der Weg zur Datenschutzerklaerung hin: Auf

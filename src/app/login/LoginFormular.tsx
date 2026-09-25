@@ -116,7 +116,13 @@ function Formular({
     (seiteFrei || passwort.length > 0);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-6 py-12">
+    // Kein <main>, aber trotzdem das Ziel des Sprunglinks aus dem
+    // Wurzel-Layout: Der Link steht auf jeder Seite, und ein Sprungziel, das
+    // es nicht gibt, ist ein toter Link.
+    <div
+      id="inhalt"
+      className="min-h-screen flex items-center justify-center bg-background px-6 py-12"
+    >
       <div className="w-full max-w-sm rounded-[24px] border border-border bg-surface p-8 flex flex-col gap-6 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.55)] ring-1 ring-white/5">
         {!seiteFrei && (
           <form

@@ -25,7 +25,7 @@ export default function KreditUebersichtClient() {
     <>
       <Header />
 
-      <main className="flex-1">
+      <main id="inhalt" className="flex-1">
         <section className="mx-auto max-w-6xl px-4 sm:px-6 pt-8 pb-12 lg:pt-10 lg:pb-16 flex flex-col gap-10">
           <div className="flex flex-col gap-5 max-w-2xl">
             <nav aria-label={x.brotkrumeKredite}>

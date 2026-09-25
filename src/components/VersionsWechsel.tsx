@@ -4,76 +4,62 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 /**
- * Umschalter zwischen den Fassungen der Startseite.
+ * Umschalter zwischen den beiden Fassungen der Startseite.
  *
- * Er steht sichtbar auf allen, weil die weiteren Fassungen zum Vergleichen da
- * sind und ein Vergleich, fuer den man Adressen von Hand tippen muss, keiner
- * ist. Verweise und kein Zustand: Welche Fassung offen ist, steht in der
- * Adresse und laesst sich weitergeben — "schau dir mal die V2.1 an" ist damit
- * ein Link.
+ * Ein Hilfsmittel fuer den Vergleich, kein Teil der Seite: Er sitzt unten
+ * links, ausserhalb des Leseweges, und liegt ueber allem, damit er auf jeder
+ * Scrollhoehe erreichbar ist — man vergleicht selten den Aufmacher allein.
  *
- * Oben rechts unter dem Kopf, in derselben Form wie die Sprachwahl darueber.
- * Fest am Fenster, damit er auch nach 6000 Pixeln noch erreichbar ist, und
- * schmal genug, dass er auf dem Handy nichts verdeckt.
+ * Er zeigt sich nur auf den beiden Startseiten. Auf /antrag oder im CRM waere
+ * er sinnlos, denn dort gibt es nur eine Fassung.
  *
- * Vor dem Start gehoert er weg — dann ist eine der Fassungen die Startseite
- * und die uebrigen sind Geschichte. Bis dahin ist er das Werkzeug, mit dem
- * entschieden wird, welche.
+ * Wenn eine der beiden Fassungen gewonnen hat, faellt dieses Bauteil weg und
+ * mit ihm die Weichen in `Startseite.tsx`.
  */
-
-/**
- * Die Fassungen, in der Reihenfolge ihrer Entstehung.
- *
- * Als Liste und nicht als drei Zeilen Markup: Eine vierte Fassung ist dann
- * eine Zeile hier und keine Aenderung am Aufbau.
- */
-const FASSUNGEN = [
-  { href: "/", name: "V1" },
-  { href: "/v2", name: "V2" },
-  { href: "/v2-1", name: "V2.1" },
-];
-
 export default function VersionsWechsel() {
   const pfad = usePathname();
+  if (pfad !== "/" && pfad !== "/v2") return null;
 
   return (
-    <div
+    <nav
       aria-label="Fassung der Startseite"
-      className="fixed right-3 top-20 z-40 flex items-center gap-1 rounded-full border border-border bg-surface/90 p-1 text-[11px] shadow-[0_8px_24px_-12px_rgba(0,0,0,0.8)] backdrop-blur lg:right-6"
+      // Unten links: Rechts unten sitzt der mitlaufende Handlungsaufruf, und
+      // zwei schwebende Dinge in derselben Ecke verdecken einander.
+      //
+      // Auf dem Handy reicht das nicht — dort laeuft der Handlungsaufruf ueber
+      // die volle Breite, unten gemessen von 776px bis 828px bei 844px Hoehe.
+      // Der Umschalter sass mitten darauf. Deshalb dort eine Etage hoeher;
+      // ab sm ist die Ecke frei und er rutscht zurueck nach unten.
+      className="fixed bottom-24 sm:bottom-4 left-4 z-40 flex items-center gap-1 rounded-full border border-border-strong bg-surface/95 p-1 text-xs font-semibold shadow-[0_8px_30px_-10px_rgba(0,0,0,0.7)] backdrop-blur"
     >
-      <span className="hidden pl-2 pr-1 text-muted/70 sm:inline">Fassung</span>
-      {FASSUNGEN.map((fassung) => (
-        <Wahl
-          key={fassung.href}
-          href={fassung.href}
-          name={fassung.name}
-          aktiv={pfad === fassung.href}
-        />
-      ))}
-    </div>
+      <Wahl href="/" label="V1" aktiv={pfad === "/"} />
+      <Wahl href="/v2" label="V2" aktiv={pfad === "/v2"} />
+    </nav>
   );
 }
 
 function Wahl({
   href,
-  name,
+  label,
   aktiv,
 }: {
   href: string;
-  name: string;
+  label: string;
   aktiv: boolean;
 }) {
   return (
     <Link
       href={href}
+      // `aria-current` sagt Vorlesehilfen, welche Fassung gerade offen ist.
+      // Die Farbe allein sagt es ihnen nicht.
       aria-current={aktiv ? "page" : undefined}
-      className={`rounded-full px-2.5 py-1 font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+      className={`rounded-full px-3 py-1.5 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
         aktiv
           ? "bg-accent text-accent-foreground"
           : "text-muted hover:text-foreground"
       }`}
     >
-      {name}
+      {label}
     </Link>
   );
 }

@@ -21,6 +21,11 @@ export interface Translations {
     rateLabel: string;
     cta: string;
     disclaimer: string;
+    /**
+     * Was Vorlesehilfen ansagen, wenn sich die Rate geaendert hat.
+     * {rate}, {betrag} und {monate} werden ersetzt.
+     */
+    ansage: string;
   };
   features: { title: string; description: string }[];
   landing: {
@@ -41,6 +46,18 @@ export interface Translations {
     // Ein einziger Hinweis, zeilenweise. SVG bricht Text nicht selbst um,
     // deshalb bestimmt jede Sprache ihre Umbrueche selbst.
     heroBeispielHinweis: string[];
+    /**
+     * Dasselbe in einer Zeile, fuer Fassung 2.
+     *
+     * Vier graue Zeilen direkt neben der Hauptaussage lesen sich wie ein
+     * Haftungsausschluss und ziehen den Blick dorthin. Der vollstaendige Text
+     * faellt nicht weg — er steht in Fassung 2 aufklappbar unter dem Bild.
+     */
+    heroBeispielKurz: string[];
+    /** Beschriftung des Aufklappers mit dem vollstaendigen Hinweis. */
+    heroBeispielMehr: string;
+    /** Abkuerzung vom Aufmacher zum Rechner weiter unten (Fassung 2). */
+    heroDirektRechnen: string;
     trustBadges: string[];
     partnerLabel: string;
     /** Hinweis darauf, dass die Namen darunter Beispiele sind. */
@@ -109,6 +126,7 @@ export const translations: Record<Language, Translations> = {
       totalLabel: "Gesamtbetrag",
       rateLabel: "eff. Jahreszins",
       cta: "Mit anderen Angeboten vergleichen",
+      ansage: "Monatliche Rate {rate} bei {betrag} über {monate} Monaten.",
       disclaimer:
         "Beispielrechnung, kein verbindliches Angebot. Individueller effektiver Jahreszins abhängig von Bonität und Anbieter.",
     },
@@ -130,7 +148,7 @@ export const translations: Record<Language, Translations> = {
       },
     ],
     landing: {
-      badge: "Kostenlos · Schufa-neutral · In 2 Minuten",
+      badge: "Kostenlos · Schufa-neutral · In 4 Minuten",
       titleLine1: "Günstiger finanzieren,",
       titleHighlight: "ohne Bank\u2011Marathon.",
       subtitle:
@@ -147,7 +165,7 @@ export const translations: Record<Language, Translations> = {
       heroErsparnis: "3.595 € gespart",
       heroSzenen: {
         eingabeTitel: "Daten eingeben",
-        eingabeUnter: "2 Minuten, ohne Unterlagen",
+        eingabeUnter: "4 Minuten, ohne Unterlagen",
         betragLabel: "Wunschbetrag",
         betragWert: "20.000 €",
         laufzeitLabel: "Laufzeit",
@@ -166,6 +184,9 @@ export const translations: Record<Language, Translations> = {
         "Jahreszins. Kein verbindliches Angebot. Ihr effektiver Jahreszins",
         "hängt von Bonität und Anbieter ab.",
       ],
+      heroBeispielKurz: ["Beispiel: 20.000 € über 72 Monate, 2,89 % eff."],
+      heroBeispielMehr: "Wie diese Zahlen zustande kommen",
+      heroDirektRechnen: "Oder gleich selbst rechnen",
       trustBadges: [
         "Schufa-neutral",
         "Kostenlos",
@@ -180,7 +201,7 @@ export const translations: Record<Language, Translations> = {
       kennzahlen: [
         { wert: "20+", label: "Banken im Vergleich" },
         { wert: "2,89 %", label: "eff. Jahreszins ab" },
-        { wert: "2 Min.", label: "bis zum Angebot" },
+        { wert: "4 Min.", label: "bis zum Angebot" },
         { wert: "0 €", label: "Kosten für Sie" },
       ],
       ablaufEyebrow: "So läuft es ab",
@@ -270,8 +291,8 @@ export const translations: Record<Language, Translations> = {
         "Rate oder Betrag anpassen — beides geht",
       ],
       mitlaufCta: "Kostenlos vergleichen",
-      mitlaufNote: "2 Minuten · Schufa-neutral",
-      schlussTitle: "Sehen Sie in zwei Minuten, was möglich ist",
+      mitlaufNote: "4 Minuten · Schufa-neutral",
+      schlussTitle: "Sehen Sie in vier Minuten, was möglich ist",
       schlussText:
         "Unverbindlich, kostenlos und ohne Wirkung auf Ihre Bonität.",
       schlussCta: "Jetzt Rate berechnen",
@@ -305,6 +326,7 @@ export const translations: Record<Language, Translations> = {
       totalLabel: "Total amount",
       rateLabel: "effective annual rate",
       cta: "Compare with other offers",
+      ansage: "Monthly rate {rate} for {betrag} over {monate} months.",
       disclaimer:
         "Example calculation, not a binding offer. Individual effective annual rate depends on creditworthiness and provider.",
     },
@@ -326,7 +348,7 @@ export const translations: Record<Language, Translations> = {
       },
     ],
     landing: {
-      badge: "Free · Credit-score-neutral · In 2 minutes",
+      badge: "Free · Credit-score-neutral · In 4 minutes",
       titleLine1: "Finance smarter,",
       titleHighlight: "without the bank marathon.",
       subtitle:
@@ -343,7 +365,7 @@ export const translations: Record<Language, Translations> = {
       heroErsparnis: "€3,595 saved",
       heroSzenen: {
         eingabeTitel: "Enter your details",
-        eingabeUnter: "2 minutes, no paperwork",
+        eingabeUnter: "4 minutes, no paperwork",
         betragLabel: "Desired amount",
         betragWert: "€20,000",
         laufzeitLabel: "Term",
@@ -362,6 +384,9 @@ export const translations: Record<Language, Translations> = {
         "rate. Not a binding offer. Your effective annual rate depends on",
         "creditworthiness and provider.",
       ],
+      heroBeispielKurz: ["Example: €20,000 over 72 months, 2.89% eff."],
+      heroBeispielMehr: "How these figures are calculated",
+      heroDirektRechnen: "Or do the maths yourself",
       trustBadges: [
         "Credit-score-neutral",
         "Free of charge",
@@ -376,7 +401,7 @@ export const translations: Record<Language, Translations> = {
       kennzahlen: [
         { wert: "20+", label: "banks compared" },
         { wert: "2.89%", label: "effective annual rate" },
-        { wert: "2 min", label: "for your offer" },
+        { wert: "4 min", label: "for your offer" },
         { wert: "€0", label: "cost for you" },
       ],
       ablaufEyebrow: "How it works",
@@ -466,8 +491,8 @@ export const translations: Record<Language, Translations> = {
         "Adjust the instalment or the amount — either works",
       ],
       mitlaufCta: "Compare for free",
-      mitlaufNote: "2 minutes · credit-score-neutral",
-      schlussTitle: "See in two minutes what is possible",
+      mitlaufNote: "4 minutes · credit-score-neutral",
+      schlussTitle: "See in four minutes what is possible",
       schlussText: "Non-binding, free, and with no effect on your credit score.",
       schlussCta: "Calculate my instalment",
     },

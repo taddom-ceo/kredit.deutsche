@@ -1,7 +1,14 @@
 export interface WizardTranslations {
   progress: {
     stepLabels: string[];
+    /**
+     * Restzeit, mit {min} fuer die Zahl der Minuten. Sie laeuft mit dem
+     * Schritt herunter — eine feste Angabe stand auf Schritt 7 noch genauso
+     * da wie auf Schritt 1 und war damit ab der Mitte nachweislich falsch.
+     */
     timeRemaining: string;
+    /** Auf dem letzten Schritt, wo "Ca. 1 Min." schon zu viel klingt. */
+    timeRemainingLast: string;
     stepAriaPrefix: string;
     // "Schritt 3 von 8" — {n} und {gesamt} werden ersetzt.
     stepCounter: string;
@@ -270,7 +277,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
         "Einkommen",
         "Bank",
       ],
-      timeRemaining: "Ca. 4 Min. verbleibend",
+      timeRemaining: "Ca. {min} Min. verbleibend",
+      timeRemainingLast: "Weniger als eine Minute",
       stepAriaPrefix: "Schritt",
       stepCounter: "Schritt {n} von {gesamt}",
       saved: "Gespeichert",
@@ -578,7 +586,8 @@ export const wizardTranslations: Record<"de" | "en", WizardTranslations> = {
         "Income",
         "Bank",
       ],
-      timeRemaining: "Approx. 4 min. remaining",
+      timeRemaining: "Approx. {min} min. remaining",
+      timeRemainingLast: "Less than a minute",
       stepAriaPrefix: "Step",
       stepCounter: "Step {n} of {gesamt}",
       saved: "Saved",

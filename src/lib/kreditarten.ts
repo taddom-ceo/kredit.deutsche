@@ -1920,7 +1920,7 @@ export const KREDITART_TEXTE: Record<Language, KreditartTexte> = {
     andereTitel: "Passt etwas anderes besser?",
     andereText:
       "Jeder Verwendungszweck hat eigene Regeln. Hier geht es zu den übrigen.",
-    schlussTitel: "Sehen Sie in zwei Minuten, was möglich ist",
+    schlussTitel: "Sehen Sie in vier Minuten, was möglich ist",
     schlussText:
       "Unverbindlich, kostenlos und ohne Wirkung auf Ihre Bonität.",
     schlussCta: "Jetzt vergleichen",
@@ -1950,7 +1950,7 @@ export const KREDITART_TEXTE: Record<Language, KreditartTexte> = {
     andereTitel: "Would something else fit better?",
     andereText:
       "Every purpose has its own rules. Here are the remaining ones.",
-    schlussTitel: "See in two minutes what is possible",
+    schlussTitel: "See in four minutes what is possible",
     schlussText: "Non-binding, free, and with no effect on your credit score.",
     schlussCta: "Compare now",
     zurStartseite: "Back to the homepage",

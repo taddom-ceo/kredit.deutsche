@@ -30,20 +30,10 @@ export default function CreditCalculator({
   zweck,
   startBetrag = 20000,
   startMonate = 72,
-  ctaText,
 }: {
   zweck?: string;
   startBetrag?: number;
   startMonate?: number;
-  /**
-   * Beschriftung des Knopfs, wenn die uebliche nicht passt.
-   *
-   * "Mit anderen Angeboten vergleichen" stimmt dort, wo der Rechner mitten
-   * auf der Seite steht und schon ein Angebot daneben. Im Aufmacher der
-   * zweiten Fassung ist er der einzige Aufruf der Seite, und dann muss er
-   * sagen, was als Naechstes passiert, statt worauf er sich bezieht.
-   */
-  ctaText?: string;
 } = {}) {
   const { t } = useLanguage();
   const [amount, setAmount] = useState(startBetrag);
@@ -82,6 +72,9 @@ export default function CreditCalculator({
             max={AMOUNT_MAX}
             step={AMOUNT_STEP}
             value={amount}
+            // Ohne diese Angabe liest eine Vorlesehilfe "25000" vor. Mit ihr
+            // steht dort, was auch auf dem Bildschirm steht.
+            aria-valuetext={formatEuro(amount)}
             onChange={(e) => setAmount(Number(e.target.value))}
           />
           <div className="flex justify-between text-xs text-muted">
@@ -134,13 +127,29 @@ export default function CreditCalculator({
           </span>
         </div>
 
+        {/* Die Rate aendert sich, wenn jemand den Schieber bewegt — aber nur
+            sichtbar. Wer die Seite vorlesen laesst, hoerte bisher die neue
+            Zahl nicht; das ist ausgerechnet die eine Zahl, um die der ganze
+            Rechner gebaut ist.
+            Als eigener, unsichtbarer Bereich und nicht als `aria-live` am
+            Kasten oben: Darin steht ein Eingabefeld, und eine Ansage waehrend
+            des Tippens spraeche jedem Tastendruck hinterher.
+            Die ungerundeten Werte, nicht die laufende Animation — angesagt
+            wird das Ergebnis, nicht der Weg dorthin. */}
+        <p aria-live="polite" className="sr-only">
+          {t.calculator.ansage
+            .replace("{rate}", formatEuro(payment))
+            .replace("{betrag}", formatEuro(amount))
+            .replace("{monate}", String(months))}
+        </p>
+
         <Link
           href={`/antrag?amount=${amount}&months=${months}${
             zweck ? `&zweck=${zweck}` : ""
           }`}
           className="w-full text-center rounded-[16px] bg-accent text-accent-foreground font-semibold px-4 py-3.5 text-sm shadow-[0_8px_24px_-6px_rgba(52,211,153,0.45)] transition-all duration-200 hover:bg-accent-strong hover:shadow-[0_10px_30px_-6px_rgba(52,211,153,0.55)] hover:-translate-y-px active:translate-y-0 active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
         >
-          {ctaText ?? t.calculator.cta}
+          {t.calculator.cta}
         </Link>
         <p className="text-[11px] leading-relaxed text-muted">
           {t.calculator.disclaimer}

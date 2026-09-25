@@ -1,19 +1,23 @@
 import type { Metadata } from "next";
-import V2Client from "./V2Client";
+import Startseite from "@/components/Startseite";
 
 /**
- * Die zweite Fassung der Startseite, unter eigener Adresse.
+ * Fassung 2 — zum Vergleich, unter eigener Adresse.
  *
- * Nicht in der Suche: Zwei Seiten mit demselben Inhalt und demselben Zweck
- * machten einander Konkurrenz, und die zweite Fassung ist zum Vergleichen da
- * und nicht zum Gefundenwerden. Faellt die Entscheidung fuer sie, wandert ihr
- * Inhalt auf "/" und diese Adresse verschwindet.
+ * Derselbe Inhalt wie unter /, nur anders angeordnet: der Rechner vor den
+ * Kreditarten, ein knapperer Aufmacher, weniger Bewegung. Was sich genau
+ * unterscheidet, steht an den Weichen in `Startseite.tsx`.
+ *
+ * Die Seite liegt wie jede andere hinter dem Seitenpasswort — der Zaun in
+ * `src/proxy.ts` erfasst alles, was nicht ausdruecklich ausgenommen ist, und
+ * `src/proxy.test.ts` prueft das auch fuer diese Adresse.
  */
 export const metadata: Metadata = {
-  title: "Startseite, zweite Fassung",
+  title: "cresolu.de — Fassung 2",
+  alternates: { canonical: "/v2" },
   robots: { index: false, follow: false },
 };
 
-export default function V2Seite() {
-  return <V2Client />;
+export default function V2() {
+  return <Startseite fassung="v2" />;
 }

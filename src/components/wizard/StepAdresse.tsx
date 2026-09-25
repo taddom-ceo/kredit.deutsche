@@ -316,6 +316,7 @@ export default function StepAdresse() {
         <FormSelect
           id="ort"
           label={wt.step5.ort}
+          autoComplete="address-level2"
           value={data.ort}
           onChange={(e) => update({ ort: e.target.value })}
           disabled={!plzOk}
@@ -405,6 +406,7 @@ export default function StepAdresse() {
                 <FormField
                   id="zweite-strasse"
                   label={wt.step5.strasse}
+                  autoComplete="section-zweite address-line1"
                   value={zweite.strasse}
                   onChange={(e) => updateZweite({ strasse: e.target.value })}
                   error={
@@ -432,6 +434,7 @@ export default function StepAdresse() {
                 <FormField
                   id="zweite-plz"
                   label={wt.step5.plz}
+                  autoComplete="section-zweite postal-code"
                   value={zweite.plz}
                   onChange={(e) =>
                     updateZweite({
@@ -446,6 +449,7 @@ export default function StepAdresse() {
                 <FormField
                   id="zweite-ort"
                   label={wt.step5.ort}
+                  autoComplete="section-zweite address-level2"
                   value={zweite.ort}
                   onChange={(e) => updateZweite({ ort: e.target.value })}
                 />
