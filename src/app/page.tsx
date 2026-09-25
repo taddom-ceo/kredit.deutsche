@@ -8,7 +8,6 @@ import Fussbereich from "@/components/Fussbereich";
 import KreditartenRaster from "@/components/KreditartenRaster";
 import MitlaufenderCta from "@/components/MitlaufenderCta";
 import Reveal from "@/components/Reveal";
-import VersionsWechsel from "@/components/VersionsWechsel";
 import VisibilityGate from "@/components/VisibilityGate";
 import PartnerLaufband from "@/components/PartnerLaufband";
 import { KREDITARTEN, KREDITART_TEXTE } from "@/lib/kreditarten";
@@ -50,7 +49,6 @@ export default function Home() {
   return (
     <>
       <Header />
-      <VersionsWechsel />
 
       <main className="flex-1">
         {/* Hero. Der Aufruf steht über der Falz und wird auf dem Handy zuerst

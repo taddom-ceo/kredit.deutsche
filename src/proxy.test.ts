@@ -42,8 +42,6 @@ function muster(): RegExp {
  */
 const GESCHUETZT = [
   "/",
-  "/v2",
-  "/v2-1",
   "/antrag",
   "/angebote",
   "/rechner",
