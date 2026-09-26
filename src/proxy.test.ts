@@ -47,6 +47,8 @@ const GESCHUETZT = [
   "/rechner",
   "/kredit",
   "/kredit/umschuldung",
+  "/ratgeber",
+  "/ueber-uns",
   "/impressum",
   "/datenschutz",
   "/crm",

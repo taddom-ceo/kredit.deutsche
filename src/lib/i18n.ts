@@ -93,6 +93,59 @@ export interface Translations {
     schlussText: string;
     schlussCta: string;
   };
+  /**
+   * Kopfzeile, Hauptmenue und die feste Leiste unten auf dem Handy.
+   *
+   * Beides zusammen an einer Stelle, weil es dieselben vier Wege sind: Wer
+   * einen davon umbenennt, benennt ihn sonst nur in der Kopfzeile um und
+   * wundert sich spaeter ueber die abweichende Beschriftung unten.
+   */
+  navigation: {
+    kredite: string;
+    kreditrechner: string;
+    ratgeber: string;
+    ueberUns: string;
+    /** Die Schaltflaeche rechts in der Kopfzeile. */
+    cta: string;
+    /** Letzter Eintrag im Klappmenue "Kredite". */
+    alleKreditarten: string;
+    menueOeffnen: string;
+    menueSchliessen: string;
+    hauptmenue: string;
+    /** Feste Leiste unten auf dem Handy. */
+    anrufen: string;
+    anfrageStarten: string;
+    schnellzugriff: string;
+  };
+  ratgeber: {
+    eyebrow: string;
+    titel: string;
+    titelHighlight: string;
+    intro: string;
+    grundlagenTitel: string;
+    grundlagenText: string;
+    zweckeTitel: string;
+    zweckeText: string;
+    alleAnsehen: string;
+    rechnerTitel: string;
+    rechnerText: string;
+    rechnerCta: string;
+  };
+  ueberUns: {
+    eyebrow: string;
+    titel: string;
+    titelHighlight: string;
+    intro: string;
+    /** Die vier Punkte, die erklaeren, wie das hier funktioniert. */
+    punkte: { titel: string; text: string }[];
+    geldTitel: string;
+    geldText: string;
+    anbieterTitel: string;
+    anbieterText: string;
+    ctaTitel: string;
+    ctaText: string;
+    cta: string;
+  };
   // Der Fussbereich steht auf jeder Seite. Impressum und Datenschutz gibt es
   // nur auf Deutsch — das Recht, dem sie folgen, gibt es auch nur dort —,
   // aber der Weg dorthin soll in beiden Sprachen beschriftet sein.
@@ -297,6 +350,73 @@ export const translations: Record<Language, Translations> = {
         "Unverbindlich, kostenlos und ohne Wirkung auf Ihre Bonität.",
       schlussCta: "Jetzt Rate berechnen",
     },
+    navigation: {
+      kredite: "Kredite",
+      kreditrechner: "Kreditrechner",
+      ratgeber: "Ratgeber",
+      ueberUns: "Über uns",
+      cta: "Konditionen prüfen",
+      alleKreditarten: "Alle Kreditarten ansehen",
+      menueOeffnen: "Menü öffnen",
+      menueSchliessen: "Menü schließen",
+      hauptmenue: "Hauptmenü",
+      anrufen: "Anrufen",
+      anfrageStarten: "Anfrage starten",
+      schnellzugriff: "Schnellzugriff",
+    },
+    ratgeber: {
+      eyebrow: "Ratgeber",
+      titel: "Was Sie vorher",
+      titelHighlight: "wissen sollten.",
+      intro:
+        "Ein Kredit ist eine Entscheidung über Jahre. Hier stehen die Fragen, die vor dem Abschluss wirklich zählen — kurz beantwortet und ohne Werbesprache.",
+      grundlagenTitel: "Die Grundlagen",
+      grundlagenText:
+        "Fünf Fragen, die uns am häufigsten gestellt werden. Sie klären, was der Vergleich kostet, was er mit Ihrer Schufa macht und was Sie dafür brauchen.",
+      zweckeTitel: "Nach Verwendungszweck",
+      zweckeText:
+        "Wofür das Geld gedacht ist, ändert die Konditionen. Zu jedem Zweck steht auf einer eigenen Seite, worauf es dabei ankommt — mit Rechner und den häufigen Fragen dazu.",
+      alleAnsehen: "Alle Kreditarten ansehen",
+      rechnerTitel: "Zahlen statt Text",
+      rechnerText:
+        "Am schnellsten beantwortet sich die Frage nach der Rate, indem Sie sie einstellen. Der Rechner ist unverbindlich und wirkt sich nicht auf Ihre Bonität aus.",
+      rechnerCta: "Zum Kreditrechner",
+    },
+    ueberUns: {
+      eyebrow: "Über uns",
+      titel: "Wir vergleichen.",
+      titelHighlight: "Geliehen wird bei der Bank.",
+      intro:
+        "cresolu.de ist ein Kreditvermittler. Wir vergeben selbst keine Darlehen, sondern holen für eine Anfrage die Konditionen mehrerer Banken ein und stellen sie nebeneinander. Der Vertrag kommt am Ende mit der Bank zustande, nicht mit uns.",
+      punkte: [
+        {
+          titel: "Eine Anfrage, mehrere Banken",
+          text: "Sie geben Ihre Angaben einmal ein. Statt bei jeder Bank einzeln zu fragen, geht die Anfrage an über 20 Häuser gleichzeitig.",
+        },
+        {
+          titel: "Schufa-neutral",
+          text: "Wir stellen eine Konditionsanfrage und keine Kreditanfrage. Sie ist für andere Banken nicht sichtbar und verändert Ihren Score nicht.",
+        },
+        {
+          titel: "Kostenlos und unverbindlich",
+          text: "Für Sie entstehen keine Kosten, und aus einer Anfrage folgt keine Verpflichtung. Sie entscheiden erst, wenn die Angebote vor Ihnen liegen.",
+        },
+        {
+          titel: "Keine Unterlagen vorab",
+          text: "Gehaltsnachweise und Ausweis braucht erst die Bank, für die Sie sich entschieden haben. Bis dahin genügen Ihre Angaben.",
+        },
+      ],
+      geldTitel: "Womit wir Geld verdienen",
+      geldText:
+        "Wir werden von der Bank vergütet, wenn über uns ein Vertrag zustande kommt. Auf Ihre Konditionen wirkt sich das nicht aus — Sie zahlen denselben Zins wie bei der Bank direkt. Kommt kein Vertrag zustande, verdienen wir nichts.",
+      anbieterTitel: "Wer dahintersteht",
+      anbieterText:
+        "Die vollständige Anbieterkennzeichnung mit Registereintrag, Erlaubnis nach § 34c GewO und Aufsichtsbehörde steht im Impressum.",
+      ctaTitel: "Sehen, was möglich ist",
+      ctaText:
+        "Unverbindlich, kostenlos und ohne Wirkung auf Ihre Bonität.",
+      cta: "Konditionen prüfen",
+    },
     fuss: {
       rechtliches: "Rechtliches",
       startseite: "Startseite",
@@ -495,6 +615,72 @@ export const translations: Record<Language, Translations> = {
       schlussTitle: "See in four minutes what is possible",
       schlussText: "Non-binding, free, and with no effect on your credit score.",
       schlussCta: "Calculate my instalment",
+    },
+    navigation: {
+      kredite: "Loans",
+      kreditrechner: "Loan calculator",
+      ratgeber: "Guide",
+      ueberUns: "About us",
+      cta: "Check conditions",
+      alleKreditarten: "See all loan types",
+      menueOeffnen: "Open menu",
+      menueSchliessen: "Close menu",
+      hauptmenue: "Main menu",
+      anrufen: "Call us",
+      anfrageStarten: "Start enquiry",
+      schnellzugriff: "Quick actions",
+    },
+    ratgeber: {
+      eyebrow: "Guide",
+      titel: "What to know",
+      titelHighlight: "before you sign.",
+      intro:
+        "A loan is a decision that lasts for years. These are the questions that actually matter beforehand — answered briefly and without sales talk.",
+      grundlagenTitel: "The basics",
+      grundlagenText:
+        "The five questions we are asked most often. They cover what the comparison costs, what it does to your credit score and what you need for it.",
+      zweckeTitel: "By loan purpose",
+      zweckeText:
+        "What the money is for changes the conditions. Each purpose has its own page explaining what matters — with a calculator and the common questions.",
+      alleAnsehen: "See all loan types",
+      rechnerTitel: "Numbers instead of text",
+      rechnerText:
+        "The fastest answer to the question of the instalment is to set it yourself. The calculator is non-binding and has no effect on your credit score.",
+      rechnerCta: "To the loan calculator",
+    },
+    ueberUns: {
+      eyebrow: "About us",
+      titel: "We compare.",
+      titelHighlight: "The bank does the lending.",
+      intro:
+        "cresolu.de is a loan broker. We do not lend money ourselves — we collect the conditions of several banks for a single enquiry and put them side by side. The contract is concluded with the bank, not with us.",
+      punkte: [
+        {
+          titel: "One enquiry, several banks",
+          text: "You enter your details once. Instead of asking each bank separately, the enquiry goes to more than 20 of them at the same time.",
+        },
+        {
+          titel: "Credit-score-neutral",
+          text: "We make a conditions enquiry, not a loan application. It is invisible to other banks and does not change your score.",
+        },
+        {
+          titel: "Free and non-binding",
+          text: "There are no costs for you, and an enquiry commits you to nothing. You decide once the offers are in front of you.",
+        },
+        {
+          titel: "No paperwork up front",
+          text: "Payslips and ID are needed only by the bank you chose. Until then your details are enough.",
+        },
+      ],
+      geldTitel: "How we earn money",
+      geldText:
+        "We are paid by the bank when a contract is concluded through us. This does not affect your conditions — you pay the same rate as you would directly with the bank. If no contract is concluded, we earn nothing.",
+      anbieterTitel: "Who is behind this",
+      anbieterText:
+        "The full provider details, including the commercial register entry, the § 34c GewO licence and the supervisory authority, are in the German legal notice.",
+      ctaTitel: "See what is possible",
+      ctaText: "Non-binding, free, and with no effect on your credit score.",
+      cta: "Check conditions",
     },
     fuss: {
       rechtliches: "Legal",
