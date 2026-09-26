@@ -12,19 +12,19 @@ import {
 } from "@/lib/vertrauen";
 
 /**
- * Die Vertrauensleiste direkt unter der Kopfzeile.
+ * Die beiden Belege am Fuss des Aufmachers: Bewertung und Erlaubnis.
  *
- * Zwei Nachweise, mehr nicht: die Bewertung und die Erlaubnis. Eine Leiste
- * mit sechs Zeichen liest niemand — sie wird zum Muster, und ein Muster
- * traegt nichts.
+ * Zwei Karten, mehr nicht. Sechs Zeichen nebeneinander liest niemand — sie
+ * werden zum Muster, und ein Muster traegt nichts.
  *
  * Die Bewertung steht links, weil sie die Frage beantwortet, die zuerst
  * kommt ("taugen die was?"); die Erlaubnis rechts beantwortet die zweite
  * ("duerfen die das ueberhaupt?").
  *
- * Sie steht ueber dem Aufmacher, weil sie dort noch wirkt: Wer die
- * Ueberschrift liest, hat die Frage "kann ich denen glauben?" im Kopf, und
- * die Antwort soll nicht drei Bildschirme weiter unten stehen.
+ * Sie stehen hinter den Handlungsaufrufen und nicht darueber: Wer bis dahin
+ * gelesen hat, ueberlegt gerade, ob er klickt — und genau dort gehoert der
+ * Beleg hin. Als Leiste ueber die ganze Breite unter der Kopfzeile standen
+ * sie vor der Ueberschrift und damit vor der Frage, die sie beantworten.
  *
  * ------------------------------------------------------------------
  * Der Hinweis am Ende
@@ -35,62 +35,79 @@ import {
  * Beleg daneben zu stehen, waere der Unterschied zwischen Werbung und
  * Irrefuehrung. Die Begruendung im einzelnen steht in `vertrauen.ts`.
  */
-export default function VertrauensLeiste() {
+export default function VertrauensBelege() {
   const { lang, t } = useLanguage();
   const v = t.vertrauen;
 
   return (
     <section
       aria-label={v.aria}
-      className="border-b border-border bg-surface/30"
+      className="auftakt flex flex-col gap-2 lg:max-w-[400px]"
+      style={{ animationDelay: "340ms" }}
     >
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5 sm:justify-start">
-        {/* Bewertung */}
-        <span className="flex items-center gap-2.5">
-          <Sterne anteil={bewertungsAnteil()} />
-          <span className="flex flex-col leading-tight">
-            <span className="text-[13px] font-semibold text-foreground">
-              {bewertungsWort(lang)} · {schnittFormatiert(lang)}
-            </span>
-            <span className="text-[11px] text-muted">
-              {v.bewertungUnter.replace("{anzahl}", anzahlFormatiert(lang))}
-            </span>
-          </span>
-        </span>
-
-        {/* Trennstrich wie in der Vorlage. Er entfaellt, wo die beiden
-            Plaketten umbrechen — ein Strich zwischen zwei Zeilen steht quer
-            und trennt nichts. */}
-        <span
-          aria-hidden="true"
-          className="hidden h-8 w-px bg-border-strong sm:block"
+      {/* Zwei Karten nebeneinander, auch auf dem schmalsten Handy: Bei 390px
+          bleiben je 173px, und die laengste Zeile darin ("Über 1.800
+          Bewertungen", 11px) braucht 128. Untereinander waeren es zwei
+          Stapel unter vier Plaketten — der Aufmacher liest sich dann als
+          Liste von Listen. */}
+      <div className="grid grid-cols-2 gap-2.5">
+        <Karte
+          zeichen={<Sterne anteil={bewertungsAnteil()} />}
+          titel={`${bewertungsWort(lang)} · ${schnittFormatiert(lang)}`}
+          unter={v.bewertungUnter.replace("{anzahl}", anzahlFormatiert(lang))}
         />
-
-        {/* Erlaubnis */}
-        <span className="flex items-center gap-2.5">
-          <SiegelZeichen />
-          <span className="flex flex-col leading-tight">
-            <span className="text-[13px] font-semibold text-foreground">
-              {v.ihkTitel}
-            </span>
-            <span className="text-[11px] text-muted">
-              {ERLAUBNIS.paragrafen}
-            </span>
-          </span>
-        </span>
-
-        {!VERTRAUEN_BELEGT && (
-          // muted/75 und nicht muted/70 wie bei den anderen Hinweisen:
-          // Gemessen auf dieser Flaeche sind 70 Prozent nur 4,32 zu 1 und
-          // damit unter der Schwelle von 4,5 fuer Fliesstext. Ausgerechnet
-          // der Satz, der die Zahlen daneben einordnet, darf nicht der
-          // schlechtest lesbare der Seite sein. Bei 75 Prozent sind es 4,81.
-          <span className="w-full text-center text-[11px] text-muted/75 sm:ml-2 sm:w-auto sm:text-left">
-            {v.hinweis}
-          </span>
-        )}
+        <Karte
+          zeichen={<SiegelZeichen />}
+          titel={v.ihkTitel}
+          unter={ERLAUBNIS.paragrafen}
+        />
       </div>
+
+      {!VERTRAUEN_BELEGT && (
+        // muted/75 und nicht muted/70 wie bei den anderen Hinweisen:
+        // Gemessen sind 70 Prozent auf dieser Flaeche nur 4,32 zu 1 und damit
+        // unter der Schwelle von 4,5 fuer Fliesstext. Ausgerechnet der Satz,
+        // der die Zahlen daneben einordnet, darf nicht der schlechtest
+        // lesbare der Seite sein. Bei 75 Prozent sind es 4,81.
+        <p className="text-[11px] leading-relaxed text-muted/75">
+          {v.hinweis}
+        </p>
+      )}
     </section>
+  );
+}
+
+/**
+ * Eine der beiden Karten.
+ *
+ * Zeichen oben, Aussage darunter — und nicht nebeneinander wie in der
+ * Vorlage: Nebeneinander braucht eine Karte 260 Pixel, zwei davon passen
+ * damit erst ab Tabletbreite nebeneinander. Untereinander tragen sie schon
+ * auf 390 Pixeln.
+ */
+function Karte({
+  zeichen,
+  titel,
+  unter,
+}: {
+  zeichen: React.ReactNode;
+  titel: string;
+  unter: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 rounded-[16px] border border-border-strong bg-surface/70 px-4 py-3">
+      {/* Feste Hoehe fuer die Zeichenzeile: Die Sterne sind 15 Pixel hoch,
+          das Siegel 24. Ohne sie saessen die beiden Ueberschriften 11 Pixel
+          versetzt — zwei Karten nebeneinander, deren Text nicht auf einer
+          Linie liegt, wirken wie ein Versehen. */}
+      <span className="flex h-6 items-center">{zeichen}</span>
+      <span className="flex flex-col leading-tight">
+        <span className="text-[13px] font-semibold text-foreground">
+          {titel}
+        </span>
+        <span className="mt-0.5 text-[11px] text-muted">{unter}</span>
+      </span>
+    </div>
   );
 }
 
