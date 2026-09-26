@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import MobileAktionsleiste from "@/components/MobileAktionsleiste";
 import { useLanguage } from "@/lib/language-context";
 
 /**
@@ -21,8 +22,9 @@ export default function Fussbereich() {
   const f = t.fuss;
 
   return (
-    <footer className="border-t border-border">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 flex flex-col gap-4">
+    <>
+      <footer className="border-t border-border">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
           <span className="text-xs text-muted tracking-wide">
             © {new Date().getFullYear()} cresolu.de
@@ -60,7 +62,14 @@ export default function Fussbereich() {
         <p className="max-w-3xl text-[11px] leading-relaxed text-muted/70">
           {f.hinweis}
         </p>
-      </div>
-    </footer>
+        </div>
+      </footer>
+
+      {/* Die feste Leiste unten auf dem Handy. Sie steht hier und nicht auf
+          jeder Seite einzeln, aus demselben Grund wie der Fussbereich selbst:
+          Was an neun Stellen steht, fehlt bei der zehnten. Sie blendet sich
+          selbst aus, wo sie nicht hingehoert. */}
+      <MobileAktionsleiste />
+    </>
   );
 }

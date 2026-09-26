@@ -1299,6 +1299,17 @@ input[type="range"]:active::-moz-range-thumb {
   }
 }
 
+/* Auf dem Handy gibt es ihn nicht. Dort steht die feste Leiste mit "Anrufen"
+   und "Anfrage starten" dauerhaft unten — beides uebereinander waeren zwei
+   Aufrufe, wo einer gemeint ist, und der mitlaufende legte sich ausserdem
+   ueber den eigenen Knopf des Rechners (gemessen: beide bei y 776-828 auf
+   einem 390 Pixel breiten Geraet). */
+@media (max-width: 767px) {
+  .mitlauf-cta {
+    display: none;
+  }
+}
+
 /* Wer Bewegung reduziert haben möchte, bekommt nur das Aufblenden — das
    Hereinfahren von unten ist genau die Art Bewegung, die dabei stört. */
 @media (prefers-reduced-motion: reduce) {
