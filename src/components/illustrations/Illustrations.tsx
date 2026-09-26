@@ -66,7 +66,16 @@ export function HeroIllustration({
   angebote: { rate: string; zins: string }[];
   proMonat: string;
   ersparnis: string;
-  beispielHinweis: string[];
+  /**
+   * Grundlage der Rechnung, zeilenweise unter dem Geraet.
+   *
+   * Ohne Angabe steht dort nichts. Die Startseite nutzt das: Dort traegt ein
+   * Aufklapper unter der Zeichnung den vollstaendigen Hinweis, und die kurze
+   * Zeile im Bild waere dann dieselbe Aussage ein zweites Mal.
+   * Die Angabe bleibt trotzdem, weil dieselbe Zeichnung auch ohne
+   * umgebenden Text stehen kann — dann muss die Grundlage mit ins Bild.
+   */
+  beispielHinweis?: string[];
   szenen: HeroSzenen;
   /** Ziel, auf das Handy und Plakette fuehren. Ohne Angabe bleibt die
       Zeichnung reine Illustration. */
@@ -506,20 +515,23 @@ export function HeroIllustration({
         </g>
       </Ziel>
 
-      {/* Grundlage der Rechnung, mittig unter dem Gerät ausgerichtet. */}
-      <text
-        x="210"
-        y="452"
-        fontSize="8.8"
-        textAnchor="middle"
-        fill="rgba(148,163,196,0.7)"
-      >
-        {beispielHinweis.map((zeile, i) => (
-          <tspan key={zeile} x="210" dy={i === 0 ? 0 : 12.5}>
-            {zeile}
-          </tspan>
-        ))}
-      </text>
+      {/* Grundlage der Rechnung, mittig unter dem Gerät ausgerichtet —
+          sofern der Aufrufer sie hier haben will. */}
+      {beispielHinweis && beispielHinweis.length > 0 && (
+        <text
+          x="210"
+          y="452"
+          fontSize="8.8"
+          textAnchor="middle"
+          fill="rgba(148,163,196,0.7)"
+        >
+          {beispielHinweis.map((zeile, i) => (
+            <tspan key={zeile} x="210" dy={i === 0 ? 0 : 12.5}>
+              {zeile}
+            </tspan>
+          ))}
+        </text>
+      )}
     </svg>
   );
 }
