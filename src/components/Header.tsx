@@ -89,8 +89,29 @@ export default function Header() {
 
   const [menueOffen, setMenueOffen] = useState(false);
   const [klappeOffen, setKlappeOffen] = useState(false);
+  const [gescrollt, setGescrollt] = useState(false);
   const klappeId = useId();
   const klappeRef = useRef<HTMLDivElement>(null);
+
+  // Die Kopfzeile laeuft mit. Am Seitenanfang bleibt sie ohne eigene
+  // Flaeche, damit der Farbverlauf des Hintergrunds durchlaeuft — mit Flaeche
+  // stuende sie dort als dunkler Kasten auf der Seite. Sobald Inhalt unter
+  // ihr durchlaeuft, braucht sie eine: Text, der durch eine durchsichtige
+  // Leiste scrollt, ist unlesbar.
+  //
+  // Die Zustandsaenderung steht im Rueckruf des Ereignisses und nicht im
+  // Rumpf des Effekts — dort waere sie eine Kaskade von Renderdurchlaeufen,
+  // und die Regel `react-hooks/set-state-in-effect` verbietet sie hier.
+  // Der erste Aufruf kommt deshalb auch nicht von Hand, sondern von
+  // `scroll` selbst: Wer die Seite neu laedt und der Browser die alte
+  // Scrollhoehe wiederherstellt, loest dabei ein `scroll` aus.
+  useEffect(() => {
+    function beiScroll() {
+      setGescrollt(window.scrollY > 8);
+    }
+    window.addEventListener("scroll", beiScroll, { passive: true });
+    return () => window.removeEventListener("scroll", beiScroll);
+  }, []);
 
   // Ein Klappmenue, das nur beim Klick auf den Knopf wieder zugeht, bleibt
   // offen stehen, waehrend man laengst woanders liest. Escape und ein Klick
@@ -125,16 +146,24 @@ export default function Header() {
   const aufKrediten = pfad === "/kredit" || pfad.startsWith("/kredit/");
 
   return (
-    // Bewusst ohne eigene Flaeche: Der Seitenhintergrund traegt oben einen
-    // Farbverlauf (globals.css, zwei radiale Verlaeufe am oberen Rand). Eine
-    // eigene Hintergrundfarbe uebermalt ihn genau dort, wo er am staerksten
-    // ist — die Kopfzeile saehe dann als dunkler Kasten aus, der auf der
-    // Seite liegt, statt zu ihr zu gehoeren.
+    // Am Seitenanfang ohne eigene Flaeche: Der Seitenhintergrund traegt oben
+    // einen Farbverlauf (globals.css, zwei radiale Verlaeufe am oberen Rand).
+    // Eine Hintergrundfarbe uebermalt ihn genau dort, wo er am staerksten ist
+    // — die Kopfzeile saehe dann als dunkler Kasten aus, der auf der Seite
+    // liegt, statt zu ihr zu gehoeren.
     //
-    // `relative z-30` bleibt: Es traegt keine Farbe, sondern haelt das
-    // Klappmenue ueber dem Inhalt darunter. Das Menue selbst ist deckend
-    // (bg-surface), ein durchsichtiges Menue ueber Text waere unlesbar.
-    <header className="relative z-30 border-b border-border">
+    // Erst beim Scrollen kommt eine dazu, und zwar durchscheinend mit
+    // Weichzeichner statt deckend: So bleibt der Verlauf dahinter zu ahnen,
+    // und der Kasten entsteht trotzdem nicht.
+    //
+    // `z-30` haelt Kopfzeile und Klappmenue ueber dem Inhalt darunter.
+    <header
+      className={`sticky top-0 z-30 border-b transition-[background-color,border-color,backdrop-filter] duration-300 ${
+        gescrollt
+          ? "border-border bg-background/85 backdrop-blur-md"
+          : "border-border"
+      }`}
+    >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 lg:py-5 flex items-center justify-between gap-4">
         {/* Der Schriftzug ist echter Text und keine Grafik: Er nutzt damit die
             Hausschrift, bleibt bei jeder Zoomstufe scharf und ist für

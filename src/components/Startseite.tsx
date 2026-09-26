@@ -10,6 +10,7 @@ import MitlaufenderCta from "@/components/MitlaufenderCta";
 import Reveal from "@/components/Reveal";
 import VisibilityGate from "@/components/VisibilityGate";
 import PartnerLaufband from "@/components/PartnerLaufband";
+import VertrauensLeiste from "@/components/VertrauensLeiste";
 import { KREDITARTEN, KREDITART_TEXTE } from "@/lib/kreditarten";
 
 import {
@@ -62,7 +63,7 @@ export default function Startseite() {
             {/* Derselbe Rechner wie auf /rechner und auf den Kreditartseiten,
                 hier ohne Zweck und damit mit den allgemeinen Vorgaben.
                 Wo er steht, sagt `abschnittsfolge` weiter unten. */}
-            <section id="rechner" className="border-y border-border bg-surface/40 scroll-mt-8">
+            <section id="rechner" className="border-y border-border bg-surface/40 scroll-mt-24 lg:scroll-mt-28">
               <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <Reveal className="flex flex-col gap-5">
                   <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
@@ -97,7 +98,7 @@ export default function Startseite() {
                 eine eigene Seite mit Rechner und Erklärung.
                 Bewusst weit oben: Wer mit einem konkreten Vorhaben kommt, soll es
                 wiederfinden, bevor er sich durch den allgemeinen Teil liest. */}
-            <section id="kreditarten" className="scroll-mt-8">
+            <section id="kreditarten" className="scroll-mt-24 lg:scroll-mt-28">
               <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-20 flex flex-col gap-10">
                 <Reveal className="flex flex-col gap-3 max-w-2xl">
                   <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
@@ -145,6 +146,12 @@ export default function Startseite() {
   return (
     <>
       <Header />
+
+      {/* Nachweise gleich unter der Kopfzeile. Dort wirken sie noch: Wer die
+          Ueberschrift liest, hat die Frage "kann ich denen glauben?" im Kopf,
+          und die Antwort soll nicht drei Bildschirme tiefer stehen.
+          Ausserhalb von `main`, weil sie zu keinem Abschnitt gehoert. */}
+      <VertrauensLeiste />
 
       <main id="inhalt" className="flex-1">
         {/* Hero. Der Aufruf steht über der Falz und wird auf dem Handy zuerst
@@ -300,7 +307,6 @@ export default function Startseite() {
               angebote={l.heroAngebote}
               proMonat={l.heroProMonat}
               ersparnis={l.heroErsparnis}
-              beispielHinweis={l.heroBeispielKurz}
               szenen={l.heroSzenen}
               // Handy und Plakette fuehren dorthin, wo auch der
               // Handlungsaufruf hinfuehrt.
@@ -309,17 +315,26 @@ export default function Startseite() {
             />
           </VisibilityGate>
 
-          {/* Der vollstaendige Rechenweg, aufklappbar.
-              Weggelassen wird er nicht — er gehoert zur Aussage "so viel
-              sparen Sie" dazu. Er steht nur nicht mehr als vier graue Zeilen
-              neben der Ueberschrift; im Bild steht die kurze Zeile.
+          {/* Der Rechenweg zur Ersparnis — unter dem Geraet, wo vorher die
+              Beispielzeile stand.
+              Die Zeile nannte die Zahlen selbst ("20.000 € über 72 Monate").
+              Das ist mehr Zahl als Erklaerung und stand dort unverbunden;
+              wer wissen will, wie die 3.595 € zustande kommen, klickt jetzt
+              und liest den ganzen Satz statt eines Ausschnitts.
+              Weggelassen wird nichts — der vollstaendige Hinweis gehoert zur
+              Aussage "so viel sparen Sie" dazu und steht unveraendert darin.
               Als natives details: klappt ohne JavaScript auf, ist ueber die
-              Tastatur bedienbar und wird von der Seitensuche gefunden. */}
-          <details className="lg:col-span-2 -mt-6 text-[11px] text-muted/70">
-            <summary className="w-fit cursor-pointer rounded-[6px] underline decoration-border-strong underline-offset-4 transition-colors duration-200 hover:text-muted focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+              Tastatur bedienbar und wird von der Seitensuche gefunden.
+              `lg:col-start-2` setzt ihn unter die Zeichnung statt unter den
+              Text — ohne ihn landete er in der ersten Spalte, weit weg von
+              der Zahl, auf die er sich bezieht. */}
+          <details className="-mt-4 lg:col-start-2 lg:-mt-2 text-[11px] text-muted/70">
+            <summary className="mx-auto w-fit cursor-pointer rounded-[6px] text-center underline decoration-border-strong underline-offset-4 transition-colors duration-200 hover:text-muted focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background">
               {l.heroBeispielMehr}
             </summary>
-            <p className="mt-2 max-w-2xl leading-relaxed">
+            {/* Der Fliesstext linksbuendig: Vier zentrierte Zeilen lesen sich
+                wie ein Gedicht und nicht wie eine Rechengrundlage. */}
+            <p className="mt-2 max-w-xl leading-relaxed">
               {l.heroBeispielHinweis.join(" ")}
             </p>
           </details>
@@ -369,8 +384,12 @@ export default function Startseite() {
 
         {abschnittsfolge}
 
-        {/* Ablauf */}
-        <section id="ablauf" className="scroll-mt-8">
+        {/* Ablauf.
+            `scroll-mt` an den drei Sprungzielen: Die Kopfzeile laeuft mit und
+            ist 75 Pixel hoch, am PC 89. Ohne den Abstand landet ein Sprung
+            auf "#rechner" oder "#ablauf" mit der Ueberschrift unter der
+            Leiste — man kommt an, sieht aber nicht, wo. */}
+        <section id="ablauf" className="scroll-mt-24 lg:scroll-mt-28">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-24 flex flex-col gap-12">
             <Reveal className="flex flex-col gap-3 max-w-xl">
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">

@@ -47,14 +47,13 @@ export interface Translations {
     // deshalb bestimmt jede Sprache ihre Umbrueche selbst.
     heroBeispielHinweis: string[];
     /**
-     * Dasselbe in einer Zeile, fuer Fassung 2.
+     * Beschriftung des Aufklappers mit dem vollstaendigen Hinweis.
      *
-     * Vier graue Zeilen direkt neben der Hauptaussage lesen sich wie ein
-     * Haftungsausschluss und ziehen den Blick dorthin. Der vollstaendige Text
-     * faellt nicht weg — er steht in Fassung 2 aufklappbar unter dem Bild.
+     * Er steht unter der Zeichnung an der Stelle, an der frueher die Zahlen
+     * selbst standen — "Beispiel: 20.000 € über 72 Monate". Das war mehr Zahl
+     * als Erklaerung; wer wissen will, wie die Ersparnis zustande kommt,
+     * bekommt jetzt den ganzen Satz statt eines Ausschnitts.
      */
-    heroBeispielKurz: string[];
-    /** Beschriftung des Aufklappers mit dem vollstaendigen Hinweis. */
     heroBeispielMehr: string;
     /** Abkuerzung vom Aufmacher zum Rechner weiter unten (Fassung 2). */
     heroDirektRechnen: string;
@@ -145,6 +144,25 @@ export interface Translations {
     ctaTitel: string;
     ctaText: string;
     cta: string;
+  };
+  /**
+   * Die Vertrauensleiste unter der Kopfzeile.
+   *
+   * Die Zahlen selbst stehen nicht hier, sondern in `src/lib/vertrauen.ts` —
+   * sie sind in beiden Sprachen dieselben, und eine Bewertung, die sich
+   * zwischen zwei Uebersetzungen unterscheidet, waere ein Fehler, den niemand
+   * bemerkt.
+   */
+  vertrauen: {
+    aria: string;
+    ihkTitel: string;
+    /** Steht unter "IHK", solange in anbieter.ts keine Kammer eingetragen ist. */
+    ihkOhneKammer: string;
+    bewertungTitel: string;
+    /** "{anzahl}" wird ersetzt. */
+    bewertungUnter: string;
+    /** Solange die Zahlen nicht belegt sind. */
+    hinweis: string;
   };
   // Der Fussbereich steht auf jeder Seite. Impressum und Datenschutz gibt es
   // nur auf Deutsch — das Recht, dem sie folgen, gibt es auch nur dort —,
@@ -237,7 +255,6 @@ export const translations: Record<Language, Translations> = {
         "Jahreszins. Kein verbindliches Angebot. Ihr effektiver Jahreszins",
         "hängt von Bonität und Anbieter ab.",
       ],
-      heroBeispielKurz: ["Beispiel: 20.000 € über 72 Monate, 2,89 % eff."],
       heroBeispielMehr: "Wie diese Zahlen zustande kommen",
       heroDirektRechnen: "Oder gleich selbst rechnen",
       trustBadges: [
@@ -417,6 +434,15 @@ export const translations: Record<Language, Translations> = {
         "Unverbindlich, kostenlos und ohne Wirkung auf Ihre Bonität.",
       cta: "Konditionen prüfen",
     },
+    vertrauen: {
+      aria: "Nachweise",
+      ihkTitel: "IHK",
+      ihkOhneKammer: "Zuständige Kammer",
+      bewertungTitel: "von",
+      bewertungUnter: "über {anzahl} Bewertungen",
+      hinweis:
+        "Beispielhafte Darstellung — Kammer und Bewertungen stehen fest, sobald die Angaben vorliegen.",
+    },
     fuss: {
       rechtliches: "Rechtliches",
       startseite: "Startseite",
@@ -504,7 +530,6 @@ export const translations: Record<Language, Translations> = {
         "rate. Not a binding offer. Your effective annual rate depends on",
         "creditworthiness and provider.",
       ],
-      heroBeispielKurz: ["Example: €20,000 over 72 months, 2.89% eff."],
       heroBeispielMehr: "How these figures are calculated",
       heroDirektRechnen: "Or do the maths yourself",
       trustBadges: [
@@ -681,6 +706,15 @@ export const translations: Record<Language, Translations> = {
       ctaTitel: "See what is possible",
       ctaText: "Non-binding, free, and with no effect on your credit score.",
       cta: "Check conditions",
+    },
+    vertrauen: {
+      aria: "Credentials",
+      ihkTitel: "IHK",
+      ihkOhneKammer: "Supervising chamber",
+      bewertungTitel: "out of",
+      bewertungUnter: "from over {anzahl} reviews",
+      hinweis:
+        "Illustrative — chamber and reviews will be final once the details are available.",
     },
     fuss: {
       rechtliches: "Legal",
