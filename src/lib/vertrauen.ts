@@ -1,5 +1,3 @@
-import { ANBIETER } from "./anbieter";
-
 /**
  * Die Zahlen der Vertrauensleiste unter der Kopfzeile.
  *
@@ -28,11 +26,15 @@ import { ANBIETER } from "./anbieter";
  *      ProvenExpert, Google). Ohne nachpruefbare Quelle bleibt die Angabe
  *      angreifbar, auch wenn sie stimmt.
  *   3. `aufsicht` in `anbieter.ts` eintragen — die Kammer, die tatsaechlich
- *      zustaendig ist.
- *   4. Erst dann `VERTRAUEN_BELEGT` auf `true` setzen. Damit verschwindet
+ *      zustaendig ist. Sie steht nicht in dieser Leiste, sondern im
+ *      Impressum; wer "IHK-lizenziert" liest und nachsieht, sucht sie dort.
+ *   4. Pruefen, dass die Erlaubnis nach Paragraf 34c GewO wirklich erteilt
+ *      ist. "IHK-lizenziert" ohne Erlaubnis ist keine Uebertreibung, sondern
+ *      eine falsche Angabe ueber eine behoerdliche Gestattung.
+ *   5. Erst dann `VERTRAUEN_BELEGT` auf `true` setzen. Damit verschwindet
  *      der Hinweis.
  *
- * Schritt 4 vor den Schritten 1 bis 3 zu machen ist der Fehler, vor dem
+ * Den letzten Schritt vor den anderen zu machen ist der Fehler, vor dem
  * dieser Kommentar warnt.
  */
 
@@ -46,14 +48,49 @@ export const BEWERTUNG = {
 };
 
 /**
- * Die zustaendige Industrie- und Handelskammer.
+ * Die Erlaubnis, auf die sich die zweite Plakette beruft.
  *
- * Sie steht schon in `anbieter.ts`, weil Impressum und Datenschutzerklaerung
- * sie ebenfalls brauchen — hier wird sie nur gelesen. Zwei Stellen fuer
- * dieselbe Kammer waeren zwei Stellen, die auseinanderlaufen koennen.
+ * Hier steht `§ 34c GewO` und nicht `§ 34c & 34i GewO`.
+ *
+ * Paragraf 34c Absatz 1 Satz 1 Nummer 2 deckt die Vermittlung von Darlehen —
+ * das ist es, was diese Seite tut. Paragraf 34i gilt fuer die Vermittlung von
+ * Immobiliardarlehen an Verbraucher, also grundpfandrechtlich gesicherte
+ * Finanzierungen. Die sechzehn Verwendungszwecke dieser Seite sind samt und
+ * sonders unbesicherte Raten- und Umschuldungskredite; auch "Modernisierung"
+ * meint hier den Ratenkredit und nicht die Baufinanzierung.
+ *
+ * Mit einer Erlaubnis zu werben, die man weder hat noch braucht, ist derselbe
+ * Fehler wie mit Bewertungen, die es nicht gibt. Kommt die Baufinanzierung
+ * spaeter dazu UND liegt die Erlaubnis nach 34i tatsaechlich vor, gehoert sie
+ * hier hinein — vorher nicht.
  */
-export function ihkName(): string {
-  return ANBIETER.aufsicht.trim();
+export const ERLAUBNIS = {
+  paragrafen: "§ 34c GewO",
+};
+
+/**
+ * Das Wort vor der Zahl: "Hervorragend · 4,9".
+ *
+ * Abgeleitet und nicht hingeschrieben, damit es der Zahl nicht widersprechen
+ * kann. Ein fest eingetragenes "Hervorragend" bliebe auch dann stehen, wenn
+ * der Schnitt eines Tages auf 3,1 faellt — und dann steht da "Hervorragend ·
+ * 3,1", was niemandem auffaellt ausser dem Leser.
+ *
+ * Die Schwellen folgen der Einteilung, die die gaengigen Bewertungsportale
+ * verwenden.
+ */
+export function bewertungsWort(sprache: string): string {
+  const s = BEWERTUNG.schnitt / BEWERTUNG.hoechstwert;
+  if (sprache === "de") {
+    if (s >= 0.9) return "Hervorragend";
+    if (s >= 0.76) return "Sehr gut";
+    if (s >= 0.6) return "Gut";
+    return "Befriedigend";
+  }
+  if (s >= 0.9) return "Excellent";
+  if (s >= 0.76) return "Great";
+  if (s >= 0.6) return "Good";
+  return "Average";
 }
 
 /**

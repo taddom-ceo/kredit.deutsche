@@ -156,9 +156,6 @@ export interface Translations {
   vertrauen: {
     aria: string;
     ihkTitel: string;
-    /** Steht unter "IHK", solange in anbieter.ts keine Kammer eingetragen ist. */
-    ihkOhneKammer: string;
-    bewertungTitel: string;
     /** "{anzahl}" wird ersetzt. */
     bewertungUnter: string;
     /** Solange die Zahlen nicht belegt sind. */
@@ -436,12 +433,10 @@ export const translations: Record<Language, Translations> = {
     },
     vertrauen: {
       aria: "Nachweise",
-      ihkTitel: "IHK",
-      ihkOhneKammer: "Zuständige Kammer",
-      bewertungTitel: "von",
-      bewertungUnter: "über {anzahl} Bewertungen",
+      ihkTitel: "IHK-lizenziert",
+      bewertungUnter: "Über {anzahl} Bewertungen",
       hinweis:
-        "Beispielhafte Darstellung — Kammer und Bewertungen stehen fest, sobald die Angaben vorliegen.",
+        "Beispielhafte Darstellung — Bewertungen und Erlaubnis stehen fest, sobald die Angaben vorliegen.",
     },
     fuss: {
       rechtliches: "Rechtliches",
@@ -709,12 +704,10 @@ export const translations: Record<Language, Translations> = {
     },
     vertrauen: {
       aria: "Credentials",
-      ihkTitel: "IHK",
-      ihkOhneKammer: "Supervising chamber",
-      bewertungTitel: "out of",
-      bewertungUnter: "from over {anzahl} reviews",
+      ihkTitel: "IHK-licensed",
+      bewertungUnter: "Over {anzahl} reviews",
       hinweis:
-        "Illustrative — chamber and reviews will be final once the details are available.",
+        "Illustrative — reviews and licence will be final once the details are available.",
     },
     fuss: {
       rechtliches: "Legal",
