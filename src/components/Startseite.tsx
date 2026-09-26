@@ -10,7 +10,6 @@ import MitlaufenderCta from "@/components/MitlaufenderCta";
 import Reveal from "@/components/Reveal";
 import VisibilityGate from "@/components/VisibilityGate";
 import PartnerLaufband from "@/components/PartnerLaufband";
-import VersionsWechsel from "@/components/VersionsWechsel";
 import { KREDITARTEN, KREDITART_TEXTE } from "@/lib/kreditarten";
 
 import {
@@ -41,50 +40,28 @@ const KENNZAHL_SYMBOLE = [IconBanks, IconPercent, IconClock, IconWallet];
  */
 const STARTSEITE_KACHELN = 6;
 
-/**
- * Welche Fassung der Startseite gezeigt wird.
- *
- * "v1" ist der Stand, der bisher unter / lag — unveraendert, damit ein
- * Vergleich ueberhaupt etwas aussagt. "v2" ist derselbe Seiteninhalt mit
- * einer anderen Anordnung und weniger Beiwerk im Aufmacher.
- *
- * Bewusst eine Weiche in einer Datei und nicht zwei Dateien: Zwei Kopien
- * laufen auseinander, sobald irgendwo ein Preis, ein Rechtshinweis oder ein
- * Text geaendert wird — und zwar still, weil beide weiter bauen. Hier steht
- * jeder Unterschied ausdruecklich da, und alles, was nicht danebensteht, ist
- * nachweislich in beiden Fassungen gleich.
- */
-export type Fassung = "v1" | "v2";
-
-export default function Startseite({ fassung }: { fassung: Fassung }) {
+export default function Startseite() {
   const { lang, t } = useLanguage();
   const l = t.landing;
   const x = KREDITART_TEXTE[lang];
-  const v2 = fassung === "v2";
 
-  // Fassung 2 blendet den Aufmacher schneller ein. Die Staffelung fuehrt den
-  // Blick von der Ueberschrift zum Knopf; bis 560 ms dauert das Fuehren
-  // laenger als das Lesen, und wer schnell ist, wartet auf seinen eigenen
-  // Handlungsaufruf.
-  const takt = (ms: number) => `${v2 ? Math.round(ms / 2) : ms}ms`;
-
-
-  // Rechner und Kreditarten — dieselben zwei Abschnitte, verschiedene
-  // Reihenfolge.
+  // Rechner und Kreditarten.
   //
-  // Fassung 1 fuehrt hin: erst der Zweck, dann die Zahl. Das ist die
-  // Reihenfolge eines Gespraechs, und sie ist nicht falsch — sie kostet nur
-  // 1.400 Pixel, bis der Rechner im Bild ist. Bis dahin hat man auf der
-  // Startseite drei Mal eine Rate gesehen und nie selbst eine ausgerechnet.
+  // Der Rechner steht vor den Kreditarten. Andersherum — erst der Zweck, dann
+  // die Zahl — ist die Reihenfolge eines Gespraechs und nicht falsch; sie
+  // kostet nur 1.400 Pixel, bis man selbst etwas ausrechnen kann. Bis dahin
+  // hat man auf der Startseite drei Mal eine Rate gesehen und nie eine
+  // eingestellt. Die Kreditarten verlieren dabei nichts — sie werden gesucht,
+  // nicht entdeckt.
   //
-  // Fassung 2 dreht es um: Wer wissen will, was er zahlt, kann es nach einem
-  // Bildschirm tun; wer ueberzeugt werden will, liest danach weiter. Die
-  // Kreditarten verlieren dabei nichts — sie werden gesucht, nicht entdeckt.
+  // Beide stehen als eigene Groesse da und nicht einfach hintereinander im
+  // Baum, damit die Reihenfolge an einer Stelle sichtbar ist statt ueber
+  // vierhundert Zeilen verteilt.
   const rechnerAbschnitt = (
     <>
             {/* Derselbe Rechner wie auf /rechner und auf den Kreditartseiten,
                 hier ohne Zweck und damit mit den allgemeinen Vorgaben.
-                Wo er steht, entscheidet die Fassung — siehe `abschnittsfolge`. */}
+                Wo er steht, sagt `abschnittsfolge` weiter unten. */}
             <section id="rechner" className="border-y border-border bg-surface/40 scroll-mt-8">
               <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 lg:py-20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <Reveal className="flex flex-col gap-5">
@@ -158,15 +135,10 @@ export default function Startseite({ fassung }: { fassung: Fassung }) {
     </>
   );
 
-  const abschnittsfolge = v2 ? (
+  const abschnittsfolge = (
     <>
       {rechnerAbschnitt}
       {kreditartenAbschnitt}
-    </>
-  ) : (
-    <>
-      {kreditartenAbschnitt}
-      {rechnerAbschnitt}
     </>
   );
 
@@ -196,7 +168,7 @@ export default function Startseite({ fassung }: { fassung: Fassung }) {
                 Rueckhalt fuer noch schmalere Geraete und andere Sprachen. */}
             <h1
               className="auftakt text-[2.9rem] max-[389px]:text-[2.35rem] lg:text-[4.1rem] font-bold leading-[1.02] tracking-[-0.035em] break-words"
-              style={{ animationDelay: takt(140) }}
+              style={{ animationDelay: "70ms" }}
             >
               {l.titleLine1}
               <br />
@@ -204,14 +176,14 @@ export default function Startseite({ fassung }: { fassung: Fassung }) {
             </h1>
             <p
               className="auftakt text-lg lg:text-xl text-muted leading-relaxed max-w-xl"
-              style={{ animationDelay: takt(280) }}
+              style={{ animationDelay: "140ms" }}
             >
               {l.subtitle}
             </p>
 
             <div
               className="auftakt flex flex-wrap items-center gap-3 mt-2"
-              style={{ animationDelay: takt(420) }}
+              style={{ animationDelay: "210ms" }}
             >
               <Link
                 href="/rechner"
@@ -241,27 +213,25 @@ export default function Startseite({ fassung }: { fassung: Fassung }) {
               </a>
             </div>
 
-            {/* Abkuerzung zum Rechner, nur in Fassung 2.
-                Der Rechner steht dort zwar schon weiter oben, aber immer noch
-                eine Bildschirmhoehe entfernt. Wer nicht ueberzeugt werden
-                muss, sondern eine Zahl sehen will, bekommt hier den direkten
-                Weg — als Textzeile und nicht als dritter Knopf, damit der
+            {/* Abkuerzung zum Rechner.
+                Er steht zwar schon vor den Kreditarten, aber immer noch eine
+                Bildschirmhoehe entfernt. Wer nicht ueberzeugt werden muss,
+                sondern eine Zahl sehen will, bekommt hier den direkten Weg —
+                als Textzeile und nicht als dritter Knopf, damit der
                 Handlungsaufruf der einzige Knopf bleibt. */}
-            {v2 && (
-              <a
-                href="#rechner"
-                className="auftakt group -mt-3 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted underline decoration-border-strong underline-offset-4 transition-colors duration-200 hover:text-foreground hover:decoration-accent focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-[6px]"
-                style={{ animationDelay: takt(480) }}
+            <a
+              href="#rechner"
+              className="auftakt group -mt-3 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted underline decoration-border-strong underline-offset-4 transition-colors duration-200 hover:text-foreground hover:decoration-accent focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-[6px]"
+              style={{ animationDelay: "240ms" }}
+            >
+              {l.heroDirektRechnen}
+              <span
+                aria-hidden="true"
+                className="text-accent transition-transform duration-200 group-hover:translate-y-0.5"
               >
-                {l.heroDirektRechnen}
-                <span
-                  aria-hidden="true"
-                  className="text-accent transition-transform duration-200 group-hover:translate-y-0.5"
-                >
-                  ↓
-                </span>
-              </a>
-            )}
+                ↓
+              </span>
+            </a>
 
             {/* Vertrauenszeichen statt Fließtext: vier Haken werden im
                 Vorbeisehen erfasst, ein Satz muss gelesen werden.
@@ -276,17 +246,12 @@ export default function Startseite({ fassung }: { fassung: Fassung }) {
               // waere hier falsch: Auf schmalen Handys waeren die Spalten
               // enger als die laengste Plakette und sie liefen ueber.
               className="auftakt flex flex-wrap gap-2.5 lg:max-w-[400px]"
-              style={{ animationDelay: takt(560) }}
+              style={{ animationDelay: "280ms" }}
             >
               {l.trustBadges.map((badge, i) => (
                 <li
                   key={badge}
-                  // Fassung 2 ohne Schimmer: Er ist der einzige Effekt auf der
-                  // Seite, der nichts erklaert — und er laeuft in der Ecke, in
-                  // der gerade der Handlungsaufruf gelesen werden soll.
-                  className={`flex items-center gap-2 rounded-full border border-border-strong bg-surface/70 px-4 py-2.5 text-[15px] font-semibold text-foreground/90 ${
-                    v2 ? "" : "vertrauen-plakette"
-                  }`}
+                  className="vertrauen-plakette flex items-center gap-2 rounded-full border border-border-strong bg-surface/70 px-4 py-2.5 text-[15px] font-semibold text-foreground/90"
                   // Der Schimmer laeuft als Welle durch die Reihe. Der Versatz
                   // muss ueber eine Variable kommen: Er gehoert zum ::after,
                   // und das erbt keine Animationsangaben vom Element.
@@ -331,7 +296,7 @@ export default function Startseite({ fassung }: { fassung: Fassung }) {
               angebote={l.heroAngebote}
               proMonat={l.heroProMonat}
               ersparnis={l.heroErsparnis}
-              beispielHinweis={v2 ? l.heroBeispielKurz : l.heroBeispielHinweis}
+              beispielHinweis={l.heroBeispielKurz}
               szenen={l.heroSzenen}
               // Handy und Plakette fuehren dorthin, wo auch der
               // Handlungsaufruf hinfuehrt.
@@ -340,22 +305,20 @@ export default function Startseite({ fassung }: { fassung: Fassung }) {
             />
           </VisibilityGate>
 
-          {/* Fassung 2: Der vollstaendige Rechenweg steht hier, aufklappbar.
+          {/* Der vollstaendige Rechenweg, aufklappbar.
               Weggelassen wird er nicht — er gehoert zur Aussage "so viel
               sparen Sie" dazu. Er steht nur nicht mehr als vier graue Zeilen
-              neben der Ueberschrift.
+              neben der Ueberschrift; im Bild steht die kurze Zeile.
               Als natives details: klappt ohne JavaScript auf, ist ueber die
               Tastatur bedienbar und wird von der Seitensuche gefunden. */}
-          {v2 && (
-            <details className="lg:col-span-2 -mt-6 text-[11px] text-muted/70">
-              <summary className="w-fit cursor-pointer rounded-[6px] underline decoration-border-strong underline-offset-4 transition-colors duration-200 hover:text-muted focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background">
-                {l.heroBeispielMehr}
-              </summary>
-              <p className="mt-2 max-w-2xl leading-relaxed">
-                {l.heroBeispielHinweis.join(" ")}
-              </p>
-            </details>
-          )}
+          <details className="lg:col-span-2 -mt-6 text-[11px] text-muted/70">
+            <summary className="w-fit cursor-pointer rounded-[6px] underline decoration-border-strong underline-offset-4 transition-colors duration-200 hover:text-muted focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+              {l.heroBeispielMehr}
+            </summary>
+            <p className="mt-2 max-w-2xl leading-relaxed">
+              {l.heroBeispielHinweis.join(" ")}
+            </p>
+          </details>
         </section>
 
         {/* Partnerbanken als durchlaufendes Band ueber die volle Breite.
@@ -591,9 +554,6 @@ export default function Startseite({ fassung }: { fassung: Fassung }) {
 
       <Fussbereich />
 
-      {/* Nur fuer den Vergleich der beiden Fassungen — faellt weg, sobald
-          eine davon gewonnen hat. */}
-      <VersionsWechsel />
     </>
   );
 }
