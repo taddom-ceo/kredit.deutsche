@@ -162,10 +162,14 @@ export default function Startseite() {
             {/* Die zweite Zeile kursiv und in der Akzentfarbe: Sie trägt die
                 Aussage und hebt sich dadurch ab, ohne dass die Überschrift
                 zwei Größen bräuchte. */}
-            {/* Unter 390px faellt die Ueberschrift kleiner aus: "Bank-Marathon."
-                ist bei 2,9rem kursiv 354px breit und ragte auf einem 360px
-                schmalen Bildschirm 10px ueber den Rand. break-words ist der
-                Rueckhalt fuer noch schmalere Geraete und andere Sprachen. */}
+            {/* Unter 390px faellt die Ueberschrift kleiner aus. Die Stufe
+                stammt von einer frueheren, laengeren Fassung der zweiten
+                Zeile, die auf einem 360px schmalen Bildschirm ueber den Rand
+                ragte; sie bleibt, weil die Zeile jederzeit wieder laenger
+                werden kann — auch in einer anderen Sprache.
+                Nachgemessen mit der jetzigen: "mit weniger Aufwand." ist bei
+                2,35rem kursiv 208px breit und endet 135px vor dem Rand.
+                break-words ist der Rueckhalt fuer noch schmalere Geraete. */}
             <h1
               className="auftakt text-[2.9rem] max-[389px]:text-[2.35rem] lg:text-[4.1rem] font-bold leading-[1.02] tracking-[-0.035em] break-words"
               style={{ animationDelay: "70ms" }}

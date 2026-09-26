@@ -202,8 +202,8 @@ export const translations: Record<Language, Translations> = {
     ],
     landing: {
       badge: "Kostenlos · Schufa-neutral · In 4 Minuten",
-      titleLine1: "Günstiger finanzieren,",
-      titleHighlight: "ohne Bank\u2011Marathon.",
+      titleLine1: "Günstiger finanzieren",
+      titleHighlight: "mit weniger Aufwand.",
       subtitle:
         "Ein Antrag, über 20 Banken im Vergleich. Sie sehen sofort, welches Angebot Sie am wenigsten kostet — ohne Wirkung auf Ihre Bonität.",
       ctaPrimary: "Kostenlos vergleichen",
@@ -469,8 +469,8 @@ export const translations: Record<Language, Translations> = {
     ],
     landing: {
       badge: "Free · Credit-score-neutral · In 4 minutes",
-      titleLine1: "Finance smarter,",
-      titleHighlight: "without the bank marathon.",
+      titleLine1: "Finance smarter",
+      titleHighlight: "with less effort.",
       subtitle:
         "One application, more than 20 banks compared. You see straight away which offer costs you the least — with no effect on your credit score.",
       ctaPrimary: "Compare for free",
