@@ -10,7 +10,7 @@ import MitlaufenderCta from "@/components/MitlaufenderCta";
 import Reveal from "@/components/Reveal";
 import VisibilityGate from "@/components/VisibilityGate";
 import PartnerLaufband from "@/components/PartnerLaufband";
-import VertrauensLeiste from "@/components/VertrauensLeiste";
+import VertrauensBelege from "@/components/VertrauensBelege";
 import { KREDITARTEN, KREDITART_TEXTE } from "@/lib/kreditarten";
 
 import {
@@ -146,12 +146,6 @@ export default function Startseite() {
   return (
     <>
       <Header />
-
-      {/* Nachweise gleich unter der Kopfzeile. Dort wirken sie noch: Wer die
-          Ueberschrift liest, hat die Frage "kann ich denen glauben?" im Kopf,
-          und die Antwort soll nicht drei Bildschirme tiefer stehen.
-          Ausserhalb von `main`, weil sie zu keinem Abschnitt gehoert. */}
-      <VertrauensLeiste />
 
       <main id="inhalt" className="flex-1">
         {/* Hero. Der Aufruf steht über der Falz und wird auf dem Handy zuerst
@@ -289,6 +283,15 @@ export default function Startseite() {
                 </li>
               ))}
             </ul>
+
+            {/* Die beiden Belege — Bewertung und Erlaubnis — als zwei Karten
+                am Fuss des Aufmachers.
+                Vorher lagen sie als Leiste ueber die ganze Breite unter der
+                Kopfzeile. Dort standen sie vor der Ueberschrift und damit vor
+                der Frage, die sie beantworten sollen. Hier stehen sie hinter
+                den Handlungsaufrufen: Wer bis dahin gelesen hat, ueberlegt
+                gerade, ob er klickt — und genau dort gehoert der Beleg hin. */}
+            <VertrauensBelege />
           </div>
 
           {/* Ab lg liegt das Bild absolut in seiner Spalte. Dadurch bestimmt
