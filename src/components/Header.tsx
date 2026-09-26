@@ -125,7 +125,16 @@ export default function Header() {
   const aufKrediten = pfad === "/kredit" || pfad.startsWith("/kredit/");
 
   return (
-    <header className="relative z-30 border-b border-border bg-background">
+    // Bewusst ohne eigene Flaeche: Der Seitenhintergrund traegt oben einen
+    // Farbverlauf (globals.css, zwei radiale Verlaeufe am oberen Rand). Eine
+    // eigene Hintergrundfarbe uebermalt ihn genau dort, wo er am staerksten
+    // ist — die Kopfzeile saehe dann als dunkler Kasten aus, der auf der
+    // Seite liegt, statt zu ihr zu gehoeren.
+    //
+    // `relative z-30` bleibt: Es traegt keine Farbe, sondern haelt das
+    // Klappmenue ueber dem Inhalt darunter. Das Menue selbst ist deckend
+    // (bg-surface), ein durchsichtiges Menue ueber Text waere unlesbar.
+    <header className="relative z-30 border-b border-border">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 lg:py-5 flex items-center justify-between gap-4">
         {/* Der Schriftzug ist echter Text und keine Grafik: Er nutzt damit die
             Hausschrift, bleibt bei jeder Zoomstufe scharf und ist für
